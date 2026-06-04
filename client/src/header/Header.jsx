@@ -4,22 +4,26 @@ import './Header.css'
 import logo from '../assets/storyweaveLogo.jpeg'
 
 const Header = () => {
+
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
     const token = localStorage.getItem('token')
+
     if (token) {
       setIsLoggedIn(true)
     }
   }, [])
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('username')
-    setIsLoggedIn(false)
-    navigate('/login')
-  }
+  localStorage.removeItem('token')
+  localStorage.removeItem('username')
+
+  navigate('/login')
+
+  window.location.reload()
+}
 
   return (
     <header className='header-container'>
@@ -63,9 +67,12 @@ const Header = () => {
 
           <div className="account">
 
-            <div className="avatar">
-              {localStorage.getItem("username")?.charAt(0).toUpperCase() || "A"}
-            </div>
+            <button
+              className='account-btn'
+              onClick={() => navigate('/account')}
+            >
+              Account
+            </button>
 
             <button
               className='logout-btn'

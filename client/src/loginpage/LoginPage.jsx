@@ -34,12 +34,13 @@ const LoginPage = () => {
         }
       )
 
-      localStorage.setItem('token', res.data.token)
+      localStorage.setItem('token', res.data.token || "loggedin")
 
       setEmail("")
       setPassword("")
 
       navigate("/")
+      window.location.reload()
 
     } catch (err) {
 
