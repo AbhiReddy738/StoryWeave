@@ -34,7 +34,7 @@ const LoginPage = () => {
         }
       )
 
-      console.log(res.data)
+      localStorage.setItem('token', res.data.token)
 
       setEmail("")
       setPassword("")
