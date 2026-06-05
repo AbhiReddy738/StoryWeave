@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import './Header.css'
-import logo from '../assets/storyweaveLogo.jpeg'
+import logo from '../../assets/storyweaveLogo.jpeg'
 
 const Header = () => {
 
