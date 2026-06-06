@@ -1,0 +1,302 @@
+/* ================= PAGE ================= */
+
+.account-page{
+  height:100vh;
+  overflow-y:auto;
+  background:#050505;
+
+  scrollbar-width:none;
+}
+
+.account-page::-webkit-scrollbar{
+  display:none;
+}
+
+/* ================= CONTAINER ================= */
+
+.account-container{
+  margin-left:170px;
+  padding:90px 25px 40px;
+
+  transition:.3s;
+}
+
+.account-expanded{
+  margin-left:75px;
+}
+
+/* ================= PROFILE ================= */
+
+.profile-card{
+  display:flex;
+
+  gap:35px;
+
+  background:#111111;
+
+  border:1px solid rgba(255,255,255,.08);
+
+  border-radius:24px;
+
+  padding:25px;
+
+  margin-bottom:40px;
+}
+
+/* ================= LEFT ================= */
+
+.profile-left{
+  width:240px;
+
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  gap:18px;
+}
+
+/* ================= PHOTO ================= */
+
+.profile-photo{
+  width:190px;
+
+  height:240px;
+
+  border-radius:50%;
+
+  overflow:hidden;
+
+  border:4px solid #c9a84c;
+
+  background:#1b1b1b;
+}
+
+.profile-photo img{
+  width:100%;
+  height:100%;
+
+  object-fit:cover;
+}
+
+/* ================= BUTTON ================= */
+
+.edit-btn{
+  width:170px;
+
+  height:44px;
+
+  border:none;
+
+  border-radius:12px;
+
+  background:#c9a84c;
+
+  color:#111;
+
+  font-weight:700;
+
+  cursor:pointer;
+
+  transition:.3s;
+}
+
+.edit-btn:hover{
+  transform:translateY(-2px);
+}
+
+/* ================= RIGHT ================= */
+
+.profile-right{
+  flex:1;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:14px;
+}
+
+/* ================= INPUT ================= */
+
+.info-input{
+  width:100%;
+
+  height:52px;
+
+  background:#181818;
+
+  border:none;
+
+  border-radius:12px;
+
+  padding:0 18px;
+
+  color:white;
+
+  font-size:16px;
+}
+
+.info-input:focus{
+  outline:none;
+
+  border:1px solid #c9a84c;
+}
+
+.info-input:disabled{
+  opacity:1;
+}
+
+/* ================= BIO ================= */
+
+.bio-input{
+  width:100%;
+
+  min-height:140px;
+
+  background:#181818;
+
+  border:none;
+
+  border-radius:12px;
+
+  padding:16px;
+
+  color:white;
+
+  resize:none;
+
+  line-height:1.7;
+}
+
+.bio-input:focus{
+  outline:none;
+
+  border:1px solid #c9a84c;
+}
+
+.bio-input:disabled{
+  opacity:1;
+}
+
+/* ================= POSTS ================= */
+
+.posts-title{
+  color:#c9a84c;
+
+  font-size:28px;
+
+  margin-bottom:20px;
+}
+
+/* ================= GRID ================= */
+
+.posts-grid{
+  display:grid;
+
+  grid-template-columns:
+  repeat(auto-fill,minmax(240px,1fr));
+
+  gap:22px;
+}
+
+/* ================= POST CARD ================= */
+
+.post-card{
+  min-height:180px;
+
+  background:#121212;
+
+  border:1px solid rgba(255,255,255,.08);
+
+  border-radius:18px;
+
+  display:flex;
+
+  flex-direction:column;
+
+  justify-content:center;
+
+  align-items:center;
+
+  gap:20px;
+
+  transition:.3s;
+}
+
+.post-card:hover{
+  transform:translateY(-4px);
+
+  border-color:#c9a84c;
+}
+
+.post-card h3{
+  color:white;
+
+  text-align:center;
+
+  padding:0 10px;
+}
+
+/* ================= DELETE ================= */
+
+.delete-post-btn{
+  border:none;
+
+  padding:10px 18px;
+
+  border-radius:10px;
+
+  background:#d63031;
+
+  color:white;
+
+  cursor:pointer;
+
+  transition:.3s;
+}
+
+.delete-post-btn:hover{
+  background:#ff4d4f;
+}
+
+/* ================= TABLET ================= */
+
+@media(max-width:768px){
+
+  .account-container{
+    margin-left:95px;
+  }
+
+  .profile-card{
+    flex-direction:column;
+
+    align-items:center;
+  }
+
+  .profile-left{
+    width:100%;
+  }
+}
+
+/* ================= MOBILE ================= */
+
+@media(max-width:480px){
+
+  .account-container{
+    margin-left:75px;
+
+    padding:85px 12px 30px;
+  }
+
+  .profile-photo{
+    width:150px;
+
+    height:190px;
+  }
+
+  .posts-grid{
+    grid-template-columns:1fr;
+  }
+}

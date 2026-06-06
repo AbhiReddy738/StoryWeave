@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import './PostPage.css';
 
 const PostPage = ({ collapsed }) => {
@@ -7,11 +9,14 @@ const PostPage = ({ collapsed }) => {
 
   const [formData, setFormData] = useState({
     title: '',
-    author: '',
     genre: '',
     summary: '',
-    content: ''
+    content: '',
+    author: '',
+    likes: 0
   });
+
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
 
@@ -22,12 +27,51 @@ const PostPage = ({ collapsed }) => {
 
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
 
     e.preventDefault();
 
-    console.log(postType);
-    console.log(formData);
+    if (
+      !formData.title ||
+      !formData.author ||
+      !formData.genre ||
+      !formData.summary ||
+      !formData.content
+    ) {
+
+      alert('Please fill all fields');
+      return;
+
+    }
+
+    try {
+
+      await axios.post(
+        'http://localhost:5000/api/story/create',
+        formData
+      );
+
+      setFormData({
+        title: '',
+        genre: '',
+        summary: '',
+        content: '',
+        author: '',
+        likes: 0
+      });
+
+      alert('Story Posted Successfully');
+
+      navigate('/');
+
+    }
+    catch (err) {
+
+      console.log(err);
+
+      alert('Failed To Post Story');
+
+    }
 
   };
 
@@ -47,25 +91,25 @@ const PostPage = ({ collapsed }) => {
         <div className="post-type-box">
 
           <button
+            type="button"
             className={
               postType === 'story'
                 ? 'active-type'
                 : ''
             }
             onClick={() => setPostType('story')}
-            type="button"
           >
             Add Story
           </button>
 
           <button
+            type="button"
             className={
               postType === 'music'
                 ? 'active-type'
                 : ''
             }
             onClick={() => setPostType('music')}
-            type="button"
           >
             Add Music
           </button>
