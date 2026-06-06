@@ -34,7 +34,17 @@ const LoginPage = () => {
         }
       )
 
-      localStorage.setItem('token', res.data.token || "loggedin")
+      console.log(res.data);
+
+      localStorage.setItem(
+        'token',
+        res.data.token || "loggedin"
+      )
+
+      localStorage.setItem(
+        'user',
+        JSON.stringify(res.data.user)
+      )
 
       setEmail("")
       setPassword("")
