@@ -47,6 +47,19 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 
       <button
         className="sidebar-btn"
+        onClick={() => navigate('/post')}
+      >
+        <span className="icon">➕</span>
+
+        {!collapsed && (
+          <span className="btn-text">
+            Post
+          </span>
+        )}
+      </button>
+
+      <button
+        className="sidebar-btn"
         onClick={() => navigate('/saved')}
       >
         <span className="icon">🔖</span>

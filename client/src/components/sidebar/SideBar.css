@@ -1,192 +1,220 @@
 /* ================= SIDEBAR ================= */
 
-.side-bar {
-  position: fixed;
+.side-bar{
+  position:fixed;
 
-  top: 70px;
-  left: 12px;
+  top:68px;
+  left:8px;
 
-  width: 220px;
-  height: calc(100vh - 82px);
+  width:170px;
 
-  background: #111111;
+  height:calc(100vh - 78px);
 
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:#111111;
 
-  border-radius: 22px;
+  border:1px solid rgba(255,255,255,.08);
 
-  display: flex;
-  flex-direction: column;
+  border-radius:18px;
 
-  gap: 12px;
+  display:flex;
+  flex-direction:column;
 
-  padding: 12px;
+  gap:8px;
 
-  transition: all 0.3s ease;
+  padding:10px;
 
-  z-index: 100;
+  transition:all .3s ease;
+
+  z-index:100;
 }
 
-/* Collapsed Sidebar */
+/* ================= COLLAPSED ================= */
 
-.side-bar.collapsed {
-  width: 80px;
+.side-bar.collapsed{
+  width:60px;
 }
 
 /* ================= MENU BUTTON ================= */
 
-.menu-btn {
-  height: 60px;
+.menu-btn{
+  height:46px;
 
-  border: none;
-  border-radius: 16px;
+  border:none;
 
-  background: #1a1a1a;
+  border-radius:14px;
 
-  color: white;
+  background:#1a1a1a;
 
-  font-size: 24px;
+  color:white;
 
-  cursor: pointer;
+  font-size:20px;
 
-  transition: all 0.3s ease;
+  cursor:pointer;
+
+  transition:.3s;
 }
 
-.menu-btn:hover {
-  background: #2a2a2a;
-
-  transform: scale(1.03);
+.menu-btn:hover{
+  background:#2a2a2a;
 }
 
 /* ================= SIDEBAR BUTTONS ================= */
 
-.sidebar-btn {
-  height: 72px;
+.sidebar-btn{
+  height:48px;
 
-  border: none;
-  border-radius: 18px;
+  border:none;
 
-  background: #1a1a1a;
+  border-radius:14px;
 
-  color: white;
+  background:#1a1a1a;
 
-  cursor: pointer;
+  color:white;
 
-  display: flex;
-  align-items: center;
+  cursor:pointer;
 
-  gap: 14px;
+  display:flex;
+  align-items:center;
 
-  padding: 0 16px;
+  gap:10px;
 
-  transition: all 0.3s ease;
+  padding:0 12px;
+
+  transition:.3s;
 }
 
-.sidebar-btn:hover {
-  background: linear-gradient(
+.sidebar-btn:hover{
+  background:linear-gradient(
     135deg,
     #c9a84c,
     #f2dc95
   );
 
-  color: #111;
+  color:#111;
 
-  transform: translateX(4px);
+  transform:translateX(3px);
 
   box-shadow:
-    0 8px 20px rgba(201, 168, 76, 0.25);
+    0 6px 16px rgba(201,168,76,.2);
 }
 
-.sidebar-btn:active {
-  transform: scale(0.97);
+.sidebar-btn:active{
+  transform:scale(.98);
+}
+
+/* ================= POST BUTTON ================= */
+
+.post-btn{
+  background:linear-gradient(
+    135deg,
+    #1f3f1f,
+    #295229
+  );
+}
+
+.post-btn:hover{
+  background:linear-gradient(
+    135deg,
+    #34c759,
+    #66d97a
+  );
+
+  color:#111;
+
+  box-shadow:
+    0 6px 16px rgba(52,199,89,.25);
 }
 
 /* ================= ICON ================= */
 
-.icon {
-  font-size: 22px;
+.icon{
+  font-size:17px;
 
-  min-width: 24px;
+  min-width:20px;
 
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
-/* ================= BUTTON TEXT ================= */
+/* ================= TEXT ================= */
 
-.btn-text {
-  font-size: 15px;
-  font-weight: 600;
+.btn-text{
+  font-size:12px;
+  font-weight:600;
 
-  white-space: nowrap;
+  white-space:nowrap;
 }
 
 /* ================= COLLAPSED MODE ================= */
 
-.side-bar.collapsed .sidebar-btn {
-  justify-content: center;
+.side-bar.collapsed .sidebar-btn{
+  justify-content:center;
 
-  padding: 0;
+  padding:0;
 }
 
-.side-bar.collapsed .btn-text {
-  display: none;
+.side-bar.collapsed .btn-text{
+  display:none;
 }
 
 /* ================= TABLET ================= */
 
-@media (max-width: 768px) {
+@media(max-width:768px){
 
-  .side-bar {
-    width: 85px;
+  .side-bar{
+    width:90px;
   }
 
-  .side-bar:not(.collapsed) {
-    width: 110px;
+  .side-bar:not(.collapsed){
+    width:105px;
   }
 
-  .sidebar-btn {
-    height: 82px;
+  .sidebar-btn{
+    height:58px;
 
-    flex-direction: column;
+    flex-direction:column;
 
-    justify-content: center;
+    justify-content:center;
 
-    gap: 5px;
+    gap:4px;
 
-    padding: 0;
+    padding:0;
   }
 
-  .icon {
-    font-size: 24px;
+  .icon{
+    font-size:18px;
   }
 
-  .btn-text {
-    font-size: 10px;
-    font-weight: 500;
+  .btn-text{
+    font-size:9px;
+    font-weight:500;
   }
 }
 
 /* ================= MOBILE ================= */
 
-@media (max-width: 480px) {
+@media(max-width:480px){
 
-  .side-bar {
-    left: 6px;
+  .side-bar{
+    left:5px;
 
-    width: 70px;
+    width:70px;
   }
 
-  .side-bar:not(.collapsed) {
-    width: 90px;
+  .side-bar:not(.collapsed){
+    width:85px;
   }
 
-  .btn-text {
-    font-size: 9px;
+  .sidebar-btn{
+    height:52px;
   }
 
-  .icon {
-    font-size: 22px;
+  .icon{
+    font-size:16px;
+  }
+
+  .btn-text{
+    font-size:8px;
   }
 }
