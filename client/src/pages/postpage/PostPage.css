@@ -1,0 +1,285 @@
+/* ================= PAGE ================= */
+
+.post-page{
+  height:100vh;
+  background:#0a0a0a;
+}
+
+/* ================= CONTAINER ================= */
+
+.post-container{
+  margin-left:250px;
+
+  height:100vh;
+
+  overflow-y:auto;
+
+  padding:80px 24px 24px;
+
+  transition:.3s;
+}
+
+/* ================= HIDE SCROLLBAR ================= */
+
+.post-container::-webkit-scrollbar{
+  width:0;
+}
+
+.post-container{
+  scrollbar-width:none;
+}
+
+/* ================= SIDEBAR EXPANDED ================= */
+
+.post-expanded{
+  margin-left:110px;
+}
+
+/* ================= HEADING ================= */
+
+.post-heading{
+  font-size:28px;
+  font-weight:700;
+
+  color:white;
+
+  margin-bottom:22px;
+}
+
+/* ================= POST TYPE ================= */
+
+.post-type-box{
+  display:flex;
+
+  gap:14px;
+
+  margin-bottom:22px;
+}
+
+.post-type-box button{
+  width:140px;
+  height:46px;
+
+  border:none;
+
+  border-radius:14px;
+
+  background:#181818;
+
+  color:white;
+
+  cursor:pointer;
+
+  font-size:14px;
+  font-weight:600;
+
+  transition:.3s;
+}
+
+.post-type-box button:hover{
+  background:#252525;
+
+  transform:translateY(-2px);
+}
+
+.active-type{
+  background:linear-gradient(
+    135deg,
+    #c9a84c,
+    #f2dc95
+  ) !important;
+
+  color:#111 !important;
+}
+
+/* ================= FORM ================= */
+
+.post-form{
+  max-width:850px;
+
+  display:flex;
+  flex-direction:column;
+
+  gap:16px;
+
+  padding-bottom:70px;
+}
+
+/* ================= INPUTS ================= */
+
+.post-form input,
+.post-form textarea{
+  width:100%;
+
+  padding:12px 14px;
+
+  border:1px solid rgba(255,255,255,.08);
+
+  border-radius:14px;
+
+  background:#161616;
+
+  color:white;
+
+  outline:none;
+
+  font-size:14px;
+
+  transition:.3s;
+}
+
+.post-form input:focus,
+.post-form textarea:focus{
+  border-color:#c9a84c;
+
+  box-shadow:
+  0 0 0 3px rgba(201,168,76,.15);
+}
+
+.post-form input::placeholder,
+.post-form textarea::placeholder{
+  color:#888;
+}
+
+/* ================= DOUBLE INPUT ================= */
+
+.double-input{
+  display:grid;
+
+  grid-template-columns:
+  repeat(2,1fr);
+
+  gap:14px;
+}
+
+/* ================= SUMMARY ================= */
+
+.post-form textarea{
+  resize:none;
+}
+
+/* ================= STORY BOX ================= */
+
+.story-box{
+  min-height:300px;
+
+  line-height:1.7;
+
+  font-size:14px;
+
+  resize:vertical;
+}
+
+/* ================= PUBLISH BUTTON ================= */
+
+.publish-btn{
+  height:50px;
+
+  border:none;
+
+  border-radius:14px;
+
+  background:linear-gradient(
+    135deg,
+    #c9a84c,
+    #f2dc95
+  );
+
+  color:#111;
+
+  font-size:15px;
+  font-weight:700;
+
+  cursor:pointer;
+
+  transition:.3s;
+}
+
+.publish-btn:hover{
+  transform:translateY(-2px);
+
+  box-shadow:
+  0 8px 20px rgba(201,168,76,.25);
+}
+
+/* ================= TABLET ================= */
+
+@media(max-width:1024px){
+
+  .post-container{
+    padding:80px 20px 20px;
+  }
+
+  .post-heading{
+    font-size:26px;
+  }
+}
+
+/* ================= MOBILE ================= */
+
+@media(max-width:768px){
+
+  .post-container{
+    margin-left:100px;
+  }
+
+  .post-expanded{
+    margin-left:100px;
+  }
+
+  .post-heading{
+    font-size:24px;
+  }
+
+  .double-input{
+    grid-template-columns:1fr;
+  }
+
+  .post-type-box{
+    flex-direction:column;
+  }
+
+  .post-type-box button{
+    width:100%;
+  }
+
+  .story-box{
+    min-height:240px;
+  }
+}
+
+/* ================= SMALL MOBILE ================= */
+
+@media(max-width:480px){
+
+  .post-container{
+    margin-left:82px;
+
+    padding:75px 12px 12px;
+  }
+
+  .post-heading{
+    font-size:22px;
+  }
+
+  .post-type-box button{
+    height:42px;
+
+    font-size:13px;
+  }
+
+  .post-form input,
+  .post-form textarea{
+    font-size:13px;
+  }
+
+  .publish-btn{
+    height:46px;
+
+    font-size:14px;
+  }
+
+  .story-box{
+    min-height:200px;
+  }
+}

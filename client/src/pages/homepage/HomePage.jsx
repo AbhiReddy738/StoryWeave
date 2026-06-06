@@ -1,61 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './HomePage.css';
 
 const HomePage = ({collapsed}) => {
 
   const navigate = useNavigate();
+  const [stories, setStories] = useState([]);
 
-  const stories = [
-    {
-      title: "A Tale of Mine",
-      genre: "Fiction",
-      likes: 123,
-      date: "10 Apr 2025",
-      summary:
-        "This is a short summary of the story. The story follows a young writer who discovers an ancient diary."
-    },
-    {
-      title: "The Silent Forest",
-      genre: "Adventure",
-      likes: 256,
-      date: "22 Mar 2025",
-      summary:
-        "Deep inside a mysterious forest lies a hidden secret."
-    },
-    {
-      title: "Lost In Time",
-      genre: "Sci-Fi",
-      likes: 489,
-      date: "01 May 2025",
-      summary:
-        "A scientist accidentally opens a portal to the past."
-    },
-    {
-      title: "Beyond The Horizon",
-      genre: "Fantasy",
-      likes: 312,
-      date: "15 Apr 2025",
-      summary:
-        "In a magical kingdom, a young warrior begins an impossible quest."
-    },
-    {
-      title: "The Last Letter",
-      genre: "Drama",
-      likes: 190,
-      date: "05 Feb 2025",
-      summary:
-        "A forgotten letter reveals a decades-old mystery."
-    },
-    {
-      title: "Ocean Of Dreams",
-      genre: "Romance",
-      likes: 278,
-      date: "11 Jan 2025",
-      summary:
-        "Two strangers meet during a voyage across the sea."
-    }
-  ];
+  useEffect(() => {
+    const fetchStories = async () => {
+
+      try{
+        const response = await axios.get('http://localhost:5000/api/story/all');
+        setStories(response.data);
+        console.log(response.data);
+      }
+      catch(err){
+        console.log(err);
+      }
+    };
+    fetchStories();
+  }, []);
+  
 
   return (
     <div className="page-container">
@@ -66,12 +33,12 @@ const HomePage = ({collapsed}) => {
         }`}
       >
 
-        {stories.map((story, index) => (
+        {stories.map((story) => (
 
           <div
-            key={index}
+            key={story._id}
             className="card-container"
-            onClick={() => navigate('/card')}
+           onClick={() => navigate(`/card/${story.slug}-${story._id}`)}
           >
 
             <div className="story-name">
@@ -92,7 +59,7 @@ const HomePage = ({collapsed}) => {
               </span>
 
               <span className="posted-on">
-                📅 {story.date}
+                📅 {new Date(story.createdAt).toLocaleDateString()}
               </span>
 
             </div>

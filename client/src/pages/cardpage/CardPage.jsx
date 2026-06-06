@@ -1,6 +1,49 @@
+import { useParams } from 'react-router-dom';
+import {useState, useEffect} from 'react';
+import axios from 'axios'; 
 import './CardPage.css';
 
 const CardPage = ({ collapsed }) => {
+  const { slug } = useParams();
+
+  const storyId = slug
+    ? slug.split("-").pop()
+    : null;
+  const [story, setStory] = useState(null);
+
+  useEffect(() => {
+
+  if(!storyId) return;
+
+  const fetchStory = async () => {
+
+    try {
+
+      const response = await axios.get(
+        `http://localhost:5000/api/story/${storyId}`
+      );
+
+      setStory(response.data);
+
+    } catch(err) {
+
+      console.error(err);
+
+    }
+
+  };
+
+  fetchStory();
+
+}, [storyId]);
+
+  if (!story) {
+    return (
+      <div className="loading-story">
+        Loading Story...
+      </div>
+    );
+  }
 
   return (
     <div className="card-page">
@@ -12,55 +55,39 @@ const CardPage = ({ collapsed }) => {
       >
 
         <h1 className="story-title">
-          The Forgotten Kingdom
+          {story.title}
         </h1>
 
         <div className="story-info">
 
           <span className="genre">
-            Fantasy
+            {story.genre}
           </span>
 
           <span>
-            ❤️ 124 Likes
+            ❤️ {story.likes} Likes
           </span>
 
           <span>
-            📅 10 Apr 2025
+            📅 {new Date(story.createdAt).toLocaleDateString()}
           </span>
 
           <span>
-            ✍️ Abhi Reddy
+            ✍️ {story.author}
           </span>
 
         </div>
 
         <div className="story-content">
-
           <p>
-            Long ago beyond the mountains there existed a forgotten kingdom hidden from the world.
-            The people lived peacefully until darkness began spreading through the land.
+            {story.content || "No content available"}
           </p>
-
-          <p>
-            A young warrior discovered an ancient map leading to a powerful relic.
-            Legends said whoever possessed the relic could restore balance and save the kingdom.
-          </p>
-
-          <p>
-            Together with a group of loyal companions, he embarked on a dangerous journey filled with mysteries, battles and magical creatures.
-          </p>
-
-          <p>
-            What they found at the end of the journey changed their lives forever and revealed secrets buried for centuries.
-          </p>
-
         </div>
 
         <div className="action-bar">
 
           <button>
-            ❤️ 124 Likes
+            ❤️ {story.likes} Likes
           </button>
 
           <button>
