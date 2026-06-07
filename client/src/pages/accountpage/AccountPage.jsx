@@ -15,19 +15,31 @@ const AccountPage = ({ collapsed }) => {
   const [posts, setPosts] = useState([
     {
       id: 1,
-      title: 'Lost Kingdom'
+      title: 'Lost Kingdom',
+      genre: 'Fantasy',
+      likes: 245,
+      summary: 'A hidden kingdom awaits discovery.'
     },
     {
       id: 2,
-      title: 'Ocean Dreams'
+      title: 'Ocean Dreams',
+      genre: 'Romance',
+      likes: 156,
+      summary: 'Two strangers meet during a voyage.'
     },
     {
       id: 3,
-      title: 'Cyber Dawn'
+      title: 'Cyber Dawn',
+      genre: 'Sci-Fi',
+      likes: 301,
+      summary: 'Artificial intelligence takes control.'
     },
     {
       id: 4,
-      title: 'Shadow Crown'
+      title: 'Shadow Crown',
+      genre: 'Fantasy',
+      likes: 198,
+      summary: 'A prince discovers a dangerous secret.'
     }
   ]);
 
@@ -99,7 +111,6 @@ const AccountPage = ({ collapsed }) => {
             <input
               className="info-input"
               name="name"
-              placeholder="Name"
               value={profile.name}
               onChange={handleChange}
               disabled={!editing}
@@ -108,7 +119,6 @@ const AccountPage = ({ collapsed }) => {
             <input
               className="info-input"
               name="author"
-              placeholder="Author Name"
               value={profile.author}
               onChange={handleChange}
               disabled={!editing}
@@ -117,7 +127,6 @@ const AccountPage = ({ collapsed }) => {
             <input
               className="info-input"
               name="interested"
-              placeholder="Interested In"
               value={profile.interested}
               onChange={handleChange}
               disabled={!editing}
@@ -126,7 +135,6 @@ const AccountPage = ({ collapsed }) => {
             <textarea
               className="bio-input"
               name="bio"
-              placeholder="Personal Blog"
               value={profile.bio}
               onChange={handleChange}
               disabled={!editing}
@@ -149,15 +157,39 @@ const AccountPage = ({ collapsed }) => {
               className="post-card"
             >
 
-              <h3>
+              <div className="story-name">
                 {post.title}
-              </h3>
+              </div>
+
+              <div className="middle-box">
+
+                <span className="genre">
+                  {post.genre}
+                </span>
+
+                <span className="likes">
+                  ❤️ {post.likes}
+                </span>
+
+              </div>
+
+              <div className="summary">
+
+                <p className="summary-heading">
+                  Summary
+                </p>
+
+                <p className="summary-lines">
+                  {post.summary}
+                </p>
+
+              </div>
 
               <button
-                className="delete-post-btn"
+                className="delete-icon-btn"
                 onClick={() => handleDelete(post.id)}
               >
-                Delete Post
+                Delete
               </button>
 
             </div>
