@@ -59,7 +59,7 @@ const PostPage = ({ collapsed }) => {
       const authorId = loggedInUser ? loggedInUser._id : null;
 
       await axios.post(
-        'http://localhost:5000/api/story/create',
+        'http://storyweave-fxdt.onrender.com/api/story/create',
         {
           ...formData,
           authorId
