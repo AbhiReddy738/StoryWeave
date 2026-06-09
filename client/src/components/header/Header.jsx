@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import './Header.css'
 import logo from '../../assets/storyweaveLogo.jpeg'
 
-const Header = () => {
+const Header = ({searchTerm, setSearchTerm}) => {
 
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const navigate = useNavigate()
@@ -38,6 +38,8 @@ const Header = () => {
         <input
           type="text"
           placeholder='🔍 Search stories, lyrics, poetry...'
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 

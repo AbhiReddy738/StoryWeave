@@ -32,6 +32,45 @@ const storySchema = new mongoose.Schema(
         default:0
     },
 
+    comments:[
+        {
+            username:{
+                type:String
+            },
+
+            text:{
+                type:String
+            },
+
+            createdAt:{
+                type:Date,
+                default:Date.now
+            }
+        }
+    ],
+
+    contributions:[
+        {
+            author:{
+                type:String
+            },
+
+            text:{
+                type:String
+            },
+
+            upvotes:{
+                type:Number,
+                default:0
+            },
+
+            createdAt:{
+                type:Date,
+                default:Date.now
+            }
+        }
+    ],
+
     slug:{
         type:String,
         unique:true

@@ -1,51 +1,155 @@
 import { useParams } from 'react-router-dom';
-import {useState, useEffect} from 'react';
-import axios from 'axios'; 
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import './CardPage.css';
 
 const CardPage = ({ collapsed }) => {
+
   const { slug } = useParams();
 
   const storyId = slug
     ? slug.split("-").pop()
     : null;
+
   const [story, setStory] = useState(null);
+
+  const [likes, setLikes] = useState(0);
+
+  const [showComments, setShowComments] = useState(false);
+
+  const [commentText, setCommentText] = useState('');
+
+  const [comments, setComments] = useState([
+    {
+      name: 'Rahul Kumar',
+      text: 'Amazing story. The world building is really good and I enjoyed every part.'
+    },
+    {
+      name: 'Priya Sharma',
+      text: 'Waiting for the next chapter. The ending created so much suspense.'
+    },
+    {
+      name: 'Arjun Reddy',
+      text: 'One of the best fantasy stories I have read recently. Great work.'
+    }
+  ]);
+
+  const [contributionText, setContributionText] = useState('');
+
+  const [contributions, setContributions] = useState([
+    {
+      id: 1,
+      author: 'Rahul Kumar',
+      text: 'The hero should discover an ancient map hidden beneath the castle.',
+      upvotes: 18
+    },
+    {
+      id: 2,
+      author: 'Priya Sharma',
+      text: 'Adding a mysterious mentor character would make the story more exciting.',
+      upvotes: 25
+    }
+  ]);
 
   useEffect(() => {
 
-  if(!storyId) return;
+    if (!storyId) return;
 
-  const fetchStory = async () => {
+    const fetchStory = async () => {
 
-    try {
+      try {
 
-      const response = await axios.get(
-        `http://localhost:5000/api/story/${storyId}`
-      );
+        const response = await axios.get(
+          `http://localhost:5000/api/story/${storyId}`
+        );
 
-      setStory(response.data);
+        setStory(response.data);
 
-    } catch(err) {
+        setLikes(response.data.likes);
 
-      console.error(err);
+      } catch (err) {
 
-    }
+        console.error(err);
+
+      }
+
+    };
+
+    fetchStory();
+
+  }, [storyId]);
+
+  const handleLike = () => {
+
+    setLikes(prev => prev + 1);
 
   };
 
-  fetchStory();
+  const handleComment = () => {
 
-}, [storyId]);
+    if (!commentText.trim()) return;
+
+    setComments([
+      ...comments,
+      {
+        name: 'You',
+        text: commentText
+      }
+    ]);
+
+    setCommentText('');
+
+  };
+
+  const handleContribution = () => {
+
+    if (!contributionText.trim()) return;
+
+    setContributions([
+      {
+        id: Date.now(),
+        author: 'You',
+        text: contributionText,
+        upvotes: 0
+      },
+      ...contributions
+    ]);
+
+    setContributionText('');
+
+  };
+
+  const handleUpvote = (id) => {
+
+    setContributions(
+
+      contributions.map((item) =>
+
+        item.id === id
+          ? {
+              ...item,
+              upvotes: item.upvotes + 1
+            }
+          : item
+
+      )
+
+    );
+
+  };
 
   if (!story) {
+
     return (
       <div className="loading-story">
         Loading Story...
       </div>
     );
+
   }
 
   return (
+
     <div className="card-page">
 
       <div
@@ -65,11 +169,13 @@ const CardPage = ({ collapsed }) => {
           </span>
 
           <span>
-            ❤️ {story.likes} Likes
+            ❤️ {likes} Likes
           </span>
 
           <span>
-            📅 {new Date(story.createdAt).toLocaleDateString()}
+            📅 {new Date(
+              story.createdAt
+            ).toLocaleDateString()}
           </span>
 
           <span>
@@ -79,19 +185,29 @@ const CardPage = ({ collapsed }) => {
         </div>
 
         <div className="story-content">
+
           <p>
-            {story.content || "No content available"}
+            {story.content || 'No content available'}
           </p>
+
         </div>
 
         <div className="action-bar">
 
-          <button>
-            ❤️ {story.likes} Likes
+          <button
+            onClick={handleLike}
+          >
+            ❤️ {likes} Likes
           </button>
 
-          <button>
-            💬 28 Comments
+          <button
+            onClick={() =>
+              setShowComments(
+                !showComments
+              )
+            }
+          >
+            💬 {comments.length} Comments
           </button>
 
           <button>
@@ -100,31 +216,134 @@ const CardPage = ({ collapsed }) => {
 
         </div>
 
-        <div className="contributions">
+        {showComments && (
 
-          <h2>
+          <div className="comments-panel">
+
+            <div className="comment-input-box">
+
+              <textarea
+                placeholder="Write a comment..."
+                value={commentText}
+                onChange={(e) =>
+                  setCommentText(
+                    e.target.value
+                  )
+                }
+              />
+
+              <button
+                onClick={
+                  handleComment
+                }
+              >
+                Post Comment
+              </button>
+
+            </div>
+
+            <div className="comments-list">
+
+              {comments.map(
+                (
+                  comment,
+                  index
+                ) => (
+
+                  <div
+                    key={index}
+                    className="comment-box"
+                  >
+
+                    <h4>
+                      {comment.name}
+                    </h4>
+
+                    <p>
+                      {comment.text}
+                    </p>
+
+                  </div>
+
+                )
+              )}
+
+            </div>
+
+          </div>
+
+        )}
+
+        <div className="contribution-section">
+
+          <h2 className="contribution-title">
             Contributions
           </h2>
 
-          <div className="comment-box">
-            <h4>Rahul Kumar</h4>
-            <p>
-              Amazing story. The world building is really good and I enjoyed every part.
-            </p>
+          <div className="contribution-input-box">
+
+            <textarea
+              placeholder="Write your contribution to continue the story..."
+              value={contributionText}
+              onChange={(e) =>
+                setContributionText(
+                  e.target.value
+                )
+              }
+            />
+
+            <button
+              onClick={
+                handleContribution
+              }
+            >
+              Submit Contribution
+            </button>
+
           </div>
 
-          <div className="comment-box">
-            <h4>Priya Sharma</h4>
-            <p>
-              Waiting for the next chapter. The ending created so much suspense.
-            </p>
-          </div>
+          <div className="contribution-list">
 
-          <div className="comment-box">
-            <h4>Arjun Reddy</h4>
-            <p>
-              One of the best fantasy stories I have read recently. Great work.
-            </p>
+            {contributions.map(
+              (item) => (
+
+                <div
+                  key={item.id}
+                  className="contribution-card"
+                >
+
+                  <div className="contribution-header">
+
+                    <h4>
+                      {item.author}
+                    </h4>
+
+                    <span>
+                      ↑ {item.upvotes} Upvotes
+                    </span>
+
+                  </div>
+
+                  <p>
+                    {item.text}
+                  </p>
+
+                  <button
+                    className="upvote-btn"
+                    onClick={() =>
+                      handleUpvote(
+                        item.id
+                      )
+                    }
+                  >
+                    👍 Upvote
+                  </button>
+
+                </div>
+
+              )
+            )}
+
           </div>
 
         </div>
@@ -132,7 +351,9 @@ const CardPage = ({ collapsed }) => {
       </div>
 
     </div>
+
   );
+
 };
 
 export default CardPage;

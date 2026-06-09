@@ -14,10 +14,14 @@ import AccountPage from './pages/accountpage/AccountPage';
 
 function App() {
   const [collapsed, setCollapsed] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   return (
     <BrowserRouter>
-      <Header />
+      <Header 
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm} 
+      />
 
       <Sidebar
         collapsed={collapsed}
@@ -25,7 +29,7 @@ function App() {
       />
 
       <Routes>
-        <Route path="/" element={<HomePage collapsed={collapsed} />} />
+        <Route path="/" element={<HomePage collapsed={collapsed} searchTerm={searchTerm} />} />
         <Route path="/trending" element={<TrendingPage collapsed={collapsed} />} />
         <Route path="/post" element={<PostPage collapsed={collapsed} />} />
         <Route path="/card/:slug" element={<CardPage collapsed={collapsed} />} />
