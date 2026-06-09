@@ -38,7 +38,7 @@ const HomePage = ({
       try {
 
         const response = await axios.get(
-          'http://storyweave-fxdt.onrender.com/api/story/all'
+          'https://storyweave-fxdt.onrender.com/api/story/all'
         );
 
         setStories(response.data);

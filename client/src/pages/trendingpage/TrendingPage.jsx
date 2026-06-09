@@ -18,7 +18,7 @@ const TrendingPage = ({ collapsed }) => {
       try {
 
         const response = await axios.get(
-          'http://storyweave-fxdt.onrender.com/api/story/all'
+          'https://storyweave-fxdt.onrender.com/api/story/all'
         );
 
         const sortedStories =

@@ -50,7 +50,7 @@ const AccountPage = ({ collapsed }) => {
       setLoading(true);
       setError('');
       try {
-        const profileRes = await axios.get(`http://localhost:5000/api/user/${userId}`);
+        const profileRes = await axios.get(`https://storyweave-fxdt.onrender.com/api/user/${userId}`);
         const user = profileRes.data;
         setProfile({
           name: user.username || '',
@@ -60,7 +60,7 @@ const AccountPage = ({ collapsed }) => {
           profileImage: user.profileImage || ''
         });
 
-        const postsRes = await axios.get(`http://localhost:5000/api/user/posts/${userId}`);
+        const postsRes = await axios.get(`https://storyweave-fxdt.onrender.com/api/user/posts/${userId}`);
         setPosts(postsRes.data);
       } catch (err) {
         console.error(err);
@@ -84,7 +84,7 @@ const AccountPage = ({ collapsed }) => {
     if (editing) {
       try {
         setLoading(true);
-        const res = await axios.put(`http://localhost:5000/api/user/update/${userId}`, {
+        const res = await axios.put(`https://storyweave-fxdt.onrender.com/api/user/update/${userId}`, {
           username: profile.name,
           authorName: profile.author,
           interests: profile.interested,
@@ -116,7 +116,7 @@ const AccountPage = ({ collapsed }) => {
       return;
     }
     try {
-      await axios.delete(`http://localhost:5000/api/story/delete/${id}`);
+      await axios.delete(`https://storyweave-fxdt.onrender.com/api/story/delete/${id}`);
       setPosts(posts.filter(post => post._id !== id));
       alert("Story Deleted Successfully");
     } catch (err) {
@@ -140,7 +140,7 @@ const AccountPage = ({ collapsed }) => {
 
     try {
       setLoading(true);
-      const uploadRes = await axios.post("http://localhost:5000/api/user/upload", formData, {
+      const uploadRes = await axios.post("https://storyweave-fxdt.onrender.com/api/user/upload", formData, {
         headers: {
           "Content-Type": "multipart/form-data"
         }
