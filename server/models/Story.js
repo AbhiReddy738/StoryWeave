@@ -27,6 +27,11 @@ const storySchema = new mongoose.Schema(
         required:true
     },
 
+    authorId:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"user"
+    },
+
     likes:{
         type:Number,
         default:0

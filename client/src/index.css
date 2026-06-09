@@ -1,0 +1,113 @@
+/* =====================================================
+   GLOBAL THEME VARIABLES
+   ===================================================== */
+
+.dark-theme,
+.app-container.dark-theme {
+  --bg-color: #0a0a0a;
+  --card-color: #161616;
+  --surface-color: #111111;
+  --text-color: #ffffff;
+  --secondary-text: #cfcfcf;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --accent-color: #c9a84c;
+  --accent-gradient: linear-gradient(135deg, #c9a84c, #f2dc95);
+  --accent-text: #111111;
+  --hover-color: #252525;
+  --input-bg: #181818;
+  --input-border: rgba(255, 255, 255, 0.1);
+  --scroll-thumb: #c9a84c;
+  --scroll-track: #111;
+  --shadow-color: rgba(0, 0, 0, 0.5);
+  --header-bg: rgba(13, 13, 13, 0.96);
+}
+
+.light-theme,
+.app-container.light-theme {
+  --bg-color: #f5f5f5;
+  --card-color: #ffffff;
+  --surface-color: #fafafa;
+  --text-color: #111111;
+  --secondary-text: #444444;
+  --border-color: rgba(0, 0, 0, 0.08);
+  --accent-color: #b8860b;
+  --accent-gradient: linear-gradient(135deg, #b8860b, #daa520);
+  --accent-text: #ffffff;
+  --hover-color: #e8e8e8;
+  --input-bg: #f1f1f1;
+  --input-border: 1px solid rgba(0,0,0,0.15);
+  --scroll-thumb: #b8860b;
+  --scroll-track: #ddd;
+  --shadow-color: rgba(0, 0, 0, 0.12);
+  --card-border: 1px solid rgba(0,0,0,0.12);
+  --section-border: 1px solid rgba(0,0,0,0.15);
+  --card-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04);
+  --card-hover-shadow: 0 8px 24px rgba(0,0,0,0.10);
+  --sidebar-bg: #ececec;
+  --header-bg: rgba(255, 255, 255, 0.96);
+}
+
+/* =====================================================
+   BASE RESET
+   ===================================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+#root {
+  height: 100%;
+}
+
+/* =====================================================
+   APP CONTAINER
+   ===================================================== */
+
+.app-container {
+  min-height: 100vh;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+/* =====================================================
+   SMOOTH THEME TRANSITIONS
+   ===================================================== */
+
+*,
+*::before,
+*::after {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+/* Exclude transforms from transition override */
+button,
+a,
+img {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}

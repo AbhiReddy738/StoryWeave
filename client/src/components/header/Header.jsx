@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import './Header.css'
 import logo from '../../assets/storyweaveLogo.jpeg'
+import { useTheme } from '../../context/ThemeContext.jsx'
 
 const Header = ({searchTerm, setSearchTerm}) => {
 
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const navigate = useNavigate()
+  const { theme, toggleTheme } = useTheme()
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -44,6 +46,14 @@ const Header = ({searchTerm, setSearchTerm}) => {
       </div>
 
       <div className="header-actions">
+
+        <button
+          className="theme-toggle-btn"
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
+        </button>
 
         {!isLoggedIn ? (
 

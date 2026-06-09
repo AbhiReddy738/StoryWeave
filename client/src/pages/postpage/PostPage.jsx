@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './PostPage.css';
@@ -15,6 +15,16 @@ const PostPage = ({ collapsed }) => {
     author: '',
     likes: 0
   });
+
+  useEffect(() => {
+    const loggedInUser = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null;
+    if (loggedInUser) {
+      setFormData(prev => ({
+        ...prev,
+        author: loggedInUser.username || ''
+      }));
+    }
+  }, []);
 
   const navigate = useNavigate();
 
@@ -45,10 +55,15 @@ const PostPage = ({ collapsed }) => {
     }
 
     try {
+      const loggedInUser = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null;
+      const authorId = loggedInUser ? loggedInUser._id : null;
 
       await axios.post(
         'http://localhost:5000/api/story/create',
-        formData
+        {
+          ...formData,
+          authorId
+        }
       );
 
       setFormData({
