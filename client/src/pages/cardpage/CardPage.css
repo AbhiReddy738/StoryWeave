@@ -238,3 +238,315 @@ body{
     margin-left:82px;
   }
 }
+
+/* ================= COMMENTS PANEL ================= */
+
+.comments-panel{
+
+  background:#111111;
+
+  border:1px solid rgba(255,255,255,.08);
+
+  border-radius:22px;
+
+  padding:22px;
+
+  margin-bottom:30px;
+}
+
+/* ================= COMMENT INPUT ================= */
+
+.comment-input-box{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:14px;
+
+  margin-bottom:20px;
+}
+
+.comment-input-box textarea{
+
+  min-height:110px;
+
+  background:#1a1a1a;
+
+  border:none;
+
+  border-radius:16px;
+
+  padding:15px;
+
+  color:white;
+
+  resize:none;
+
+  outline:none;
+
+  font-size:15px;
+}
+
+.comment-input-box textarea:focus{
+
+  border:1px solid #c9a84c;
+}
+
+/* ================= POST BUTTON ================= */
+
+.comment-input-box button{
+
+  width:150px;
+
+  height:44px;
+
+  border:none;
+
+  border-radius:12px;
+
+  background:#c9a84c;
+
+  color:black;
+
+  font-weight:700;
+
+  cursor:pointer;
+
+  transition:.3s;
+}
+
+.comment-input-box button:hover{
+
+  transform:translateY(-2px);
+}
+
+/* ================= COMMENTS LIST ================= */
+
+.comments-list{
+
+  max-height:350px;
+
+  overflow-y:auto;
+
+  padding-right:4px;
+
+  scrollbar-width:none;
+}
+
+.comments-list::-webkit-scrollbar{
+
+  display:none;
+}
+
+/* ================= COMMENT BOX ================= */
+
+.comment-box{
+
+  background:#151515;
+
+  border:1px solid rgba(255,255,255,.06);
+
+  border-radius:18px;
+
+  padding:18px;
+
+  margin-bottom:14px;
+}
+
+.comment-box h4{
+
+  color:#c9a84c;
+
+  margin-bottom:8px;
+}
+
+.comment-box p{
+
+  color:#d5d5d5;
+
+  line-height:1.8;
+}
+
+/* ================= LOADING ================= */
+
+.loading-story{
+
+  height:100vh;
+
+  display:flex;
+
+  justify-content:center;
+
+  align-items:center;
+
+  font-size:22px;
+
+  color:white;
+
+  background:#0a0a0a;
+}
+
+/* ================= CONTRIBUTIONS ================= */
+
+.contribution-section{
+
+  margin-top:35px;
+}
+
+.contribution-title{
+
+  font-size:30px;
+
+  margin-bottom:20px;
+
+  color:white;
+}
+
+/* ================= INPUT ================= */
+
+.contribution-input-box{
+
+  background:#111;
+
+  border:1px solid rgba(255,255,255,.08);
+
+  border-radius:20px;
+
+  padding:20px;
+
+  margin-bottom:25px;
+}
+
+.contribution-input-box textarea{
+
+  width:100%;
+
+  min-height:120px;
+
+  background:#1a1a1a;
+
+  border:none;
+
+  border-radius:14px;
+
+  padding:15px;
+
+  color:white;
+
+  resize:none;
+
+  outline:none;
+}
+
+.contribution-input-box button{
+
+  margin-top:15px;
+
+  width:220px;
+
+  height:46px;
+
+  border:none;
+
+  border-radius:12px;
+
+  background:#c9a84c;
+
+  color:black;
+
+  font-weight:700;
+
+  cursor:pointer;
+}
+
+/* ================= LIST ================= */
+
+.contribution-list{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:18px;
+}
+
+/* ================= CARD ================= */
+
+.contribution-card{
+
+  background:#141414;
+
+  border:1px solid rgba(255,255,255,.08);
+
+  border-radius:20px;
+
+  padding:20px;
+}
+
+.contribution-card:hover{
+
+  border-color:#c9a84c;
+}
+
+/* ================= HEADER ================= */
+
+.contribution-header{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  margin-bottom:12px;
+}
+
+.contribution-header h4{
+
+  color:#c9a84c;
+}
+
+.contribution-header span{
+
+  color:#d8d8d8;
+
+  font-size:14px;
+}
+
+/* ================= TEXT ================= */
+
+.contribution-card p{
+
+  color:#e4e4e4;
+
+  line-height:1.8;
+
+  margin-bottom:15px;
+}
+
+/* ================= UPVOTE ================= */
+
+.upvote-btn{
+
+  border:none;
+
+  padding:10px 18px;
+
+  border-radius:12px;
+
+  background:#202020;
+
+  color:#c9a84c;
+
+  cursor:pointer;
+
+  transition:.3s;
+}
+
+.upvote-btn:hover{
+
+  background:#c9a84c;
+
+  color:black;
+}
