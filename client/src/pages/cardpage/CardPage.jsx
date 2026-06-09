@@ -62,7 +62,7 @@ const CardPage = ({ collapsed }) => {
       try {
 
         const response = await axios.get(
-          `http://localhost:5000/api/story/${storyId}`
+          `https://storyweave-fxdt.onrender.com/api/story/${storyId}`
         );
 
         setStory(response.data);
@@ -81,7 +81,7 @@ const CardPage = ({ collapsed }) => {
         if (userStr) {
           const userObj = JSON.parse(userStr);
           const saveResponse = await axios.get(
-            `http://localhost:5000/api/story/is-saved/${storyId}/${userObj._id}`
+            `https://storyweave-fxdt.onrender.com/api/story/is-saved/${storyId}/${userObj._id}`
           );
           setIsSaved(saveResponse.data.isSaved);
         }
@@ -109,10 +109,10 @@ const CardPage = ({ collapsed }) => {
 
     try {
       if (isSaved) {
-        await axios.post(`http://localhost:5000/api/story/unsave/${story._id}`, { userId });
+        await axios.post(`https://storyweave-fxdt.onrender.com/api/story/unsave/${story._id}`, { userId });
         setIsSaved(false);
       } else {
-        await axios.post(`http://localhost:5000/api/story/save/${story._id}`, { userId });
+        await axios.post(`https://storyweave-fxdt.onrender.com/api/story/save/${story._id}`, { userId });
         setIsSaved(true);
       }
     } catch (err) {
@@ -125,7 +125,7 @@ const CardPage = ({ collapsed }) => {
     try{
 
       const response = await axios.put(
-        `http://localhost:5000/api/story/like/${story._id}`
+        `https://storyweave-fxdt.onrender.com/api/story/like/${story._id}`
       );
 
       setLikes(response.data.likes);
@@ -146,7 +146,7 @@ const CardPage = ({ collapsed }) => {
 
       const response = await axios.post(
 
-        `http://localhost:5000/api/story/comment/${story._id}`,
+        `https://storyweave-fxdt.onrender.com/api/story/comment/${story._id}`,
 
         {
           username:"Abhi",
@@ -178,7 +178,7 @@ const CardPage = ({ collapsed }) => {
 
       const response = await axios.post(
 
-        `http://localhost:5000/api/story/contribution/${story._id}`,
+        `https://storyweave-fxdt.onrender.com/api/story/contribution/${story._id}`,
 
         {
           author:"Abhi",
@@ -208,7 +208,7 @@ const CardPage = ({ collapsed }) => {
 
       const response = await axios.put(
 
-        `http://localhost:5000/api/story/contribution/upvote/${story._id}/${id}`
+        `https://storyweave-fxdt.onrender.com/api/story/contribution/upvote/${story._id}/${id}`
 
       );
 
