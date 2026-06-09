@@ -51,6 +51,8 @@ const CardPage = ({ collapsed }) => {
     }
   ]);
 
+  const [isSaved, setIsSaved] = useState(false);
+
   useEffect(() => {
 
     if (!storyId) return;
@@ -65,7 +67,24 @@ const CardPage = ({ collapsed }) => {
 
         setStory(response.data);
 
+        setComments(
+          response.data.comments || []
+        );
+
+        setContributions(
+          response.data.contributions || []
+        );
+
         setLikes(response.data.likes);
+
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const userObj = JSON.parse(userStr);
+          const saveResponse = await axios.get(
+            `http://localhost:5000/api/story/is-saved/${storyId}/${userObj._id}`
+          );
+          setIsSaved(saveResponse.data.isSaved);
+        }
 
       } catch (err) {
 
@@ -79,62 +98,130 @@ const CardPage = ({ collapsed }) => {
 
   }, [storyId]);
 
-  const handleLike = () => {
+  const handleSave = async () => {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      alert("Please login to save stories");
+      return;
+    }
+    const userObj = JSON.parse(userStr);
+    const userId = userObj._id;
 
-    setLikes(prev => prev + 1);
-
-  };
-
-  const handleComment = () => {
-
-    if (!commentText.trim()) return;
-
-    setComments([
-      ...comments,
-      {
-        name: 'You',
-        text: commentText
+    try {
+      if (isSaved) {
+        await axios.post(`http://localhost:5000/api/story/unsave/${story._id}`, { userId });
+        setIsSaved(false);
+      } else {
+        await axios.post(`http://localhost:5000/api/story/save/${story._id}`, { userId });
+        setIsSaved(true);
       }
-    ]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-    setCommentText('');
+  const handleLike = async () => {
+
+    try{
+
+      const response = await axios.put(
+        `http://localhost:5000/api/story/like/${story._id}`
+      );
+
+      setLikes(response.data.likes);
+
+    }
+    catch(err){
+
+      console.log(err);
+
+    }
+
+  };
+  const handleComment = async () => {
+
+    if(!commentText.trim()) return;
+
+    try{
+
+      const response = await axios.post(
+
+        `http://localhost:5000/api/story/comment/${story._id}`,
+
+        {
+          username:"Abhi",
+          text:commentText
+        }
+
+      );
+
+      setComments(
+        response.data.comments
+      );
+
+      setCommentText('');
+
+    }
+    catch(err){
+
+      console.log(err);
+
+    }
 
   };
 
-  const handleContribution = () => {
+  const handleContribution = async () => {
 
-    if (!contributionText.trim()) return;
+    if(!contributionText.trim()) return;
 
-    setContributions([
-      {
-        id: Date.now(),
-        author: 'You',
-        text: contributionText,
-        upvotes: 0
-      },
-      ...contributions
-    ]);
+    try{
 
-    setContributionText('');
+      const response = await axios.post(
+
+        `http://localhost:5000/api/story/contribution/${story._id}`,
+
+        {
+          author:"Abhi",
+          text:contributionText
+        }
+
+      );
+
+      setContributions(
+        response.data.contributions
+      );
+
+      setContributionText('');
+
+    }
+    catch(err){
+
+      console.log(err);
+
+    }
 
   };
 
-  const handleUpvote = (id) => {
+  const handleUpvote = async (id) => {
 
-    setContributions(
+    try{
 
-      contributions.map((item) =>
+      const response = await axios.put(
 
-        item.id === id
-          ? {
-              ...item,
-              upvotes: item.upvotes + 1
-            }
-          : item
+        `http://localhost:5000/api/story/contribution/upvote/${story._id}/${id}`
 
-      )
+      );
 
-    );
+      setContributions(
+        response.data.contributions
+      );
+
+    }
+    catch(err){
+
+      console.log(err);
+
+    }
 
   };
 
@@ -210,8 +297,8 @@ const CardPage = ({ collapsed }) => {
             💬 {comments.length} Comments
           </button>
 
-          <button>
-            🔖 Save
+          <button onClick={handleSave}>
+            {isSaved ? "🔖 Saved" : "🔖 Save"}
           </button>
 
         </div>
@@ -256,7 +343,7 @@ const CardPage = ({ collapsed }) => {
                   >
 
                     <h4>
-                      {comment.name}
+                      {comment.username}
                     </h4>
 
                     <p>
@@ -308,7 +395,7 @@ const CardPage = ({ collapsed }) => {
               (item) => (
 
                 <div
-                  key={item.id}
+                  key={item._id || item.id}
                   className="contribution-card"
                 >
 
@@ -332,7 +419,7 @@ const CardPage = ({ collapsed }) => {
                     className="upvote-btn"
                     onClick={() =>
                       handleUpvote(
-                        item.id
+                        item._id
                       )
                     }
                   >
