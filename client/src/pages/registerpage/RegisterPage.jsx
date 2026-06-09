@@ -36,7 +36,7 @@ const RegisterPage = () => {
       setError("")
 
       const res = await axios.post(
-        "http://localhost:5000/api/auth/register",
+        "http://storyweave-fxdt.onrender.com/api/auth/register",
         {
           username,
           email,

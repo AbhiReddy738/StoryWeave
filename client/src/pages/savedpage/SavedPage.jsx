@@ -23,7 +23,7 @@ const SavedPage = ({ collapsed }) => {
       const userId = userObj._id;
 
       try {
-        const response = await axios.get(`http://localhost:5000/api/story/saved/${userId}`);
+        const response = await axios.get(`http://storyweave-fxdt.onrender.com/api/story/saved/${userId}`);
         setSavedStories(response.data);
       } catch (err) {
         console.error(err);
@@ -43,7 +43,7 @@ const SavedPage = ({ collapsed }) => {
     const userId = userObj._id;
 
     try {
-      await axios.post(`http://localhost:5000/api/story/unsave/${id}`, { userId });
+      await axios.post(`http://storyweave-fxdt.onrender.com/api/story/unsave/${id}`, { userId });
       setSavedStories(savedStories.filter(story => (story._id || story.id) !== id));
     } catch (err) {
       console.error(err);
