@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useTheme } from './context/ThemeContext.jsx';
 
 import Header from './components/header/Header';
-import Sidebar from './components/sidebar/Sidebar';
+import Sidebar from './components/sidebar/SideBar';
 
 import HomePage from './pages/homepage/HomePage';
 import CardPage from './pages/cardpage/CardPage';
