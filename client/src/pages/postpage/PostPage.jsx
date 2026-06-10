@@ -32,6 +32,8 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
   const navigate = useNavigate();
   const { theme } = useTheme();
 
+  const [contentType, setContentType] = useState(activeGlobalTab || "stories");
+
   // ── Core story/song fields ──────────────────────────────────────────────────────
   const [title, setTitle] = useState('');
   const [summary, setSummary] = useState('');
@@ -98,7 +100,7 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
     setLyrics('');
     setArtistName('');
     setBlocks([{ id: Date.now(), type: 'text', value: '' }]);
-  }, [activeGlobalTab]);
+  }, [contentType]);
 
   // Load logged-in user on mount
   useEffect(() => {
@@ -112,15 +114,15 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
 
   // Live word/char count whenever blocks change (stories only)
   useEffect(() => {
-    if (activeGlobalTab === 'songs') return;
+    if (contentType === 'songs') return;
     const { words, chars } = getWordCount(blocks);
     setWordCount(words);
     setCharCount(chars);
-  }, [blocks, activeGlobalTab]);
+  }, [blocks, contentType]);
 
   // "Saved X seconds ago" label ticker (stories only)
   useEffect(() => {
-    if (activeGlobalTab === 'songs') return;
+    if (contentType === 'songs') return;
     const ticker = setInterval(() => {
       if (lastSavedRef.current) {
         const secs = Math.floor((Date.now() - lastSavedRef.current) / 1000);
@@ -128,7 +130,7 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
       }
     }, 5000);
     return () => clearInterval(ticker);
-  }, [activeGlobalTab]);
+  }, [contentType]);
 
   // ── Build payload (stories only) ───────────────────────────────────────────
   const buildPayload = useCallback((overrideStatus) => {
@@ -158,7 +160,7 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
 
   // ── Auto-save (every 30 seconds) (stories only) ────────────────────────────
   const doAutoSave = useCallback(async () => {
-    if (activeGlobalTab === 'songs') return;
+    if (contentType === 'songs') return;
     if (!title && blocks.every(b => !b.value)) return; // nothing to save
     setSaving(true);
     try {
@@ -177,13 +179,13 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
     } finally {
       setSaving(false);
     }
-  }, [buildPayload, storyId, title, blocks, activeGlobalTab]);
+  }, [buildPayload, storyId, title, blocks, contentType]);
 
   useEffect(() => {
-    if (activeGlobalTab === 'songs') return;
+    if (contentType === 'songs') return;
     autoSaveRef.current = setInterval(doAutoSave, 30000);
     return () => clearInterval(autoSaveRef.current);
-  }, [doAutoSave, activeGlobalTab]);
+  }, [doAutoSave, contentType]);
 
   // ── Cover image upload ─────────────────────────────────────────────────────
   const handleCoverUpload = async (e) => {
@@ -193,7 +195,7 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
     try {
       const fd = new FormData();
       fd.append('image', file);
-      const uploadAPI = activeGlobalTab === 'songs'
+      const uploadAPI = contentType === 'songs'
         ? 'https://storyweave-fxdt.onrender.com/api/song/upload-cover'
         : 'https://storyweave-fxdt.onrender.com/api/story/upload-cover';
       const res = await axios.post(uploadAPI, fd, {
@@ -380,11 +382,29 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
 
   return (
     <div className="post-page">
-      {showPreview && activeGlobalTab !== 'songs' && (
+      {showPreview && contentType !== 'songs' && (
         <StoryReader story={previewStory} onClose={() => setShowPreview(false)} />
       )}
 
       <div className={`post-container ${collapsed ? 'post-expanded' : ''}`}>
+
+        {/* Modern Segmented Toggle for Content Type */}
+        <div className="post-type-toggle-container">
+          <div className="post-type-toggle">
+            <button
+              className={`post-toggle-btn ${contentType === 'stories' ? 'active' : ''}`}
+              onClick={() => setContentType('stories')}
+            >
+              📖 Stories
+            </button>
+            <button
+              className={`post-toggle-btn ${contentType === 'songs' ? 'active' : ''}`}
+              onClick={() => setContentType('songs')}
+            >
+              🎵 Songs
+            </button>
+          </div>
+        </div>
 
         {/* Inline Feedback Banner */}
         {feedback && (
@@ -396,10 +416,10 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
         {/* ── Top bar ── */}
         <div className="post-topbar">
           <h1 className="post-heading">
-            {activeGlobalTab === 'songs' ? '🎤 Lyrics Editor' : '✍️ Story Editor'}
+            {contentType === 'songs' ? '🎤 Lyrics Editor' : '✍️ Story Editor'}
           </h1>
           <div className="post-topbar-actions">
-            {activeGlobalTab === 'songs' ? (
+            {contentType === 'songs' ? (
               <button className="btn-publish" onClick={handlePublishSong} disabled={publishing}>
                 {publishing ? 'Publishing...' : '🚀 Publish Song'}
               </button>
@@ -456,7 +476,7 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
               />
             </div>
 
-            {activeGlobalTab === 'songs' ? (
+            {contentType === 'songs' ? (
               <>
                 {/* Title */}
                 <input
@@ -623,11 +643,11 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
           {/* ══ RIGHT: SETTINGS PANEL ══════════════════════════════════════ */}
           <aside className="settings-panel">
             <h3 className="settings-title">
-              {activeGlobalTab === 'songs' ? '🎤 Lyrics Settings' : '⚙️ Story Settings'}
+              {contentType === 'songs' ? '🎤 Lyrics Settings' : '⚙️ Story Settings'}
             </h3>
 
             {/* Optional Artist Name Input for Songs */}
-            {activeGlobalTab === 'songs' && (
+            {contentType === 'songs' && (
               <div className="settings-group">
                 <label className="settings-label">Artist Name <span className="optional">(optional)</span></label>
                 <input
@@ -649,13 +669,13 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
                 onChange={e => setGenre(e.target.value)}
               >
                 <option value="">Select genre...</option>
-                {(activeGlobalTab === 'songs' ? SONG_GENRES : GENRES).map(g => (
+                {(contentType === 'songs' ? SONG_GENRES : GENRES).map(g => (
                   <option key={g} value={g}>{g}</option>
                 ))}
               </select>
             </div>
 
-            {activeGlobalTab !== 'songs' && (
+            {contentType !== 'songs' && (
               <>
                 {/* Status */}
                 <div className="settings-group">
@@ -718,7 +738,7 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
 
             {/* Quick actions */}
             <div className="settings-actions">
-              {activeGlobalTab === 'songs' ? (
+              {contentType === 'songs' ? (
                 <button className="btn-publish btn-full" onClick={handlePublishSong} disabled={publishing}>
                   {publishing ? 'Publishing...' : '🚀 Publish Song'}
                 </button>
