@@ -8,6 +8,7 @@ import { fileURLToPath } from "url";
 import authRoutes from "./routes/authRoutes.js";
 import storyRoutes from "./routes/story.js";
 import userRoutes from "./routes/userRoutes.js";
+import songRoutes from "./routes/song.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,6 +26,7 @@ app.use(cors());
 app.use("/api/auth", authRoutes);
 app.use("/api/story", storyRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/song", songRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 mongoose.connect(process.env.MONGO_URI)

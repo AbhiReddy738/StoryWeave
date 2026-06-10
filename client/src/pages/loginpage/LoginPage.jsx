@@ -34,8 +34,6 @@ const LoginPage = () => {
         }
       )
 
-      console.log(res.data);
-
       localStorage.setItem(
         'token',
         res.data.token || "loggedin"

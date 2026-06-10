@@ -10,7 +10,117 @@
 }
 
 /* =====================================================
-   STORY SECTION
+   COVER HERO IMAGE
+   ===================================================== */
+
+.story-cover-hero {
+  width: 100%;
+  height: 280px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 20px;
+  margin-bottom: 28px;
+  box-shadow: 0 8px 28px var(--shadow-color);
+}
+
+/* =====================================================
+   BLOCK CONTENT RENDERER
+   ===================================================== */
+
+.content-text-block {
+  margin-bottom: 20px;
+  line-height: 2;
+  color: var(--text-color);
+  font-size: 16px;
+}
+.content-text-block h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 16px 0 8px;
+}
+.content-text-block blockquote {
+  border-left: 4px solid var(--accent-color);
+  margin: 8px 0;
+  padding: 8px 16px;
+  color: var(--secondary-text);
+  font-style: italic;
+  background: var(--input-bg);
+  border-radius: 0 8px 8px 0;
+}
+
+.content-image-block {
+  margin: 24px 0;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+.content-image-block img {
+  width: 100%;
+  max-height: 500px;
+  object-fit: contain;
+  display: block;
+}
+
+/* =====================================================
+   STORY TAGS
+   ===================================================== */
+
+.story-tags-row {
+  grid-area: unset;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 0 8px;
+}
+
+.story-tag-chip {
+  background: rgba(201, 168, 76, 0.12);
+  color: var(--accent-color);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Light theme override */
+.light-theme .story-tag-chip {
+  background: rgba(184, 134, 11, 0.1);
+  border-color: rgba(184, 134, 11, 0.25);
+}
+
+/* =====================================================
+   AUTHOR NOTE CALLOUT
+   ===================================================== */
+
+.author-note-callout {
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--accent-color);
+  border-radius: 0 16px 16px 0;
+  padding: 18px 20px;
+  margin: 20px 0;
+}
+
+.author-note-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent-color);
+  margin-bottom: 8px;
+}
+
+.author-note-callout p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--secondary-text);
+  font-style: italic;
+}
+
+/* =====================================================
+   STORY SECTION - GRID SYSTEM
    ===================================================== */
 
 .story-section {
@@ -21,6 +131,19 @@
   padding: 90px 40px 40px;
   background: var(--bg-color);
   transition: margin-left 0.3s ease;
+  
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "title title"
+    "info summary"
+    "content content"
+    "actions actions"
+    "feedback feedback"
+    "comments comments"
+    "contributions contributions";
+  gap: 24px;
+  align-content: start;
 }
 
 .story-expanded { margin-left: 110px; }
@@ -55,40 +178,90 @@
    ===================================================== */
 
 .story-title {
+  grid-area: title;
   font-size: 44px;
   font-weight: 800;
   color: var(--text-color);
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .story-info {
+  grid-area: info;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 16px;
+  align-self: start;
+}
+
+.info-item {
   display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
-  margin-bottom: 30px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-label {
+  font-size: 11px;
+  text-transform: uppercase;
   color: var(--secondary-text);
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
 }
 
 .genre {
   color: var(--accent-color);
-  font-weight: 700;
   cursor: pointer;
 }
 
 .genre:hover { opacity: 0.8; }
 
 /* =====================================================
+   STORY SUMMARY
+   ===================================================== */
+
+.story-summary {
+  grid-area: summary;
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 16px;
+  align-self: start;
+}
+
+.story-summary h3 {
+  font-size: 14px;
+  color: var(--accent-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.story-summary p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--secondary-text);
+}
+
+/* =====================================================
    STORY CONTENT
    ===================================================== */
 
 .story-content {
+  grid-area: content;
   background: var(--card-color);
   border: 1px solid var(--border-color);
   border-radius: 24px;
   padding: 35px;
   line-height: 2;
   color: var(--text-color);
-  margin-bottom: 35px;
 }
 
 .story-content p { margin-bottom: 20px; }
@@ -98,10 +271,11 @@
    ===================================================== */
 
 .action-bar {
+  grid-area: actions;
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
-  margin-bottom: 40px;
+  margin-bottom: 15px;
 }
 
 .action-bar button {
@@ -120,6 +294,40 @@
   color: var(--accent-text);
   border-color: var(--accent-color);
   transform: translateY(-2px);
+}
+
+.action-bar button.view-full-story-btn {
+  background: var(--accent-gradient);
+  color: var(--accent-text);
+  border-color: transparent;
+  font-weight: 700;
+}
+
+.action-bar button.view-full-story-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+
+/* =====================================================
+   FEEDBACK BANNER
+   ===================================================== */
+
+.card-page-feedback {
+  grid-area: feedback;
+  background-color: var(--accent-color);
+  color: var(--accent-text);
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 15px;
+  animation: feedbackFadeIn 0.3s ease forwards;
+}
+
+@keyframes feedbackFadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* =====================================================
@@ -329,6 +537,56 @@
   border-color: var(--accent-color);
 }
 
+.upvote-btn.upvoted {
+  background: var(--accent-color) !important;
+  color: var(--accent-text) !important;
+  border-color: var(--accent-color) !important;
+}
+
+.action-btn {
+  padding: 12px 22px;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--card-color);
+  color: var(--accent-color);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.action-btn-active {
+  background: var(--accent-gradient) !important;
+  color: var(--accent-text) !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 15px rgba(201, 168, 76, 0.25);
+}
+
+.contribution-card.top-contribution {
+  border: 2px solid var(--accent-color) !important;
+  background: linear-gradient(135deg, var(--card-color) 0%, rgba(201, 168, 76, 0.08) 100%) !important;
+  position: relative !important;
+  box-shadow: 0 10px 30px rgba(201, 168, 76, 0.15) !important;
+}
+
+.top-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--accent-gradient);
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 6px 16px;
+  border-bottom-left-radius: 12px;
+  box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.light-theme .top-badge {
+  color: #ffffff !important;
+}
+
 /* =====================================================
    RESPONSIVE
    ===================================================== */
@@ -339,7 +597,21 @@
 }
 
 @media (max-width: 768px) {
-  .story-section { margin-left: 100px; padding: 85px 15px 20px; }
+  .story-section {
+    margin-left: 100px;
+    padding: 85px 15px 20px;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "title"
+      "info"
+      "content"
+      "actions"
+      "feedback"
+      "comments"
+      "summary"
+      "contributions";
+    gap: 20px;
+  }
   .story-title { font-size: 28px; }
   .story-content { padding: 20px; font-size: 16px; }
   .action-bar button { width: 100%; }

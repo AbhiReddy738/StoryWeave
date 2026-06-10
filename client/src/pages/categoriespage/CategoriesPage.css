@@ -1,0 +1,314 @@
+/* =====================================================
+   PAGE & CONTAINER
+   ===================================================== */
+
+.categories-page {
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--bg-color);
+  scrollbar-width: none;
+}
+
+.categories-page::-webkit-scrollbar { display: none; }
+
+.categories-container {
+  margin-left: 170px;
+  padding: 90px 25px 40px;
+  transition: margin-left 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.categories-expanded { margin-left: 75px; }
+
+.categories-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-color);
+  margin-bottom: 24px;
+}
+
+/* =====================================================
+   CATEGORIES GRID
+   ===================================================== */
+
+.categories-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.category-pill-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  padding: 12px 24px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px var(--shadow-color);
+}
+
+.category-pill-card:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+}
+
+.category-pill-card.selected {
+  background: var(--accent-gradient);
+  border-color: transparent;
+  color: var(--accent-text) !important;
+  box-shadow: 0 6px 18px rgba(201, 168, 76, 0.3);
+}
+
+.category-pill-card.selected .category-card-name {
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+.category-card-icon {
+  font-size: 18px;
+}
+
+.category-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+/* =====================================================
+   RESULTS SECTION
+   ===================================================== */
+
+.filtered-results-section {
+  border-top: 1px solid var(--border-color);
+  padding-top: 30px;
+  animation: fadeIn 0.4s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.results-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.clear-filter-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--secondary-text);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clear-filter-btn:hover {
+  background: var(--hover-color);
+  color: var(--text-color);
+}
+
+.loading-results,
+.empty-category-results {
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 16px;
+  color: var(--secondary-text);
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+}
+
+/* =====================================================
+   CARDS GRIDS
+   ===================================================== */
+
+.category-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+/* Story Card inside categories filtering */
+.story-list-card {
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 20px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.story-list-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--accent-color);
+  box-shadow: 0 10px 25px var(--shadow-color);
+}
+
+.story-list-card .story-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 12px;
+}
+
+.story-list-card .middle-box {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.story-list-card .genre,
+.story-list-card .likes {
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+.story-list-card .posted-on {
+  color: var(--secondary-text);
+}
+
+.story-list-card .summary-heading {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text-color);
+}
+
+.story-list-card .summary-lines {
+  color: var(--secondary-text);
+  font-size: 13px;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Spotify style song card */
+.spotify-song-card {
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.spotify-song-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--accent-color);
+  box-shadow: 0 10px 25px var(--shadow-color);
+}
+
+.song-card-img {
+  width: 100%;
+  aspect-ratio: 1;
+  background-size: cover;
+  background-position: center;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.song-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.song-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.song-artist {
+  font-size: 13px;
+  color: var(--secondary-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.song-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.song-genre {
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+.song-likes {
+  color: var(--secondary-text);
+}
+
+.song-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+}
+
+.song-save-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--accent-color);
+  padding: 6px 14px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.song-save-btn:hover,
+.song-save-btn.saved {
+  background: var(--accent-gradient);
+  color: var(--accent-text);
+  border-color: transparent;
+}
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 768px) {
+  .categories-container { margin-left: 95px; }
+  .categories-title { font-size: 26px; }
+}
+
+@media (max-width: 480px) {
+  .categories-container { margin-left: 75px; padding: 85px 12px 30px; }
+  .category-pill-card { padding: 8px 16px; }
+  .category-card-name { font-size: 12px; }
+}

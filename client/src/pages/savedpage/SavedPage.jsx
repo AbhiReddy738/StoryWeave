@@ -26,7 +26,6 @@ const SavedPage = ({ collapsed }) => {
         const response = await axios.get(`https://storyweave-fxdt.onrender.com/api/story/saved/${userId}`);
         setSavedStories(response.data);
       } catch (err) {
-        console.error(err);
         setError("Error loading saved stories");
       } finally {
         setLoading(false);
@@ -46,7 +45,7 @@ const SavedPage = ({ collapsed }) => {
       await axios.post(`https://storyweave-fxdt.onrender.com/api/story/unsave/${id}`, { userId });
       setSavedStories(savedStories.filter(story => (story._id || story.id) !== id));
     } catch (err) {
-      console.error(err);
+      // silent
     }
   };
 

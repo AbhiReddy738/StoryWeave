@@ -18,6 +18,14 @@ const AccountPage = ({ collapsed }) => {
   });
 
   const [posts, setPosts] = useState([]);
+  const [actionFeedback, setActionFeedback] = useState('');
+  const [feedbackType, setFeedbackType] = useState('success');
+
+  const showFeedback = (msg, type = 'success') => {
+    setActionFeedback(msg);
+    setFeedbackType(type);
+    setTimeout(() => setActionFeedback(''), 3000);
+  };
   
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
@@ -100,10 +108,9 @@ const AccountPage = ({ collapsed }) => {
           localStorage.setItem("user", JSON.stringify(userObj));
         }
 
-        alert(res.data.message || 'Profile Saved');
+        showFeedback(res.data.message || 'Profile Saved', 'success');
       } catch (err) {
-        console.error(err);
-        alert('Failed to save profile. Please try again.');
+        showFeedback('Failed to save profile. Please try again.', 'error');
       } finally {
         setLoading(false);
       }
@@ -118,10 +125,9 @@ const AccountPage = ({ collapsed }) => {
     try {
       await axios.delete(`https://storyweave-fxdt.onrender.com/api/story/delete/${id}`);
       setPosts(posts.filter(post => post._id !== id));
-      alert("Story Deleted Successfully");
+      showFeedback("Story Deleted Successfully", 'success');
     } catch (err) {
-      console.error(err);
-      alert("Failed to delete story.");
+      showFeedback("Failed to delete story.", 'error');
     }
   };
 
@@ -149,10 +155,9 @@ const AccountPage = ({ collapsed }) => {
         ...prev,
         profileImage: uploadRes.data.url
       }));
-      alert("Photo uploaded successfully. Click 'Save Profile' to save changes.");
+      showFeedback("Photo uploaded successfully. Click 'Save Profile' to save changes.", 'success');
     } catch (err) {
-      console.error(err);
-      alert("Failed to upload image.");
+      showFeedback("Failed to upload image.", 'error');
     } finally {
       setLoading(false);
     }
@@ -207,6 +212,12 @@ const AccountPage = ({ collapsed }) => {
             fontSize: '20px'
           }}>
             Updating profile...
+          </div>
+        )}
+
+        {actionFeedback && (
+          <div className={`account-feedback-banner ${feedbackType}`}>
+            {actionFeedback}
           </div>
         )}
 
