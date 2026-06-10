@@ -27,7 +27,7 @@ const LoginPage = () => {
       setError("")
 
       const res = await axios.post(
-        "http://storyweave-fxdt.onrender.com/api/auth/login",
+        "https://storyweave-fxdt.onrender.com/api/auth/login",
         {
           email,
           password
