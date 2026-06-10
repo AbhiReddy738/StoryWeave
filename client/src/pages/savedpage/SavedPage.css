@@ -16,12 +16,10 @@
    ===================================================== */
 
 .saved-container {
-  margin-left: 170px;
+  margin-left: var(--sidebar-width);
   padding: 90px 25px 40px;
-  transition: margin-left 0.3s ease;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-.saved-expanded { margin-left: 75px; }
 
 /* =====================================================
    TABS
@@ -163,11 +161,16 @@
    ===================================================== */
 
 @media (max-width: 768px) {
-  .saved-container { margin-left: 95px; }
+  .saved-container { padding: 90px 16px 40px; }
+  .saved-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
 }
 
-@media (max-width: 480px) {
-  .saved-container { margin-left: 75px; padding: 85px 12px 25px; }
+@media (max-width: 600px) {
+  .saved-container { padding: 130px 12px 25px; }
   .saved-grid { grid-template-columns: 1fr; }
   .story-name { font-size: 20px; }
+  .saved-tab {
+    padding: 10px 18px;
+    font-size: 13px;
+  }
 }

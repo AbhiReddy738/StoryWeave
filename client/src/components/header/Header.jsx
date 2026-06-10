@@ -4,7 +4,7 @@ import './Header.css'
 import logo from '../../assets/storyweaveLogo.jpeg'
 import { useTheme } from '../../context/ThemeContext.jsx'
 
-const Header = ({searchTerm, setSearchTerm}) => {
+const Header = ({searchTerm, setSearchTerm, sidebarOpen, setSidebarOpen}) => {
 
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const navigate = useNavigate()
@@ -19,16 +19,25 @@ const Header = ({searchTerm, setSearchTerm}) => {
   }, [])
 
   const handleLogout = () => {
-  localStorage.removeItem('token')
-  localStorage.removeItem('username')
+    localStorage.removeItem('token')
+    localStorage.removeItem('username')
+    localStorage.removeItem('user') // also remove user object if present
 
-  navigate('/login')
-
-  window.location.reload()
-}
+    navigate('/login')
+    window.location.reload()
+  }
 
   return (
     <header className='header-container'>
+
+      <button
+        className="hamburger-btn"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        aria-label="Toggle Menu"
+        title="Toggle Menu"
+      >
+        ☰
+      </button>
 
       <div className="logo">
         <Link to='/'>

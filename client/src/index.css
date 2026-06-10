@@ -48,8 +48,45 @@
 }
 
 /* =====================================================
-   BASE RESET
+   BASE RESET & RESPONSIVE CONSTANTS
    ===================================================== */
+
+:root {
+  --sidebar-width: 170px;
+  --header-height: 68px;
+  --touch-target: 44px;
+
+  /* Typography Fluid Clamps */
+  --fs-title-large: clamp(1.8rem, 5vw + 1rem, 2.75rem);
+  --fs-title-medium: clamp(1.4rem, 4vw + 0.8rem, 2rem);
+  --fs-title-small: clamp(1.1rem, 3vw + 0.6rem, 1.4rem);
+  --fs-body: clamp(0.9rem, 1vw + 0.7rem, 1.05rem);
+  --fs-meta: clamp(0.75rem, 0.5vw + 0.7rem, 0.85rem);
+}
+
+.app-container {
+  --sidebar-width: 170px;
+}
+
+.app-container.sidebar-collapsed {
+  --sidebar-width: 60px;
+}
+
+@media (max-width: 1024px) {
+  .app-container {
+    --sidebar-width: 90px;
+  }
+  .app-container.sidebar-collapsed {
+    --sidebar-width: 60px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-container,
+  .app-container.sidebar-collapsed {
+    --sidebar-width: 0px !important;
+  }
+}
 
 * {
   margin: 0;
@@ -63,7 +100,8 @@ html {
 
 html, body {
   height: 100%;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 body {

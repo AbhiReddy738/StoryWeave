@@ -18,6 +18,7 @@ import SongPage from './pages/songpage/SongPage';
 
 function App() {
   const [collapsed, setCollapsed] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const { theme } = useTheme();
 
@@ -33,15 +34,19 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className={`app-container ${theme === 'dark' ? 'dark-theme' : 'light-theme'}`}>
+      <div className={`app-container ${theme === 'dark' ? 'dark-theme' : 'light-theme'} ${collapsed ? 'sidebar-collapsed' : ''}`}>
         <Header 
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm} 
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
         />
 
         <Sidebar
           collapsed={collapsed}
           setCollapsed={setCollapsed}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
         />
 
         <Routes>

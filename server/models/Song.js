@@ -7,12 +7,7 @@ const songSchema = new mongoose.Schema(
         required: true
     },
 
-    artist: {
-        type: String,
-        required: true
-    },
-
-    album: {
+    artistName: {
         type: String,
         default: ""
     },
@@ -27,14 +22,9 @@ const songSchema = new mongoose.Schema(
         default: ""
     },
 
-    audioUrl: {
-        type: String,
-        required: true
-    },
-
     lyrics: {
         type: String,
-        default: ""
+        required: true
     },
 
     summary: {
@@ -82,9 +72,23 @@ const songSchema = new mongoose.Schema(
         }
     ],
 
-    plays: {
-        type: Number,
-        default: 0
+    contributions: [
+        {
+            author: { type: String },
+            text: { type: String },
+            upvotes: { type: Number, default: 0 },
+            upvotedBy: {
+                type: [mongoose.Schema.Types.ObjectId],
+                ref: 'user',
+                default: []
+            },
+            createdAt: { type: Date, default: Date.now }
+        }
+    ],
+
+    slug: {
+        type: String,
+        unique: true
     }
 },
 {
