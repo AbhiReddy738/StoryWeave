@@ -8,16 +8,15 @@
 }
 
 .post-container {
-  margin-left: 250px;
+  margin-left: var(--sidebar-width);
   height: 100vh;
   overflow-y: auto;
   padding: 80px 32px 60px;
   background: var(--bg-color);
-  transition: margin-left 0.3s ease;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   scrollbar-width: none;
 }
 .post-container::-webkit-scrollbar { display: none; }
-.post-expanded { margin-left: 110px; }
 
 /* =====================================================
    TOP BAR
@@ -607,11 +606,10 @@
     position: static;
     order: -1; /* settings above editor on tablet */
   }
-  .post-container { margin-left: 110px; }
 }
 
 @media (max-width: 768px) {
-  .post-container { margin-left: 100px; padding: 75px 16px 40px; }
+  .post-container { padding: 80px 16px 40px; }
   .post-topbar { flex-direction: column; align-items: flex-start; }
   .post-topbar-actions { width: 100%; justify-content: flex-end; }
   .cover-upload-area { height: 180px; }
@@ -619,8 +617,8 @@
   .word-count-bar { gap: 12px; }
 }
 
-@media (max-width: 480px) {
-  .post-container { margin-left: 82px; padding: 70px 12px 36px; }
+@media (max-width: 600px) {
+  .post-container { padding: 130px 12px 36px; }
   .btn-outline, .btn-publish { padding: 9px 14px; font-size: 13px; }
   .writing-toolbar { gap: 2px; padding: 8px 10px; }
   .tool-btn { padding: 5px 8px; font-size: 13px; }
@@ -653,4 +651,40 @@
 @keyframes feedbackFadeIn {
   from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Lyrics Editor Specific Styles */
+.lyrics-textarea {
+  width: 100%;
+  min-height: 380px;
+  background: var(--card-color);
+  border: 1.5px solid var(--border-color);
+  border-radius: 14px;
+  color: var(--text-color);
+  font-size: 16px;
+  padding: 20px;
+  resize: vertical;
+  font-family: 'Georgia', serif;
+  line-height: 2;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+.lyrics-textarea:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.1);
+}
+
+.artist-input {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1.5px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-color);
+  font-size: 14px;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+.artist-input:focus {
+  border-color: var(--accent-color);
 }

@@ -1,21 +1,22 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './SavedPage.css';
 
 const SavedPage = ({ collapsed }) => {
+  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState('stories');
   const [savedStories, setSavedStories] = useState([]);
+  const [savedSongs, setSavedSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [savedSongs] = useState([]);
-
   useEffect(() => {
-    const fetchSavedStories = async () => {
+    const fetchSavedData = async () => {
       const userStr = localStorage.getItem('user');
       if (!userStr) {
-        setError("Please login to see your saved stories");
+        setError("Please login to see your saved stories and songs");
         setLoading(false);
         return;
       }
@@ -23,16 +24,19 @@ const SavedPage = ({ collapsed }) => {
       const userId = userObj._id;
 
       try {
-        const response = await axios.get(`https://storyweave-fxdt.onrender.com/api/story/saved/${userId}`);
-        setSavedStories(response.data);
+        const storiesResponse = await axios.get(`https://storyweave-fxdt.onrender.com/api/story/saved/${userId}`);
+        setSavedStories(storiesResponse.data);
+
+        const songsResponse = await axios.get(`https://storyweave-fxdt.onrender.com/api/song/saved/${userId}`);
+        setSavedSongs(songsResponse.data);
       } catch (err) {
-        setError("Error loading saved stories");
+        setError("Error loading saved items");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSavedStories();
+    fetchSavedData();
   }, []);
 
   const removeStory = async (id) => {
@@ -49,10 +53,22 @@ const SavedPage = ({ collapsed }) => {
     }
   };
 
+  const removeSong = async (id) => {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return;
+    const userObj = JSON.parse(userStr);
+    const userId = userObj._id;
+
+    try {
+      await axios.post(`https://storyweave-fxdt.onrender.com/api/song/unsave/${id}`, { userId });
+      setSavedSongs(savedSongs.filter(song => (song._id || song.id) !== id));
+    } catch (err) {
+      // silent
+    }
+  };
+
   return (
-
     <div className="saved-page">
-
       <div
         className={`saved-container ${
           collapsed
@@ -60,9 +76,7 @@ const SavedPage = ({ collapsed }) => {
             : ''
         }`}
       >
-
         <div className="saved-tabs">
-
           <button
             className={
               activeTab === 'stories'
@@ -88,14 +102,12 @@ const SavedPage = ({ collapsed }) => {
           >
             Saved Songs
           </button>
-
         </div>
 
         <div className="saved-grid">
-
           {loading ? (
             <div className="empty-box">
-              ⏳ Loading Saved Stories...
+              ⏳ Loading Saved Items...
             </div>
           ) : error ? (
             <div className="empty-box">
@@ -104,34 +116,29 @@ const SavedPage = ({ collapsed }) => {
           ) : (
             <>
               {activeTab === 'stories' && (
-
                 savedStories.length > 0 ? (
-
                   savedStories.map((story) => (
-
                     <div
                       key={story._id || story.id}
                       className="saved-card"
+                      onClick={() => navigate(`/card/${story.slug}-${story._id}`)}
+                      style={{ cursor: 'pointer' }}
                     >
-
                       <div className="story-name">
                         {story.title}
                       </div>
 
                       <div className="middle-box">
-
-                        <span className="genre">
+                        <span className="genre" onClick={e => e.stopPropagation()}>
                           {story.genre}
                         </span>
 
                         <span className="likes">
                           ❤️ {story.likes}
                         </span>
-
                       </div>
 
                       <div className="summary">
-
                         <p className="summary-heading">
                           Summary
                         </p>
@@ -139,61 +146,50 @@ const SavedPage = ({ collapsed }) => {
                         <p className="summary-lines">
                           {story.summary}
                         </p>
-
                       </div>
 
                       <button
                         className="remove-btn"
-                        onClick={() =>
-                          removeStory(story._id || story.id)
-                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeStory(story._id || story.id);
+                        }}
                       >
                         Remove
                       </button>
-
                     </div>
-
                   ))
-
                 ) : (
-
                   <div className="empty-box">
                     📚 No Saved Stories
                   </div>
-
                 )
-
               )}
 
               {activeTab === 'songs' && (
-
                 savedSongs.length > 0 ? (
-
                   savedSongs.map((song) => (
-
                     <div
-                      key={song.id}
+                      key={song._id || song.id}
                       className="saved-card"
+                      onClick={() => navigate(`/song/${song._id || song.id}`)}
+                      style={{ cursor: 'pointer' }}
                     >
-
                       <div className="story-name">
                         {song.title}
                       </div>
 
                       <div className="middle-box">
-
-                        <span className="genre">
+                        <span className="genre" onClick={e => e.stopPropagation()}>
                           {song.genre}
                         </span>
 
                         <span className="likes">
                           ❤️ {song.likes}
                         </span>
-
                       </div>
 
                       <div className="summary">
-
                         <p className="summary-heading">
                           Lyrics
                         </p>
@@ -201,33 +197,31 @@ const SavedPage = ({ collapsed }) => {
                         <p className="summary-lines">
                           {song.summary}
                         </p>
-
                       </div>
 
+                      <button
+                        className="remove-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeSong(song._id || song.id);
+                        }}
+                      >
+                        Remove
+                      </button>
                     </div>
-
                   ))
-
                 ) : (
-
                   <div className="empty-box">
                     🎵 No Saved Songs
                   </div>
-
                 )
-
               )}
             </>
           )}
-
         </div>
-
       </div>
-
     </div>
-
   );
-
 };
 
 export default SavedPage;

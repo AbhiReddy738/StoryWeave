@@ -9,14 +9,21 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({
     storage,
-    limits: { fileSize: 30 * 1024 * 1024 } // Allow up to 30 MB for audio
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB limit for cover images
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith("image/")) {
+            cb(null, true);
+        } else {
+            cb(new Error("Only image files are allowed"), false);
+        }
+    }
 });
 
-// Helper to stream file buffers to Cloudinary
-const uploadToCloudinary = (buffer, folder, resourceType = "auto") => {
+// Helper: upload a buffer to Cloudinary and return the secure URL
+const uploadToCloudinary = (buffer, folder) => {
     return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
-            { folder, resource_type: resourceType },
+            { folder, resource_type: "image" },
             (error, result) => {
                 if (error) return reject(error);
                 resolve(result.secure_url);
@@ -26,7 +33,7 @@ const uploadToCloudinary = (buffer, folder, resourceType = "auto") => {
     });
 };
 
-// ─── AUDIO & COVER UPLOADS ───────────────────────────────────────────────────
+// ─── COVER UPLOAD ──────────────────────────────────────────────────────────
 
 // POST /song/upload-cover
 router.post("/upload-cover", upload.single("image"), async (req, res) => {
@@ -34,23 +41,10 @@ router.post("/upload-cover", upload.single("image"), async (req, res) => {
         if (!req.file) {
             return res.status(400).json({ message: "No image file provided" });
         }
-        const url = await uploadToCloudinary(req.file.buffer, "storyweave/song-covers", "image");
+        const url = await uploadToCloudinary(req.file.buffer, "storyweave/song-covers");
         res.status(200).json({ url });
     } catch (err) {
         res.status(500).json({ message: "Cover upload failed", error: err.message });
-    }
-});
-
-// POST /song/upload-audio
-router.post("/upload-audio", upload.single("audio"), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ message: "No audio file provided" });
-        }
-        const url = await uploadToCloudinary(req.file.buffer, "storyweave/song-audio", "auto");
-        res.status(200).json({ url });
-    } catch (err) {
-        res.status(500).json({ message: "Audio upload failed", error: err.message });
     }
 });
 
@@ -69,11 +63,11 @@ router.get("/all", async (req, res) => {
 // GET /song/trending — Retrieve trending songs
 router.get("/trending", async (req, res) => {
     try {
-        // Sort by plays, likes, and comments length combined
+        // Sort by likes, comments length, and contributions length combined
         const songs = await Song.find();
         const sorted = songs.sort((a, b) => {
-            const scoreA = (a.likes || 0) * 3 + (a.plays || 0) + (a.comments?.length || 0) * 2;
-            const scoreB = (b.likes || 0) * 3 + (b.plays || 0) + (b.comments?.length || 0) * 2;
+            const scoreA = (a.likes || 0) * 3 + (a.contributions?.length || 0) + (a.comments?.length || 0) * 2;
+            const scoreB = (b.likes || 0) * 3 + (b.contributions?.length || 0) + (b.comments?.length || 0) * 2;
             return scoreB - scoreA;
         });
         res.status(200).json(sorted);
@@ -89,7 +83,7 @@ router.get("/search", async (req, res) => {
         const songs = await Song.find({
             $or: [
                 { title: { $regex: q, $options: "i" } },
-                { artist: { $regex: q, $options: "i" } },
+                { artistName: { $regex: q, $options: "i" } },
                 { genre: { $regex: q, $options: "i" } },
                 { tags: { $in: [new RegExp(q, "i")] } }
             ]
@@ -123,15 +117,17 @@ router.get("/is-saved/:songId/:userId", async (req, res) => {
     }
 });
 
-// GET /song/:id — Retrieve single song and increment plays
+// GET /song/:id — Retrieve single song
 router.get("/:id", async (req, res) => {
     try {
-        const song = await Song.findByIdAndUpdate(
-            req.params.id,
-            { $inc: { plays: 1 } },
-            { new: true }
-        );
+        const song = await Song.findById(req.params.id);
         if (!song) return res.status(404).json({ message: "Song not found" });
+
+        // Sort contributions by upvotes desc
+        if (song.contributions && song.contributions.length > 0) {
+            song.contributions.sort((a, b) => b.upvotes - a.upvotes);
+        }
+
         res.status(200).json(song);
     } catch (err) {
         res.status(500).json(err);
@@ -142,22 +138,29 @@ router.get("/:id", async (req, res) => {
 router.post("/create", async (req, res) => {
     try {
         const {
-            title, artist, album, genre, coverImage, audioUrl,
+            title, artistName, genre, coverImage,
             lyrics, summary, tags, author, authorId
         } = req.body;
 
+        const slug =
+            (title || "song")
+                .toLowerCase()
+                .replace(/[^a-z0-9\s]/g, "")
+                .trim()
+                .replaceAll(" ", "-")
+            + "-" + Date.now();
+
         const song = new Song({
             title,
-            artist,
-            album: album || "",
+            artistName: artistName || "",
             genre,
             coverImage: coverImage || "",
-            audioUrl,
             lyrics: lyrics || "",
             summary: summary || "",
             tags: tags || [],
             author,
-            authorId
+            authorId,
+            slug
         });
 
         const savedSong = await song.save();
@@ -263,6 +266,56 @@ router.put("/save/:id", async (req, res) => {
     }
 });
 
+// POST /song/save/:id — Add save (mirroring story save)
+router.post("/save/:id", async (req, res) => {
+    try {
+        const { userId } = req.body;
+        const songId = req.params.id;
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        const song = await Song.findById(songId);
+        if (!song) return res.status(404).json({ message: "Song not found" });
+
+        if (!user.savedSongs.includes(songId)) {
+            user.savedSongs.push(songId);
+            await user.save();
+        }
+
+        if (!song.savedBy.some(id => id.toString() === userId)) {
+            song.savedBy.push(userId);
+            await song.save();
+        }
+
+        res.status(200).json({ message: "Song saved successfully", savedSongs: user.savedSongs });
+    } catch (err) {
+        res.status(500).json(err);
+    }
+});
+
+// POST /song/unsave/:id — Remove save (mirroring story unsave)
+router.post("/unsave/:id", async (req, res) => {
+    try {
+        const { userId } = req.body;
+        const songId = req.params.id;
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        const song = await Song.findById(songId);
+        if (!song) return res.status(404).json({ message: "Song not found" });
+
+        user.savedSongs = user.savedSongs.filter(id => id.toString() !== songId);
+        await user.save();
+
+        song.savedBy = song.savedBy.filter(id => id.toString() !== userId);
+        await song.save();
+
+        res.status(200).json({ message: "Song unsaved successfully", savedSongs: user.savedSongs });
+    } catch (err) {
+        res.status(500).json(err);
+    }
+});
+
 // ─── COMMENTS ────────────────────────────────────────────────────────────────
 
 // POST /song/comment/:id — Add comment
@@ -293,6 +346,59 @@ router.delete("/comment/:id/:commentId", async (req, res) => {
         await song.save();
 
         res.status(200).json(song);
+    } catch (err) {
+        res.status(500).json(err);
+    }
+});
+
+// ─── LYRIC CONTRIBUTIONS ──────────────────────────────────────────────────────
+
+// POST /song/contribution/:id — Add lyric contribution
+router.post("/contribution/:id", async (req, res) => {
+    try {
+        const song = await Song.findById(req.params.id);
+        if (!song) return res.status(404).json({ message: "Song not found" });
+        song.contributions.push({ author: req.body.author, text: req.body.text, upvotes: 0 });
+        await song.save();
+        // Return sorted by upvotes desc
+        const sorted = [...song.contributions].sort((a, b) => b.upvotes - a.upvotes);
+        res.status(200).json({ ...song.toObject(), contributions: sorted });
+    } catch (err) {
+        res.status(500).json(err);
+    }
+});
+
+// PUT /song/contribution/upvote/:songId/:contributionId — toggle upvote
+router.put("/contribution/upvote/:songId/:contributionId", async (req, res) => {
+    try {
+        const { userId } = req.body;
+        if (!userId) return res.status(400).json({ message: "userId required" });
+
+        const song = await Song.findById(req.params.songId);
+        if (!song) return res.status(404).json({ message: "Song not found" });
+
+        const contribution = song.contributions.id(req.params.contributionId);
+        if (!contribution) return res.status(404).json({ message: "Contribution not found" });
+
+        const alreadyUpvoted = contribution.upvotedBy.some(id => id.toString() === userId);
+
+        if (alreadyUpvoted) {
+            contribution.upvotedBy = contribution.upvotedBy.filter(id => id.toString() !== userId);
+            contribution.upvotes = Math.max(0, contribution.upvotes - 1);
+        } else {
+            contribution.upvotedBy.push(userId);
+            contribution.upvotes += 1;
+        }
+
+        await song.save();
+
+        // Return contributions sorted by upvotes desc
+        const sorted = [...song.contributions].sort((a, b) => b.upvotes - a.upvotes);
+        res.status(200).json({
+            contributions: sorted,
+            upvoted: !alreadyUpvoted,
+            contributionId: req.params.contributionId
+        });
     } catch (err) {
         res.status(500).json(err);
     }

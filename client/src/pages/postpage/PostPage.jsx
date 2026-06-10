@@ -13,6 +13,10 @@ const GENRES = [
   'Young Adult', 'Children', 'Comedy', 'Drama', 'Poetry', 'Other'
 ];
 
+const SONG_GENRES = [
+  'Pop', 'Rock', 'Hip-Hop', 'Rap', 'Classical', 'Lo-Fi', 'Electronic', 'Jazz', 'Indie', 'R&B'
+];
+
 // Helper: compute word count from blocks
 const getWordCount = (blocks) => {
   const text = blocks
@@ -24,11 +28,11 @@ const getWordCount = (blocks) => {
   return { words: words.length, chars: text.replace(/\s/g, '').length };
 };
 
-const PostPage = ({ collapsed }) => {
+const PostPage = ({ collapsed, activeGlobalTab }) => {
   const navigate = useNavigate();
   const { theme } = useTheme();
 
-  // ── Core story fields ──────────────────────────────────────────────────────
+  // ── Core story/song fields ──────────────────────────────────────────────────────
   const [title, setTitle] = useState('');
   const [summary, setSummary] = useState('');
   const [authorNote, setAuthorNote] = useState('');
@@ -40,30 +44,34 @@ const PostPage = ({ collapsed }) => {
   const [author, setAuthor] = useState('');
   const [authorId, setAuthorId] = useState(null);
 
+  // ── Song specific fields ───────────────────────────────────────────────────
+  const [lyrics, setLyrics] = useState('');
+  const [artistName, setArtistName] = useState('');
+
   // ── Cover image ────────────────────────────────────────────────────────────
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [coverUploading, setCoverUploading] = useState(false);
   const coverInputRef = useRef(null);
 
-  // ── Block-based content editor ────────────────────────────────────────────
+  // ── Block-based content editor (stories only) ──────────────────────────────
   // Each block: { id, type: 'text'|'image', value: string }
   const [blocks, setBlocks] = useState([
     { id: Date.now(), type: 'text', value: '' }
   ]);
   const [uploadingBlockId, setUploadingBlockId] = useState(null);
 
-  // ── Auto-save state ────────────────────────────────────────────────────────
+  // ── Auto-save state (stories only) ──────────────────────────────────────────
   const [storyId, setStoryId] = useState(null);
   const [lastSaved, setLastSaved] = useState(null);
   const [saveLabel, setSaveLabel] = useState('');
   const autoSaveRef = useRef(null);
   const lastSavedRef = useRef(null);
 
-  // ── Live stats ─────────────────────────────────────────────────────────────
+  // ── Live stats (stories only) ──────────────────────────────────────────────
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
 
-  // ── Preview ────────────────────────────────────────────────────────────────
+  // ── Preview (stories only) ─────────────────────────────────────────────────
   const [showPreview, setShowPreview] = useState(false);
 
   // ── UI state ───────────────────────────────────────────────────────────────
@@ -80,6 +88,18 @@ const PostPage = ({ collapsed }) => {
     }, 4000);
   };
 
+  // Reset page state when switching tabs
+  useEffect(() => {
+    setTitle('');
+    setSummary('');
+    setGenre('');
+    setTags([]);
+    setCoverImageUrl('');
+    setLyrics('');
+    setArtistName('');
+    setBlocks([{ id: Date.now(), type: 'text', value: '' }]);
+  }, [activeGlobalTab]);
+
   // Load logged-in user on mount
   useEffect(() => {
     const user = localStorage.getItem('user');
@@ -90,15 +110,17 @@ const PostPage = ({ collapsed }) => {
     }
   }, []);
 
-  // Live word/char count whenever blocks change
+  // Live word/char count whenever blocks change (stories only)
   useEffect(() => {
+    if (activeGlobalTab === 'songs') return;
     const { words, chars } = getWordCount(blocks);
     setWordCount(words);
     setCharCount(chars);
-  }, [blocks]);
+  }, [blocks, activeGlobalTab]);
 
-  // "Saved X seconds ago" label ticker
+  // "Saved X seconds ago" label ticker (stories only)
   useEffect(() => {
+    if (activeGlobalTab === 'songs') return;
     const ticker = setInterval(() => {
       if (lastSavedRef.current) {
         const secs = Math.floor((Date.now() - lastSavedRef.current) / 1000);
@@ -106,9 +128,9 @@ const PostPage = ({ collapsed }) => {
       }
     }, 5000);
     return () => clearInterval(ticker);
-  }, []);
+  }, [activeGlobalTab]);
 
-  // ── Build payload ──────────────────────────────────────────────────────────
+  // ── Build payload (stories only) ───────────────────────────────────────────
   const buildPayload = useCallback((overrideStatus) => {
     const textContent = blocks
       .filter(b => b.type === 'text')
@@ -134,8 +156,9 @@ const PostPage = ({ collapsed }) => {
     };
   }, [title, summary, genre, blocks, author, authorId, coverImageUrl, tags, authorNote, status, storyType]);
 
-  // ── Auto-save (every 30 seconds) ──────────────────────────────────────────
+  // ── Auto-save (every 30 seconds) (stories only) ────────────────────────────
   const doAutoSave = useCallback(async () => {
+    if (activeGlobalTab === 'songs') return;
     if (!title && blocks.every(b => !b.value)) return; // nothing to save
     setSaving(true);
     try {
@@ -154,12 +177,13 @@ const PostPage = ({ collapsed }) => {
     } finally {
       setSaving(false);
     }
-  }, [buildPayload, storyId, title, blocks]);
+  }, [buildPayload, storyId, title, blocks, activeGlobalTab]);
 
   useEffect(() => {
+    if (activeGlobalTab === 'songs') return;
     autoSaveRef.current = setInterval(doAutoSave, 30000);
     return () => clearInterval(autoSaveRef.current);
-  }, [doAutoSave]);
+  }, [doAutoSave, activeGlobalTab]);
 
   // ── Cover image upload ─────────────────────────────────────────────────────
   const handleCoverUpload = async (e) => {
@@ -169,19 +193,22 @@ const PostPage = ({ collapsed }) => {
     try {
       const fd = new FormData();
       fd.append('image', file);
-      const res = await axios.post(`${API}/upload-cover`, fd, {
+      const uploadAPI = activeGlobalTab === 'songs'
+        ? 'https://storyweave-fxdt.onrender.com/api/song/upload-cover'
+        : 'https://storyweave-fxdt.onrender.com/api/story/upload-cover';
+      const res = await axios.post(uploadAPI, fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setCoverImageUrl(res.data.url);
     } catch (err) {
-      showFeedback('Cover image upload failed. Check Cloudinary credentials.', 'error');
+      showFeedback('Cover image upload failed.', 'error');
     } finally {
       setCoverUploading(false);
       if (coverInputRef.current) coverInputRef.current.value = '';
     }
   };
 
-  // ── Block management ───────────────────────────────────────────────────────
+  // ── Block management (stories only) ────────────────────────────────────────
   const updateBlock = (id, value) => {
     setBlocks(prev => prev.map(b => b.id === id ? { ...b, value } : b));
   };
@@ -246,12 +273,12 @@ const PostPage = ({ collapsed }) => {
     }
   };
 
-  // ── Toolbar (contentEditable execCommand) ──────────────────────────────────
+  // ── Toolbar (contentEditable execCommand) (stories only) ───────────────────
   const execFormat = (command, value = null) => {
     document.execCommand(command, false, value);
   };
 
-  // ── Save Draft ─────────────────────────────────────────────────────────────
+  // ── Save Draft (stories only) ──────────────────────────────────────────────
   const handleSaveDraft = async () => {
     if (!title) { showFeedback('Please add a title before saving', 'error'); return; }
     setSaving(true);
@@ -274,7 +301,7 @@ const PostPage = ({ collapsed }) => {
     }
   };
 
-  // ── Publish ────────────────────────────────────────────────────────────────
+  // ── Publish Story (stories only) ───────────────────────────────────────────
   const handlePublish = async () => {
     if (!title || !genre || !author) {
       showFeedback('Title, Genre, and Author are required to publish.', 'error');
@@ -300,7 +327,38 @@ const PostPage = ({ collapsed }) => {
     }
   };
 
-  // ── Preview data ───────────────────────────────────────────────────────────
+  // ── Publish Song (songs only) ──────────────────────────────────────────────
+  const handlePublishSong = async () => {
+    if (!title || !genre || !lyrics) {
+      showFeedback('Title, Genre, and Lyrics are required to publish.', 'error');
+      return;
+    }
+    setPublishing(true);
+    try {
+      const payload = {
+        title,
+        artistName: artistName || '',
+        genre,
+        coverImage: coverImageUrl,
+        lyrics,
+        summary: summary || '',
+        tags,
+        author,
+        authorId
+      };
+      await axios.post(`https://storyweave-fxdt.onrender.com/api/song/create`, payload);
+      showFeedback('Lyrics published successfully! 🎉', 'success');
+      setTimeout(() => {
+        navigate('/');
+      }, 1500);
+    } catch (err) {
+      showFeedback('Failed to publish song.', 'error');
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  // ── Preview data (stories only) ────────────────────────────────────────────
   const previewStory = {
     _id: storyId || 'preview',
     title: title || 'Untitled Story',
@@ -314,10 +372,15 @@ const PostPage = ({ collapsed }) => {
     createdAt: new Date().toISOString()
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  const getLyricsWordCount = () => {
+    const words = lyrics.trim().split(/\s+/).filter(Boolean).length;
+    const chars = lyrics.replace(/\s/g, '').length;
+    return { words, chars };
+  };
+
   return (
     <div className="post-page">
-      {showPreview && (
+      {showPreview && activeGlobalTab !== 'songs' && (
         <StoryReader story={previewStory} onClose={() => setShowPreview(false)} />
       )}
 
@@ -332,18 +395,28 @@ const PostPage = ({ collapsed }) => {
 
         {/* ── Top bar ── */}
         <div className="post-topbar">
-          <h1 className="post-heading">✍️ Story Editor</h1>
+          <h1 className="post-heading">
+            {activeGlobalTab === 'songs' ? '🎤 Lyrics Editor' : '✍️ Story Editor'}
+          </h1>
           <div className="post-topbar-actions">
-            {saveLabel && <span className="save-label">{saving ? '⟳ Saving...' : `✓ ${saveLabel}`}</span>}
-            <button className="btn-outline" onClick={handleSaveDraft} disabled={saving}>
-              💾 Save Draft
-            </button>
-            <button className="btn-outline btn-preview" onClick={() => setShowPreview(true)}>
-              👁 Preview
-            </button>
-            <button className="btn-publish" onClick={handlePublish} disabled={publishing}>
-              {publishing ? 'Publishing...' : '🚀 Publish'}
-            </button>
+            {activeGlobalTab === 'songs' ? (
+              <button className="btn-publish" onClick={handlePublishSong} disabled={publishing}>
+                {publishing ? 'Publishing...' : '🚀 Publish Song'}
+              </button>
+            ) : (
+              <>
+                {saveLabel && <span className="save-label">{saving ? '⟳ Saving...' : `✓ ${saveLabel}`}</span>}
+                <button className="btn-outline" onClick={handleSaveDraft} disabled={saving}>
+                  💾 Save Draft
+                </button>
+                <button className="btn-outline btn-preview" onClick={() => setShowPreview(true)}>
+                  👁 Preview
+                </button>
+                <button className="btn-publish" onClick={handlePublish} disabled={publishing}>
+                  {publishing ? 'Publishing...' : '🚀 Publish'}
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -383,133 +456,189 @@ const PostPage = ({ collapsed }) => {
               />
             </div>
 
-            {/* Title */}
-            <input
-              className="title-input"
-              type="text"
-              placeholder="Story Title..."
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-            />
+            {activeGlobalTab === 'songs' ? (
+              <>
+                {/* Title */}
+                <input
+                  className="title-input"
+                  type="text"
+                  placeholder="Song / Poem Title..."
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                />
 
-            {/* Summary */}
-            <textarea
-              className="summary-input"
-              placeholder="Write a short summary to hook your readers..."
-              value={summary}
-              onChange={e => setSummary(e.target.value)}
-              rows={3}
-            />
+                {/* Summary */}
+                <textarea
+                  className="summary-input"
+                  placeholder="Write a short summary/description for this song..."
+                  value={summary}
+                  onChange={e => setSummary(e.target.value)}
+                  rows={3}
+                />
 
-            {/* ── Formatting Toolbar ── */}
-            <div className="writing-toolbar">
-              <button className="tool-btn" title="Bold" onMouseDown={e => { e.preventDefault(); execFormat('bold'); }}>
-                <strong>B</strong>
-              </button>
-              <button className="tool-btn" title="Italic" onMouseDown={e => { e.preventDefault(); execFormat('italic'); }}>
-                <em>I</em>
-              </button>
-              <button className="tool-btn" title="Underline" onMouseDown={e => { e.preventDefault(); execFormat('underline'); }}>
-                <u>U</u>
-              </button>
-              <div className="tool-divider" />
-              <button className="tool-btn" title="Heading" onMouseDown={e => {
-                e.preventDefault();
-                execFormat('formatBlock', '<h3>');
-              }}>H</button>
-              <button className="tool-btn" title="Quote" onMouseDown={e => {
-                e.preventDefault();
-                execFormat('formatBlock', '<blockquote>');
-              }}>❝</button>
-              <div className="tool-divider" />
-              <button className="tool-btn" title="Bullet List" onMouseDown={e => {
-                e.preventDefault();
-                execFormat('insertUnorderedList');
-              }}>• List</button>
-              <button className="tool-btn" title="Numbered List" onMouseDown={e => {
-                e.preventDefault();
-                execFormat('insertOrderedList');
-              }}>1. List</button>
-            </div>
+                {/* Lyrics textarea */}
+                <textarea
+                  className="lyrics-textarea"
+                  placeholder="Write or paste your lyrics, verses, or poems here..."
+                  value={lyrics}
+                  onChange={e => setLyrics(e.target.value)}
+                  rows={15}
+                />
 
-            {/* ── Block Editor ── */}
-            <div className="block-editor">
-              {blocks.map((block, idx) => (
-                <div key={block.id} className="block-wrapper">
-                  {block.type === 'text' ? (
-                    <div
-                      className="text-block"
-                      contentEditable
-                      suppressContentEditableWarning
-                      data-placeholder="Tell your story..."
-                      onInput={e => updateBlock(block.id, e.currentTarget.innerHTML)}
-                      dangerouslySetInnerHTML={{ __html: block.value }}
-                    />
-                  ) : (
-                    <div className={`image-block ${block.uploading ? 'uploading' : ''}`}>
-                      {block.uploading
-                        ? <div className="image-block-loader">⟳ Uploading image...</div>
-                        : <img src={block.value} alt={`Story image ${idx}`} />
-                      }
-                    </div>
-                  )}
-
-                  {/* Block controls */}
-                  {blocks.length > 1 && (
-                    <button
-                      className="block-remove-btn"
-                      onClick={() => removeBlock(block.id)}
-                      title="Remove block"
-                    >✕</button>
-                  )}
-
-                  {/* Add block buttons between blocks */}
-                  <div className="block-add-bar">
-                    <button className="block-add-btn" onClick={() => addTextBlock(idx)}>
-                      + Text
-                    </button>
-                    <label className="block-add-btn block-add-image">
-                      + Image
-                      <input
-                        type="file"
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        disabled={uploadingBlockId !== null}
-                        onChange={e => {
-                          const file = e.target.files?.[0];
-                          if (file) handleInlineImageUpload(idx, file);
-                          e.target.value = '';
-                        }}
-                      />
-                    </label>
-                  </div>
+                {/* Live stats for lyrics */}
+                <div className="word-count-bar">
+                  <span>📊 Words: <strong>{getLyricsWordCount().words.toLocaleString()}</strong></span>
+                  <span>Characters: <strong>{getLyricsWordCount().chars.toLocaleString()}</strong></span>
                 </div>
-              ))}
-            </div>
+              </>
+            ) : (
+              <>
+                {/* Title */}
+                <input
+                  className="title-input"
+                  type="text"
+                  placeholder="Story Title..."
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                />
 
-            {/* Author Note */}
-            <div className="author-note-section">
-              <label className="field-label">📝 Author Note <span className="optional">(optional)</span></label>
-              <textarea
-                className="author-note-input"
-                placeholder="Share what inspired this story, a dedication, or a note to your readers..."
-                value={authorNote}
-                onChange={e => setAuthorNote(e.target.value)}
-                rows={3}
-              />
-            </div>
+                {/* Summary */}
+                <textarea
+                  className="summary-input"
+                  placeholder="Write a short summary to hook your readers..."
+                  value={summary}
+                  onChange={e => setSummary(e.target.value)}
+                  rows={3}
+                />
 
-            {/* Word / Char count */}
-            <div className="word-count-bar">
-              <span>📊 Words: <strong>{wordCount.toLocaleString()}</strong></span>
-              <span>Characters: <strong>{charCount.toLocaleString()}</strong></span>
-              <span>⏱ ~{Math.max(1, Math.ceil(wordCount / 200))} min read</span>
-            </div>
+                {/* ── Formatting Toolbar ── */}
+                <div className="writing-toolbar">
+                  <button className="tool-btn" title="Bold" onMouseDown={e => { e.preventDefault(); execFormat('bold'); }}>
+                    <strong>B</strong>
+                  </button>
+                  <button className="tool-btn" title="Italic" onMouseDown={e => { e.preventDefault(); execFormat('italic'); }}>
+                    <em>I</em>
+                  </button>
+                  <button className="tool-btn" title="Underline" onMouseDown={e => { e.preventDefault(); execFormat('underline'); }}>
+                    <u>U</u>
+                  </button>
+                  <div className="tool-divider" />
+                  <button className="tool-btn" title="Heading" onMouseDown={e => {
+                    e.preventDefault();
+                    execFormat('formatBlock', '<h3>');
+                  }}>H</button>
+                  <button className="tool-btn" title="Quote" onMouseDown={e => {
+                    e.preventDefault();
+                    execFormat('formatBlock', '<blockquote>');
+                  }}>❝</button>
+                  <div className="tool-divider" />
+                  <button className="tool-btn" title="Bullet List" onMouseDown={e => {
+                    e.preventDefault();
+                    execFormat('insertUnorderedList');
+                  }}>• List</button>
+                  <button className="tool-btn" title="Numbered List" onMouseDown={e => {
+                    e.preventDefault();
+                    execFormat('insertOrderedList');
+                  }}>1. List</button>
+                </div>
+
+                {/* ── Block Editor ── */}
+                <div className="block-editor">
+                  {blocks.map((block, idx) => (
+                    <div key={block.id} className="block-wrapper">
+                      {block.type === 'text' ? (
+                        <div
+                          className="text-block"
+                          contentEditable
+                          suppressContentEditableWarning
+                          data-placeholder="Tell your story..."
+                          onInput={e => updateBlock(block.id, e.currentTarget.innerHTML)}
+                          dangerouslySetInnerHTML={{ __html: block.value }}
+                        />
+                      ) : (
+                        <div className={`image-block ${block.uploading ? 'uploading' : ''}`}>
+                          {block.uploading
+                            ? <div className="image-block-loader">⟳ Uploading image...</div>
+                            : <img src={block.value} alt={`Story image ${idx}`} />
+                          }
+                        </div>
+                      )}
+
+                      {/* Block controls */}
+                      {blocks.length > 1 && (
+                        <button
+                          className="block-remove-btn"
+                          onClick={() => removeBlock(block.id)}
+                          title="Remove block"
+                        >✕</button>
+                      )}
+
+                      {/* Add block buttons between blocks */}
+                      <div className="block-add-bar">
+                        <button className="block-add-btn" onClick={() => addTextBlock(idx)}>
+                          + Text
+                        </button>
+                        <label className="block-add-btn block-add-image">
+                          + Image
+                          <input
+                            type="file"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            disabled={uploadingBlockId !== null}
+                            onChange={e => {
+                              const file = e.target.files?.[0];
+                              if (file) handleInlineImageUpload(idx, file);
+                              e.target.value = '';
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Author Note */}
+                <div className="author-note-section">
+                  <label className="field-label">📝 Author Note <span className="optional">(optional)</span></label>
+                  <textarea
+                    className="author-note-input"
+                    placeholder="Share what inspired this story, a dedication, or a note to your readers..."
+                    value={authorNote}
+                    onChange={e => setAuthorNote(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+
+                {/* Word / Char count */}
+                <div className="word-count-bar">
+                  <span>📊 Words: <strong>{wordCount.toLocaleString()}</strong></span>
+                  <span>Characters: <strong>{charCount.toLocaleString()}</strong></span>
+                  <span>⏱ ~{Math.max(1, Math.ceil(wordCount / 200))} min read</span>
+                </div>
+              </>
+            )}
+
           </div>
 
           {/* ══ RIGHT: SETTINGS PANEL ══════════════════════════════════════ */}
           <aside className="settings-panel">
-            <h3 className="settings-title">⚙️ Story Settings</h3>
+            <h3 className="settings-title">
+              {activeGlobalTab === 'songs' ? '🎤 Lyrics Settings' : '⚙️ Story Settings'}
+            </h3>
+
+            {/* Optional Artist Name Input for Songs */}
+            {activeGlobalTab === 'songs' && (
+              <div className="settings-group">
+                <label className="settings-label">Artist Name <span className="optional">(optional)</span></label>
+                <input
+                  className="artist-input"
+                  type="text"
+                  placeholder="e.g. Original Singer/Band"
+                  value={artistName}
+                  onChange={e => setArtistName(e.target.value)}
+                />
+              </div>
+            )}
 
             {/* Genre */}
             <div className="settings-group">
@@ -520,41 +649,45 @@ const PostPage = ({ collapsed }) => {
                 onChange={e => setGenre(e.target.value)}
               >
                 <option value="">Select genre...</option>
-                {GENRES.map(g => (
+                {(activeGlobalTab === 'songs' ? SONG_GENRES : GENRES).map(g => (
                   <option key={g} value={g}>{g}</option>
                 ))}
               </select>
             </div>
 
-            {/* Status */}
-            <div className="settings-group">
-              <label className="settings-label">Status</label>
-              <div className="status-toggle">
-                <button
-                  className={`status-btn ${status === 'draft' ? 'active' : ''}`}
-                  onClick={() => setStatus('draft')}
-                >📄 Draft</button>
-                <button
-                  className={`status-btn ${status === 'published' ? 'active' : ''}`}
-                  onClick={() => setStatus('published')}
-                >🌐 Published</button>
-              </div>
-            </div>
+            {activeGlobalTab !== 'songs' && (
+              <>
+                {/* Status */}
+                <div className="settings-group">
+                  <label className="settings-label">Status</label>
+                  <div className="status-toggle">
+                    <button
+                      className={`status-btn ${status === 'draft' ? 'active' : ''}`}
+                      onClick={() => setStatus('draft')}
+                    >📄 Draft</button>
+                    <button
+                      className={`status-btn ${status === 'published' ? 'active' : ''}`}
+                      onClick={() => setStatus('published')}
+                    >🌐 Published</button>
+                  </div>
+                </div>
 
-            {/* Story Type */}
-            <div className="settings-group">
-              <label className="settings-label">Story Type</label>
-              <div className="status-toggle">
-                <button
-                  className={`status-btn ${storyType === 'single' ? 'active' : ''}`}
-                  onClick={() => setStoryType('single')}
-                >📖 Single</button>
-                <button
-                  className={`status-btn ${storyType === 'chapter' ? 'active' : ''}`}
-                  onClick={() => setStoryType('chapter')}
-                >📚 Chapters</button>
-              </div>
-            </div>
+                {/* Story Type */}
+                <div className="settings-group">
+                  <label className="settings-label">Story Type</label>
+                  <div className="status-toggle">
+                    <button
+                      className={`status-btn ${storyType === 'single' ? 'active' : ''}`}
+                      onClick={() => setStoryType('single')}
+                    >📖 Single</button>
+                    <button
+                      className={`status-btn ${storyType === 'chapter' ? 'active' : ''}`}
+                      onClick={() => setStoryType('chapter')}
+                    >📚 Chapters</button>
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Tags */}
             <div className="settings-group">
@@ -583,14 +716,22 @@ const PostPage = ({ collapsed }) => {
               <div className="settings-readonly">{author || 'Not logged in'}</div>
             </div>
 
-            {/* Quick actions (duplicate of top bar for convenience) */}
+            {/* Quick actions */}
             <div className="settings-actions">
-              <button className="btn-outline btn-full" onClick={handleSaveDraft} disabled={saving}>
-                💾 Save Draft
-              </button>
-              <button className="btn-publish btn-full" onClick={handlePublish} disabled={publishing}>
-                {publishing ? 'Publishing...' : '🚀 Publish Story'}
-              </button>
+              {activeGlobalTab === 'songs' ? (
+                <button className="btn-publish btn-full" onClick={handlePublishSong} disabled={publishing}>
+                  {publishing ? 'Publishing...' : '🚀 Publish Song'}
+                </button>
+              ) : (
+                <>
+                  <button className="btn-outline btn-full" onClick={handleSaveDraft} disabled={saving}>
+                    💾 Save Draft
+                  </button>
+                  <button className="btn-publish btn-full" onClick={handlePublish} disabled={publishing}>
+                    {publishing ? 'Publishing...' : '🚀 Publish Story'}
+                  </button>
+                </>
+              )}
             </div>
           </aside>
         </div>

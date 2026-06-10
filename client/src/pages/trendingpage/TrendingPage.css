@@ -13,18 +13,16 @@
    ===================================================== */
 
 .trending-container {
-  margin-left: 250px;
+  margin-left: var(--sidebar-width);
   height: 100vh;
   overflow-y: auto;
   padding: 90px 25px 25px;
   background: var(--bg-color);
-  transition: margin-left 0.3s ease;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   scrollbar-width: none;
 }
 
 .trending-container::-webkit-scrollbar { display: none; }
-
-.trending-expanded { margin-left: 110px; }
 
 /* =====================================================
    HEADING
@@ -163,12 +161,16 @@
    ===================================================== */
 
 @media (max-width: 900px) {
-  .trending-container { margin-left: 100px; }
-  .trending-expanded { margin-left: 100px; }
-  .cards-grid { grid-template-columns: 1fr; }
+  .cards-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
 }
 
-@media (max-width: 480px) {
-  .trending-container { margin-left: 82px; padding: 85px 12px 12px; }
+@media (max-width: 768px) {
+  .trending-container { padding: 90px 16px 25px; }
+}
+
+@media (max-width: 600px) {
+  .trending-container { padding: 130px 12px 25px; }
+  .cards-grid { grid-template-columns: 1fr; }
   .story-name { font-size: 20px; }
+  .tab-btn { width: 110px; height: 44px; font-size: 14px; }
 }

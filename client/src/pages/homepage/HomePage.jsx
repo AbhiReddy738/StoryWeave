@@ -25,7 +25,8 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
 
   const filteredSongs = songs.filter(song =>
     (song.title?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
-    (song.artist?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
+    (song.artistName?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
+    (song.author?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
     (song.genre?.toLowerCase().includes((searchTerm || '').toLowerCase()))
   );
 
@@ -130,18 +131,18 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
                     ? <img src={song.coverImage} alt={song.title} />
                     : <div className="song-card-placeholder">🎵</div>
                   }
-                  <div className="song-card-play-overlay">▶</div>
+                  <div className="song-card-read-overlay">📝</div>
                 </div>
                 <div className="song-card-body">
                   <div className="song-card-title">{song.title}</div>
                   <div className="song-card-artist">
-                    🎤 {song.artist || song.author}
+                    🎤 {song.artistName || song.author}
                   </div>
                   <div className="song-card-meta">
                     <span className="genre">{song.genre}</span>
                     <span className="likes">❤️ {song.likes ?? 0}</span>
                     <span className="posted-on">
-                      ▶ {(song.plays ?? 0).toLocaleString()} plays
+                      ✍️ {(song.contributions?.length ?? 0)} contributions
                     </span>
                   </div>
                   {song.summary && (

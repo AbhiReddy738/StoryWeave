@@ -177,16 +177,17 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
                     return (
                       <div 
                         key={item._id}
-                        className="spotify-song-card"
+                        className="category-song-card"
                         onClick={() => handleCardClick(item)}
                       >
                         <div className="song-card-img" style={{ backgroundImage: `url(${item.coverImage || 'https://via.placeholder.com/300'})` }} />
                         <div className="song-card-info">
                           <div className="song-title">{item.title}</div>
-                          <div className="song-artist">{item.artist}</div>
+                          <div className="song-artist">{item.artistName || item.author}</div>
                           <div className="song-meta">
                             <span className="song-genre">{item.genre}</span>
                             <span className="song-likes">❤️ {item.likes || 0}</span>
+                            <span className="song-contributions">✍️ {item.contributions?.length || 0}</span>
                           </div>
                         </div>
                         <div className="song-card-actions" onClick={e => e.stopPropagation()}>

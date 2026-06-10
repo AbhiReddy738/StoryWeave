@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './SongPage.css';
@@ -14,18 +14,6 @@ const SongPage = ({ collapsed }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Player state
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(0.8);
-  const [isLooping, setIsLooping] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  const audioRef = useRef(null);
-  const progressRef = useRef(null);
-
   // Likes & saves
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -36,6 +24,10 @@ const SongPage = ({ collapsed }) => {
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
   const [commentPosting, setCommentPosting] = useState(false);
+
+  // Contributions
+  const [contributions, setContributions] = useState([]);
+  const [contributionText, setContributionText] = useState('');
 
   // Active tab
   const [activeTab, setActiveTab] = useState('lyrics');
@@ -53,6 +45,12 @@ const SongPage = ({ collapsed }) => {
         setSong(res.data);
         setLikeCount(res.data.likes || 0);
         setComments(res.data.comments || []);
+        
+        // Sort contributions by upvotes desc on load
+        const sorted = [...(res.data.contributions || [])].sort(
+          (a, b) => b.upvotes - a.upvotes
+        );
+        setContributions(sorted);
 
         // Check if user already liked/saved
         const user = getUser();
@@ -78,90 +76,43 @@ const SongPage = ({ collapsed }) => {
     fetchSong();
   }, [id]);
 
-  // Audio event listeners
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const onDurationChange = () => setDuration(audio.duration);
-    const onEnded = () => { setIsPlaying(false); setCurrentTime(0); };
-
-    audio.addEventListener('timeupdate', onTimeUpdate);
-    audio.addEventListener('durationchange', onDurationChange);
-    audio.addEventListener('ended', onEnded);
-    audio.volume = volume;
-
-    return () => {
-      audio.removeEventListener('timeupdate', onTimeUpdate);
-      audio.removeEventListener('durationchange', onDurationChange);
-      audio.removeEventListener('ended', onEnded);
-    };
-  }, [song]);
-
-  const togglePlay = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (isPlaying) { audio.pause(); } else { audio.play(); }
-    setIsPlaying(!isPlaying);
-  };
-
-  const handleSeek = (e) => {
-    const audio = audioRef.current;
-    if (!audio || !duration) return;
-    const rect = progressRef.current.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
-    audio.currentTime = pct * duration;
-  };
-
-  const handleVolumeChange = (e) => {
-    const v = parseFloat(e.target.value);
-    setVolume(v);
-    if (audioRef.current) audioRef.current.volume = v;
-    setIsMuted(v === 0);
-  };
-
-  const toggleMute = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (isMuted) { audio.volume = volume || 0.8; setIsMuted(false); }
-    else { audio.volume = 0; setIsMuted(true); }
-  };
-
-  const skip = (secs) => {
-    if (audioRef.current) audioRef.current.currentTime += secs;
-  };
-
-  const formatTime = (t) => {
-    if (!t || isNaN(t)) return '0:00';
-    const m = Math.floor(t / 60);
-    const s = Math.floor(t % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
-
-  const progressPct = duration ? (currentTime / duration) * 100 : 0;
-
   // Like toggle
   const handleLike = async () => {
     const user = getUser();
     if (!user) return alert('Please log in to like songs.');
+    
+    // Optimistic update
+    const newLiked = !liked;
+    setLiked(newLiked);
+    setLikeCount(prev => newLiked ? prev + 1 : prev - 1);
+
     try {
       const res = await axios.put(`${API}/like/${id}`, { userId: user._id });
       setLiked(res.data.liked);
       setLikeCount(res.data.likes);
-    } catch { /* silent */ }
+    } catch {
+      // Revert on failure
+      setLiked(!newLiked);
+      setLikeCount(prev => newLiked ? prev - 1 : prev + 1);
+    }
   };
 
   // Save toggle
   const handleSave = async () => {
     const user = getUser();
     if (!user) return alert('Please log in to save songs.');
+
+    const newSaved = !saved;
+    setSaved(newSaved);
+
     try {
-      const res = await axios.put(`${API}/save/${id}`, { userId: user._id });
-      setSaved(res.data.saved);
-      setSaveFeedback(res.data.saved ? '🎵 Song Saved!' : '🗑 Song Removed');
+      const endpoint = newSaved ? 'save' : 'unsave';
+      await axios.post(`${API}/${endpoint}/${id}`, { userId: user._id });
+      setSaveFeedback(newSaved ? '🎵 Song Saved!' : '🗑 Song Removed');
       setTimeout(() => setSaveFeedback(''), 2500);
-    } catch { /* silent */ }
+    } catch {
+      setSaved(!newSaved);
+    }
   };
 
   // Post comment
@@ -181,13 +132,83 @@ const SongPage = ({ collapsed }) => {
     setCommentPosting(false);
   };
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen?.();
-      setIsFullscreen(true);
+  // Share / Copy Link
+  const handleShare = async () => {
+    const shareData = {
+      title: song?.title || 'StoryWeave Lyrics',
+      text: `Read "${song?.title}" by ${song?.artistName || song?.author} on StoryWeave!`,
+      url: window.location.href
+    };
+    if (navigator.share && navigator.canShare?.(shareData)) {
+      try {
+        await navigator.share(shareData);
+        setSaveFeedback('🔗 Lyrics shared!');
+        setTimeout(() => setSaveFeedback(''), 2500);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          navigator.clipboard.writeText(window.location.href);
+          setSaveFeedback('📋 Link copied!');
+          setTimeout(() => setSaveFeedback(''), 2500);
+        }
+      }
     } else {
-      document.exitFullscreen?.();
-      setIsFullscreen(false);
+      navigator.clipboard.writeText(window.location.href);
+      setSaveFeedback('📋 Link copied!');
+      setTimeout(() => setSaveFeedback(''), 2500);
+    }
+  };
+
+  // Submit contribution
+  const handleContribution = async () => {
+    const user = getUser();
+    if (!user) return alert('Please log in to submit contributions.');
+    if (!contributionText.trim()) return;
+    try {
+      const res = await axios.post(`${API}/contribution/${id}`, {
+        author: user.username,
+        text: contributionText.trim()
+      });
+      setContributions(res.data.contributions || []);
+      setContributionText('');
+    } catch { /* silent */ }
+  };
+
+  // Upvote contribution
+  const handleUpvote = async (contributionId) => {
+    const user = getUser();
+    if (!user) return alert('Please log in to upvote contributions.');
+
+    // Optimistic toggle
+    const alreadyUpvoted = contributions
+      .find(c => (c._id || c.id)?.toString() === contributionId?.toString())
+      ?.upvotedBy?.some(uid => uid.toString() === user._id);
+
+    setContributions(prev =>
+      [...prev.map(c => {
+        if ((c._id || c.id)?.toString() !== contributionId?.toString()) return c;
+        const nowUpvoted = !(c.upvotedBy || []).some(uid => uid.toString() === user._id);
+        return {
+          ...c,
+          upvotes: nowUpvoted ? c.upvotes + 1 : Math.max(0, c.upvotes - 1),
+          upvotedBy: nowUpvoted
+            ? [...(c.upvotedBy || []), user._id]
+            : (c.upvotedBy || []).filter(uid => uid.toString() !== user._id)
+        };
+      })].sort((a, b) => b.upvotes - a.upvotes)
+    );
+
+    try {
+      const res = await axios.put(
+        `${API}/contribution/upvote/${id}/${contributionId}`,
+        { userId: user._id }
+      );
+      setContributions(res.data.contributions || []);
+    } catch {
+      // Revert on failure
+      try {
+        const res = await axios.get(`${API}/${id}`);
+        setContributions(res.data.contributions || []);
+      } catch {}
     }
   };
 
@@ -208,16 +229,6 @@ const SongPage = ({ collapsed }) => {
 
   return (
     <div className={`song-page ${collapsed ? 'song-page-expanded' : ''}`}>
-      {/* Hidden audio element */}
-      {song.audioUrl && (
-        <audio
-          ref={audioRef}
-          src={song.audioUrl}
-          loop={isLooping}
-          preload="metadata"
-        />
-      )}
-
       {/* Save feedback toast */}
       {saveFeedback && <div className="song-toast">{saveFeedback}</div>}
 
@@ -241,11 +252,10 @@ const SongPage = ({ collapsed }) => {
           <div className="song-hero-info">
             <span className="song-genre-badge">{song.genre}</span>
             <h1 className="song-title">{song.title}</h1>
-            <p className="song-artist">by {song.artist || song.author}</p>
-            {song.album && <p className="song-album">📀 {song.album}</p>}
+            <p className="song-artist">by {song.artistName || song.author}</p>
             <div className="song-meta-row">
-              <span>🎵 {likeCount.toLocaleString()} likes</span>
-              <span>▶ {(song.plays || 0).toLocaleString()} plays</span>
+              <span>❤️ {likeCount.toLocaleString()} likes</span>
+              <span>✍️ {contributions.length} contributions</span>
               <span>💬 {comments.length} comments</span>
               <span>📅 {new Date(song.createdAt).toLocaleDateString()}</span>
             </div>
@@ -262,72 +272,16 @@ const SongPage = ({ collapsed }) => {
               >
                 {saved ? '🔖 Saved' : '📌 Save'}
               </button>
+              <button
+                className="song-action-btn"
+                onClick={handleShare}
+              >
+                🔗 Share
+              </button>
             </div>
           </div>
         </div>
       </div>
-
-      {/* ── PLAYER BAR ── */}
-      {song.audioUrl && (
-        <div className="song-player-bar">
-          <div className="player-inner">
-            {/* Time */}
-            <span className="player-time">{formatTime(currentTime)}</span>
-
-            {/* Progress track */}
-            <div
-              className="player-progress"
-              ref={progressRef}
-              onClick={handleSeek}
-            >
-              <div
-                className="player-progress-fill"
-                style={{ width: `${progressPct}%` }}
-              />
-              <div
-                className="player-progress-thumb"
-                style={{ left: `${progressPct}%` }}
-              />
-            </div>
-
-            <span className="player-time">{formatTime(duration)}</span>
-
-            {/* Controls */}
-            <div className="player-controls">
-              <button className="player-ctrl-btn" onClick={() => skip(-10)} title="Back 10s">⏮</button>
-              <button className="player-play-btn" onClick={togglePlay}>
-                {isPlaying ? '⏸' : '▶'}
-              </button>
-              <button className="player-ctrl-btn" onClick={() => skip(10)} title="Forward 10s">⏭</button>
-              <button
-                className={`player-ctrl-btn ${isLooping ? 'active-ctrl' : ''}`}
-                onClick={() => setIsLooping(!isLooping)}
-                title="Loop"
-              >🔁</button>
-            </div>
-
-            {/* Volume */}
-            <div className="player-volume">
-              <button className="player-ctrl-btn" onClick={toggleMute}>
-                {isMuted ? '🔇' : volume < 0.4 ? '🔉' : '🔊'}
-              </button>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={isMuted ? 0 : volume}
-                onChange={handleVolumeChange}
-                className="volume-slider"
-              />
-            </div>
-
-            <button className="player-ctrl-btn" onClick={toggleFullscreen} title="Fullscreen">
-              {isFullscreen ? '⛶' : '⛶'}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ── MAIN CONTENT ── */}
       <div className="song-main-content">
@@ -336,18 +290,23 @@ const SongPage = ({ collapsed }) => {
         <div className="song-content-left">
 
           <div className="song-tabs">
-            {['lyrics', 'comments'].map(tab => (
+            {['lyrics', 'contributions', 'comments'].map(tab => (
               <button
                 key={tab}
                 className={`song-tab-btn ${activeTab === tab ? 'song-tab-active' : ''}`}
                 onClick={() => setActiveTab(tab)}
               >
-                {tab === 'lyrics' ? '🎤 Lyrics' : `💬 Comments (${comments.length})`}
+                {tab === 'lyrics'
+                  ? '🎤 Lyrics'
+                  : tab === 'contributions'
+                  ? `🎶 Contributions (${contributions.length})`
+                  : `💬 Comments (${comments.length})`
+                }
               </button>
             ))}
           </div>
 
-          {/* Lyrics */}
+          {/* Lyrics Tab */}
           {activeTab === 'lyrics' && (
             <div className="song-lyrics-area">
               {song.lyrics ? (
@@ -361,7 +320,77 @@ const SongPage = ({ collapsed }) => {
             </div>
           )}
 
-          {/* Comments */}
+          {/* Contributions Tab */}
+          {activeTab === 'contributions' && (
+            <div className="song-contributions-area">
+              <div className="contribution-input-box">
+                <textarea
+                  className="contribution-textarea"
+                  placeholder="Suggest a lyric, verse, or continuation..."
+                  value={contributionText}
+                  onChange={e => setContributionText(e.target.value)}
+                  rows={4}
+                />
+                <button
+                  className="contribution-submit-btn"
+                  onClick={handleContribution}
+                  disabled={!contributionText.trim()}
+                >
+                  🚀 Submit Contribution
+                </button>
+              </div>
+
+              <div className="contributions-list">
+                {contributions.length === 0 ? (
+                  <div className="song-empty-tab">
+                    <span>📝</span>
+                    <p>No contributions yet. Be the first to add a verse!</p>
+                  </div>
+                ) : (
+                  contributions.map((item, idx) => {
+                    const cid = item._id || item.id;
+                    const isTop = idx === 0 && item.upvotes > 0;
+                    const user = getUser();
+                    const hasUpvoted = user?._id
+                      ? (item.upvotedBy || []).some(uid => uid.toString() === user._id)
+                      : false;
+
+                    return (
+                      <div
+                        key={cid}
+                        className={`contribution-card ${isTop ? 'top-contribution' : ''}`}
+                      >
+                        {isTop && (
+                          <div className="top-badge">🏆 Top Contribution</div>
+                        )}
+
+                        <div className="contribution-header">
+                          <div className="contribution-meta">
+                            <span className="contribution-author">✍️ {item.author}</span>
+                            <span className="contribution-date">
+                              {new Date(item.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <span className="upvotes-count">↑ {item.upvotes} Upvotes</span>
+                        </div>
+
+                        <p className="contribution-text">{item.text}</p>
+
+                        <button
+                          className={`upvote-btn ${hasUpvoted ? 'upvoted' : ''}`}
+                          onClick={() => handleUpvote(cid)}
+                        >
+                          {hasUpvoted ? '👍 Upvoted' : '👍 Upvote'}
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Comments Tab */}
           {activeTab === 'comments' && (
             <div className="song-comments-area">
               <div className="comment-input-box">
@@ -431,7 +460,7 @@ const SongPage = ({ collapsed }) => {
                   </div>
                   <div className="related-song-info">
                     <p className="related-song-title">{rs.title}</p>
-                    <p className="related-song-artist">{rs.artist || rs.author}</p>
+                    <p className="related-song-artist">{rs.artistName || rs.author}</p>
                     <span className="related-song-genre">{rs.genre}</span>
                   </div>
                 </div>
