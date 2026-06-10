@@ -19,6 +19,78 @@
 .post-container::-webkit-scrollbar { display: none; }
 
 /* =====================================================
+   CONTENT TYPE TOGGLE (Stories / Songs)
+   ===================================================== */
+
+.post-type-toggle-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.post-type-toggle {
+  display: inline-flex;
+  background: var(--card-color);
+  border: 1.5px solid var(--border-color);
+  border-radius: 50px;
+  padding: 5px;
+  gap: 4px;
+  box-shadow: 0 4px 20px var(--shadow-color);
+}
+
+.post-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 32px;
+  border: none;
+  border-radius: 44px;
+  background: transparent;
+  color: var(--secondary-text);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  position: relative;
+  font-family: inherit;
+  letter-spacing: 0.2px;
+}
+
+.post-toggle-btn:hover {
+  color: var(--text-color);
+  background: var(--hover-color);
+}
+
+.post-toggle-btn.active {
+  background: var(--accent-gradient);
+  color: var(--accent-text);
+  box-shadow: 0 4px 14px var(--shadow-color);
+  font-weight: 700;
+}
+
+.post-toggle-btn.active:hover {
+  filter: brightness(1.08);
+}
+
+/* Mobile: make toggle full width */
+@media (max-width: 480px) {
+  .post-type-toggle-container {
+    padding: 0 4px;
+  }
+  .post-type-toggle {
+    width: 100%;
+    justify-content: stretch;
+  }
+  .post-toggle-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 11px 16px;
+    font-size: 14px;
+  }
+}
+
+/* =====================================================
    TOP BAR
    ===================================================== */
 
