@@ -44,8 +44,6 @@ const RegisterPage = () => {
         }
       )
 
-      console.log(res.data)
-
       localStorage.setItem("token", "registered")
       localStorage.setItem("username", username)
 
@@ -54,13 +52,10 @@ const RegisterPage = () => {
       setPassword("")
       setConfirmPassword("")
 
-      alert("User Registered")
-
       navigate("/")
       window.location.reload()
 
     } catch (err) {
-      console.log(err)
 
       if (err.response?.data?.message) {
         setError(err.response.data.message)

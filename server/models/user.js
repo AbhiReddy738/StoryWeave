@@ -42,6 +42,30 @@ const userSchema = new mongoose.Schema({
             type:mongoose.Schema.Types.ObjectId,
             ref:"Story"
         }
+    ],
+
+    savedSongs:[
+        {
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"Song",
+            default:[]
+        }
+    ],
+
+    likedSongs:[
+        {
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"Song",
+            default:[]
+        }
+    ],
+
+    uploadedSongs:[
+        {
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"Song",
+            default:[]
+        }
     ]
 });
 

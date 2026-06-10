@@ -3,181 +3,158 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './HomePage.css';
 
-const HomePage = ({
-  collapsed,
-  searchTerm
-}) => {
+const STORY_API = 'https://storyweave-fxdt.onrender.com/api/story';
+const SONG_API  = 'https://storyweave-fxdt.onrender.com/api/song';
 
+const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }) => {
   const navigate = useNavigate();
 
   const [stories, setStories] = useState([]);
-  const [activeTab, setActiveTab] = useState('stories');
+  const [songs,   setSongs]   = useState([]);
+  const [loadingStories, setLoadingStories] = useState(true);
+  const [loadingSongs,   setLoadingSongs]   = useState(true);
 
-  const filteredStories = stories.filter(
-    (story) =>
-      story.title?.toLowerCase()
-        .includes(
-          searchTerm.toLowerCase()
-        ) ||
+  // Active tab defaults to prop (global state) or 'stories'
+  const activeTab = activeGlobalTab || 'stories';
 
-      story.author?.toLowerCase()
-        .includes(
-          searchTerm.toLowerCase()
-        ) ||
+  const filteredStories = stories.filter(story =>
+    (story.title?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
+    (story.author?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
+    (story.genre?.toLowerCase().includes((searchTerm || '').toLowerCase()))
+  );
 
-      story.genre?.toLowerCase()
-        .includes(
-          searchTerm.toLowerCase()
-        )
+  const filteredSongs = songs.filter(song =>
+    (song.title?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
+    (song.artist?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
+    (song.genre?.toLowerCase().includes((searchTerm || '').toLowerCase()))
   );
 
   useEffect(() => {
-
     const fetchStories = async () => {
-
       try {
-
-        const response = await axios.get(
-          'https://storyweave-fxdt.onrender.com/api/story/all'
-        );
-
-        setStories(response.data);
-
-      } catch (err) {
-
-        console.log(err);
-
-      }
-
+        const res = await axios.get(`${STORY_API}/all`);
+        setStories(res.data);
+      } catch { /* silent */ }
+      finally { setLoadingStories(false); }
     };
-
     fetchStories();
+  }, []);
 
+  useEffect(() => {
+    const fetchSongs = async () => {
+      try {
+        const res = await axios.get(`${SONG_API}/all`);
+        setSongs(res.data);
+      } catch { /* silent */ }
+      finally { setLoadingSongs(false); }
+    };
+    fetchSongs();
   }, []);
 
   return (
-
     <div className="page-container">
+      <main className={`main-container ${collapsed ? 'main-expanded' : ''}`}>
 
-      <main
-        className={`main-container ${
-          collapsed
-            ? 'main-expanded'
-            : ''
-        }`}
-      >
-
+        {/* ── Global Toggle ── */}
         <div className="home-tabs">
-
           <button
-            className={
-              activeTab === 'stories'
-                ? 'tab-btn active-tab'
-                : 'tab-btn'
-            }
-            onClick={() =>
-              setActiveTab('stories')
-            }
+            className={`tab-btn ${activeTab === 'stories' ? 'active-tab' : ''}`}
+            onClick={() => setActiveGlobalTab('stories')}
           >
-            Stories
+            📖 Stories
           </button>
-
           <button
-            className={
-              activeTab === 'songs'
-                ? 'tab-btn active-tab'
-                : 'tab-btn'
-            }
-            onClick={() =>
-              setActiveTab('songs')
-            }
+            className={`tab-btn ${activeTab === 'songs' ? 'active-tab' : ''}`}
+            onClick={() => setActiveGlobalTab('songs')}
           >
-            Songs
+            🎵 Songs
           </button>
-
         </div>
 
-        {activeTab === 'stories' &&
-         filteredStories.length === 0 && (
-
-          <div className="empty-songs">
-            🔍 No Stories Found
-          </div>
-
+        {/* ── STORIES TAB ── */}
+        {activeTab === 'stories' && (
+          <>
+            {loadingStories && (
+              <div className="empty-songs">⏳ Loading stories...</div>
+            )}
+            {!loadingStories && filteredStories.length === 0 && (
+              <div className="empty-songs">🔍 No Stories Found</div>
+            )}
+            {filteredStories.map(story => (
+              <div
+                key={story._id}
+                className="card-container"
+                onClick={() => navigate(`/card/${story.slug}-${story._id}`)}
+              >
+                {story.coverImage && (
+                  <div className="card-cover">
+                    <img src={story.coverImage} alt={story.title} />
+                  </div>
+                )}
+                <div className="story-name">{story.title}</div>
+                <div className="middle-box">
+                  <span className="genre" onClick={e => e.stopPropagation()}>
+                    {story.genre}
+                  </span>
+                  <span className="likes">❤️ {story.likedBy?.length ?? story.likes ?? 0}</span>
+                  <span className="posted-on">
+                    📅 {new Date(story.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="summary">
+                  <p className="summary-heading">Summary</p>
+                  <p className="summary-lines">{story.summary}</p>
+                </div>
+              </div>
+            ))}
+          </>
         )}
 
-        {activeTab === 'stories' &&
-
-          filteredStories.map((story) => (
-
-            <div
-              key={story._id}
-              className="card-container"
-              onClick={() =>
-                navigate(
-                  `/card/${story.slug}-${story._id}`
-                )
-              }
-            >
-
-              <div className="story-name">
-                {story.title}
-              </div>
-
-              <div className="middle-box">
-
-                <span
-                  className="genre"
-                  onClick={(e) =>
-                    e.stopPropagation()
-                  }
-                >
-                  {story.genre}
-                </span>
-
-                <span className="likes">
-                  ❤️ {story.likes}
-                </span>
-
-                <span className="posted-on">
-                  📅 {
-                    new Date(
-                      story.createdAt
-                    ).toLocaleDateString()
-                  }
-                </span>
-
-              </div>
-
-              <div className="summary">
-
-                <p className="summary-heading">
-                  Summary
-                </p>
-
-                <p className="summary-lines">
-                  {story.summary}
-                </p>
-
-              </div>
-
-            </div>
-
-          ))
-        }
-
+        {/* ── SONGS TAB ── */}
         {activeTab === 'songs' && (
-
-          <div className="empty-songs">
-            🎵 No Songs Available Yet
-          </div>
-
+          <>
+            {loadingSongs && (
+              <div className="empty-songs">⏳ Loading songs...</div>
+            )}
+            {!loadingSongs && filteredSongs.length === 0 && (
+              <div className="empty-songs">🎵 No Songs Found</div>
+            )}
+            {filteredSongs.map(song => (
+              <div
+                key={song._id}
+                className="song-card"
+                onClick={() => navigate(`/song/${song._id}`)}
+              >
+                <div className="song-card-cover">
+                  {song.coverImage
+                    ? <img src={song.coverImage} alt={song.title} />
+                    : <div className="song-card-placeholder">🎵</div>
+                  }
+                  <div className="song-card-play-overlay">▶</div>
+                </div>
+                <div className="song-card-body">
+                  <div className="song-card-title">{song.title}</div>
+                  <div className="song-card-artist">
+                    🎤 {song.artist || song.author}
+                  </div>
+                  <div className="song-card-meta">
+                    <span className="genre">{song.genre}</span>
+                    <span className="likes">❤️ {song.likes ?? 0}</span>
+                    <span className="posted-on">
+                      ▶ {(song.plays ?? 0).toLocaleString()} plays
+                    </span>
+                  </div>
+                  {song.summary && (
+                    <p className="song-card-summary">{song.summary}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </>
         )}
 
       </main>
-
     </div>
-
   );
 };
 
