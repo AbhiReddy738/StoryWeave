@@ -1,30 +1,18 @@
-import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import './Header.css'
 import logo from '../../assets/storyweaveLogo.jpeg'
 import { useTheme } from '../../context/ThemeContext.jsx'
+import { useAuth } from '../../context/AuthContext.jsx'
 
 const Header = ({searchTerm, setSearchTerm, sidebarOpen, setSidebarOpen}) => {
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const navigate = useNavigate()
   const { theme, toggleTheme } = useTheme()
-
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-
-    if (token) {
-      setIsLoggedIn(true)
-    }
-  }, [])
+  const { isLoggedIn, logout } = useAuth()
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('username')
-    localStorage.removeItem('user') // also remove user object if present
-
+    logout()
     navigate('/login')
-    window.location.reload()
   }
 
   return (

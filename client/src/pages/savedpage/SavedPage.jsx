@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
+import LazyImage from '../../components/LazyImage';
 import './SavedPage.css';
 
 const SavedPage = ({ collapsed }) => {
@@ -24,10 +26,10 @@ const SavedPage = ({ collapsed }) => {
       const userId = userObj._id;
 
       try {
-        const storiesResponse = await axios.get(`https://storyweave-fxdt.onrender.com/api/story/saved/${userId}`);
+        const storiesResponse = await axios.get(`${API_BASE_URL}/story/saved/${userId}`);
         setSavedStories(storiesResponse.data);
 
-        const songsResponse = await axios.get(`https://storyweave-fxdt.onrender.com/api/song/saved/${userId}`);
+        const songsResponse = await axios.get(`${API_BASE_URL}/song/saved/${userId}`);
         setSavedSongs(songsResponse.data);
       } catch (err) {
         setError("Error loading saved items");
@@ -46,7 +48,7 @@ const SavedPage = ({ collapsed }) => {
     const userId = userObj._id;
 
     try {
-      await axios.post(`https://storyweave-fxdt.onrender.com/api/story/unsave/${id}`, { userId });
+      await axios.post(`${API_BASE_URL}/story/unsave/${id}`, { userId });
       setSavedStories(savedStories.filter(story => (story._id || story.id) !== id));
     } catch (err) {
       // silent
@@ -60,7 +62,7 @@ const SavedPage = ({ collapsed }) => {
     const userId = userObj._id;
 
     try {
-      await axios.post(`https://storyweave-fxdt.onrender.com/api/song/unsave/${id}`, { userId });
+      await axios.post(`${API_BASE_URL}/song/unsave/${id}`, { userId });
       setSavedSongs(savedSongs.filter(song => (song._id || song.id) !== id));
     } catch (err) {
       // silent
@@ -120,43 +122,44 @@ const SavedPage = ({ collapsed }) => {
                   savedStories.map((story) => (
                     <div
                       key={story._id || story.id}
-                      className="saved-card"
+                      className="saved-card book-card"
                       onClick={() => navigate(`/card/${story.slug}-${story._id}`)}
                       style={{ cursor: 'pointer' }}
                     >
-                      <div className="story-name">
-                        {story.title}
-                      </div>
-
-                      <div className="middle-box">
-                        <span className="genre" onClick={e => e.stopPropagation()}>
+                      <div className="card-cover">
+                        <LazyImage 
+                          src={story.coverImage} 
+                          alt={story.title} 
+                        />
+                        <div className="card-cover-overlay"></div>
+                        <span className="genre-badge" onClick={e => e.stopPropagation()}>
                           {story.genre}
                         </span>
-
-                        <span className="likes">
-                          ❤️ {story.likes}
-                        </span>
                       </div>
-
-                      <div className="summary">
-                        <p className="summary-heading">
-                          Summary
-                        </p>
-
-                        <p className="summary-lines">
-                          {story.summary}
-                        </p>
+                      <div className="book-card-body">
+                        <div className="story-name" title={story.title}>{story.title}</div>
+                        <div className="story-author">By {story.author || 'Unknown'}</div>
+                        <div className="middle-box">
+                          <span className="likes">❤️ {story.likedBy?.length ?? story.likes ?? 0}</span>
+                          <span className="comments-count">💬 {story.comments?.length || 0}</span>
+                          <span className="posted-on">
+                            📅 {new Date(story.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="summary">
+                          <p className="summary-heading">Summary</p>
+                          <p className="summary-lines">{story.summary}</p>
+                        </div>
+                        <button
+                          className="remove-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeStory(story._id || story.id);
+                          }}
+                        >
+                          Remove
+                        </button>
                       </div>
-
-                      <button
-                        className="remove-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeStory(story._id || story.id);
-                        }}
-                      >
-                        Remove
-                      </button>
                     </div>
                   ))
                 ) : (

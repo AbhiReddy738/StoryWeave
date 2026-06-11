@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
+import LazyImage from '../../components/LazyImage';
 import './HomePage.css';
 
-const STORY_API = 'https://storyweave-fxdt.onrender.com/api/story';
-const SONG_API  = 'https://storyweave-fxdt.onrender.com/api/song';
+const STORY_API = `${API_BASE_URL}/story`;
+const SONG_API  = `${API_BASE_URL}/song`;
 
 const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }) => {
   const navigate = useNavigate();
@@ -84,27 +86,33 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
             {filteredStories.map(story => (
               <div
                 key={story._id}
-                className="card-container"
+                className="card-container book-card"
                 onClick={() => navigate(`/card/${story.slug}-${story._id}`)}
               >
-                {story.coverImage && (
-                  <div className="card-cover">
-                    <img src={story.coverImage} alt={story.title} />
-                  </div>
-                )}
-                <div className="story-name">{story.title}</div>
-                <div className="middle-box">
-                  <span className="genre" onClick={e => e.stopPropagation()}>
+                <div className="card-cover">
+                  <LazyImage 
+                    src={story.coverImage} 
+                    alt={story.title} 
+                  />
+                  <div className="card-cover-overlay"></div>
+                  <span className="genre-badge" onClick={e => e.stopPropagation()}>
                     {story.genre}
                   </span>
-                  <span className="likes">❤️ {story.likedBy?.length ?? story.likes ?? 0}</span>
-                  <span className="posted-on">
-                    📅 {new Date(story.createdAt).toLocaleDateString()}
-                  </span>
                 </div>
-                <div className="summary">
-                  <p className="summary-heading">Summary</p>
-                  <p className="summary-lines">{story.summary}</p>
+                <div className="book-card-body">
+                  <div className="story-name" title={story.title}>{story.title}</div>
+                  <div className="story-author">By {story.author || 'Unknown'}</div>
+                  <div className="middle-box">
+                    <span className="likes">❤️ {story.likedBy?.length ?? story.likes ?? 0}</span>
+                    <span className="comments-count">💬 {story.comments?.length || 0}</span>
+                    <span className="posted-on">
+                      📅 {new Date(story.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="summary">
+                    <p className="summary-heading">Summary</p>
+                    <p className="summary-lines">{story.summary}</p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -127,10 +135,7 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
                 onClick={() => navigate(`/song/${song._id}`)}
               >
                 <div className="song-card-cover">
-                  {song.coverImage
-                    ? <img src={song.coverImage} alt={song.title} />
-                    : <div className="song-card-placeholder">🎵</div>
-                  }
+                  <LazyImage src={song.coverImage} alt={song.title} />
                   <div className="song-card-read-overlay">📝</div>
                 </div>
                 <div className="song-card-body">

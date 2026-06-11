@@ -1,10 +1,12 @@
 import { useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
+import LazyImage from '../../components/LazyImage';
 import './CardPage.css';
 import StoryReader from '../../components/storyreader/StoryReader';
 
-const API = 'https://storyweave-fxdt.onrender.com/api/story';
+const API = `${API_BASE_URL}/story`;
 
 const CardPage = ({ collapsed }) => {
 
@@ -237,8 +239,8 @@ const CardPage = ({ collapsed }) => {
       return content.map((block, idx) => {
         if (block.type === 'image') {
           return (
-            <figure key={idx} className="content-image-block">
-              <img src={block.value} alt={`Story image ${idx + 1}`} />
+            <figure key={idx} className="content-image-block" style={{ height: '350px' }}>
+              <LazyImage src={block.value} alt={`Story image ${idx + 1}`} />
             </figure>
           );
         }
@@ -265,12 +267,13 @@ const CardPage = ({ collapsed }) => {
       <div className={`story-section ${collapsed ? 'story-expanded' : ''}`}>
 
         {/* Cover Image Hero */}
-        {story.coverImage && (
-          <div
-            className="story-cover-hero"
-            style={{ backgroundImage: `url(${story.coverImage})` }}
+        <div className="story-cover-hero-container">
+          <LazyImage 
+            src={story.coverImage} 
+            alt={story.title} 
+            className="story-cover-hero-img"
           />
-        )}
+        </div>
 
         <h1 className="story-title">{story.title}</h1>
 

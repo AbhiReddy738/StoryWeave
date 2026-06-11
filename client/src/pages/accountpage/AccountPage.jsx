@@ -1,9 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext.jsx';
+import LazyImage from '../../components/LazyImage';
 import './AccountPage.css';
 
 const AccountPage = ({ collapsed }) => {
+  const { user: authUser, token, login: updateAuthSession } = useAuth();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,25 +35,13 @@ const AccountPage = ({ collapsed }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const userStr = localStorage.getItem("user");
-    if (!userStr) {
+    if (authUser && authUser._id) {
+      setUserId(authUser._id);
+    } else {
       setError("Please log in to access your account.");
       setLoading(false);
-      return;
     }
-    try {
-      const userObj = JSON.parse(userStr);
-      if (userObj && userObj._id) {
-        setUserId(userObj._id);
-      } else {
-        setError("Invalid user session. Please log in again.");
-        setLoading(false);
-      }
-    } catch (e) {
-      setError("Failed to parse user session. Please log in again.");
-      setLoading(false);
-    }
-  }, []);
+  }, [authUser]);
 
   useEffect(() => {
     if (!userId) return;
@@ -58,7 +50,7 @@ const AccountPage = ({ collapsed }) => {
       setLoading(true);
       setError('');
       try {
-        const profileRes = await axios.get(`https://storyweave-fxdt.onrender.com/api/user/${userId}`);
+        const profileRes = await axios.get(`${API_BASE_URL}/user/${userId}`);
         const user = profileRes.data;
         setProfile({
           name: user.username || '',
@@ -68,7 +60,7 @@ const AccountPage = ({ collapsed }) => {
           profileImage: user.profileImage || ''
         });
 
-        const postsRes = await axios.get(`https://storyweave-fxdt.onrender.com/api/user/posts/${userId}`);
+        const postsRes = await axios.get(`${API_BASE_URL}/user/posts/${userId}`);
         setPosts(postsRes.data);
       } catch (err) {
         console.error(err);
@@ -92,7 +84,7 @@ const AccountPage = ({ collapsed }) => {
     if (editing) {
       try {
         setLoading(true);
-        const res = await axios.put(`https://storyweave-fxdt.onrender.com/api/user/update/${userId}`, {
+        const res = await axios.put(`${API_BASE_URL}/user/update/${userId}`, {
           username: profile.name,
           authorName: profile.author,
           interests: profile.interested,
@@ -100,13 +92,8 @@ const AccountPage = ({ collapsed }) => {
           profileImage: profile.profileImage
         });
         
-        // Update localStorage user if username changed
-        const userStr = localStorage.getItem("user");
-        if (userStr) {
-          const userObj = JSON.parse(userStr);
-          userObj.username = profile.name;
-          localStorage.setItem("user", JSON.stringify(userObj));
-        }
+        // Sync with Auth Context
+        updateAuthSession(token, res.data.user);
 
         showFeedback(res.data.message || 'Profile Saved', 'success');
       } catch (err) {
@@ -123,7 +110,7 @@ const AccountPage = ({ collapsed }) => {
       return;
     }
     try {
-      await axios.delete(`https://storyweave-fxdt.onrender.com/api/story/delete/${id}`);
+      await axios.delete(`${API_BASE_URL}/story/delete/${id}`);
       setPosts(posts.filter(post => post._id !== id));
       showFeedback("Story Deleted Successfully", 'success');
     } catch (err) {
@@ -146,7 +133,7 @@ const AccountPage = ({ collapsed }) => {
 
     try {
       setLoading(true);
-      const uploadRes = await axios.post("https://storyweave-fxdt.onrender.com/api/user/upload", formData, {
+      const uploadRes = await axios.post(`${API_BASE_URL}/user/upload`, formData, {
         headers: {
           "Content-Type": "multipart/form-data"
         }
@@ -224,9 +211,10 @@ const AccountPage = ({ collapsed }) => {
         <div className="profile-card">
           <div className="profile-left">
             <div className="profile-photo">
-              <img
-                src={profile.profileImage || "https://via.placeholder.com/250"}
+              <LazyImage
+                src={profile.profileImage}
                 alt="Profile"
+                fallback="https://via.placeholder.com/250"
               />
             </div>
             
@@ -301,30 +289,37 @@ const AccountPage = ({ collapsed }) => {
             </div>
           ) : (
             posts.map((post) => (
-              <div key={post._id} className="post-card">
-                <div className="story-name">{post.title}</div>
-
-                <div className="middle-box">
-                  <span className="genre">{post.genre}</span>
-                  <span className="likes">❤️ {post.likes}</span>
-                  {post.createdAt && (
-                    <span className="posted-on" style={{ color: 'var(--secondary-text)', fontSize: '13px', marginLeft: 'auto' }}>
-                      {new Date(post.createdAt).toLocaleDateString()}
-                    </span>
-                  )}
+              <div 
+                key={post._id} 
+                className="post-card book-thumbnail-card"
+                onClick={() => navigate(`/card/${post.slug}-${post._id}`)}
+              >
+                <div className="post-card-thumbnail">
+                  <LazyImage 
+                    src={post.coverImage} 
+                    alt={post.title} 
+                  />
                 </div>
-
-                <div className="summary">
-                  <p className="summary-heading">Summary</p>
-                  <p className="summary-lines">{post.summary}</p>
+                <div className="post-card-details">
+                  <div className="story-name" title={post.title}>{post.title}</div>
+                  <div className="middle-box">
+                    <span className="genre">{post.genre}</span>
+                    {post.createdAt && (
+                      <span className="posted-on">
+                        📅 {new Date(post.createdAt).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    className="delete-icon-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(post._id);
+                    }}
+                  >
+                    Delete
+                  </button>
                 </div>
-
-                <button
-                  className="delete-icon-btn"
-                  onClick={() => handleDelete(post._id)}
-                >
-                  Delete
-                </button>
               </div>
             ))
           )}

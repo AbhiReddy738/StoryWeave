@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
+import LazyImage from '../../components/LazyImage';
 import './TrendingPage.css';
 
 const TrendingPage = ({ collapsed }) => {
@@ -14,7 +16,7 @@ const TrendingPage = ({ collapsed }) => {
     const fetchStories = async () => {
       try {
         const response = await axios.get(
-          'https://storyweave-fxdt.onrender.com/api/story/all'
+          `${API_BASE_URL}/story/all`
         );
         const sortedStories = response.data.sort(
           (a, b) => b.likes - a.likes
@@ -28,7 +30,7 @@ const TrendingPage = ({ collapsed }) => {
     const fetchSongs = async () => {
       try {
         const response = await axios.get(
-          'https://storyweave-fxdt.onrender.com/api/song/trending'
+          `${API_BASE_URL}/song/trending`
         );
         setSongs(response.data);
       } catch (err) {
@@ -80,40 +82,47 @@ const TrendingPage = ({ collapsed }) => {
             {stories.map((story) => (
               <div
                 key={story._id}
-                className="card-container"
+                className="card-container book-card"
                 onClick={() =>
                   navigate(
                     `/card/${story.slug}-${story._id}`
                   )
                 }
               >
-                <div className="story-name">
-                  {story.title}
-                </div>
-
-                <div className="middle-box">
-                  <span className="genre">
+                <div className="card-cover">
+                  <LazyImage 
+                    src={story.coverImage} 
+                    alt={story.title} 
+                  />
+                  <div className="card-cover-overlay"></div>
+                  <span className="genre-badge" onClick={e => e.stopPropagation()}>
                     {story.genre}
                   </span>
-                  <span className="likes">
-                    ❤️ {story.likes}
-                  </span>
-                  <span className="posted-on">
-                    📅 {
-                      new Date(
-                        story.createdAt
-                      ).toLocaleDateString()
-                    }
-                  </span>
                 </div>
-
-                <div className="summary">
-                  <p className="summary-heading">
-                    Summary
-                  </p>
-                  <p className="summary-lines">
-                    {story.summary}
-                  </p>
+                <div className="book-card-body">
+                  <div className="story-name" title={story.title}>
+                    {story.title}
+                  </div>
+                  <div className="middle-box">
+                    <span className="likes">
+                      ❤️ {story.likes}
+                    </span>
+                    <span className="posted-on">
+                      📅 {
+                        new Date(
+                          story.createdAt
+                        ).toLocaleDateString()
+                      }
+                    </span>
+                  </div>
+                  <div className="summary">
+                    <p className="summary-heading">
+                      Summary
+                    </p>
+                    <p className="summary-lines">
+                      {story.summary}
+                    </p>
+                  </div>
                 </div>
               </div>
             ))}

@@ -1,21 +1,12 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 import './SideBar.css';
 
 const Sidebar = ({ collapsed, setCollapsed, sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
-    }
-  }, [sidebarOpen]); // recheck when drawer opens
+  const { isLoggedIn, logout } = useAuth();
 
   const handleNav = (path) => {
     navigate(path);
@@ -25,14 +16,11 @@ const Sidebar = ({ collapsed, setCollapsed, sidebarOpen, setSidebarOpen }) => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    localStorage.removeItem('user');
+    logout();
     if (setSidebarOpen) {
       setSidebarOpen(false);
     }
     navigate('/login');
-    window.location.reload();
   };
 
   return (
