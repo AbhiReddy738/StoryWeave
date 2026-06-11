@@ -451,15 +451,16 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
         summary: summary || '',
         tags,
         author,
-        authorId
+        authorId,
+        status
       };
       await axios.post(`${API_BASE_URL}/song/create`, payload);
-      showFeedback('Lyrics published successfully! 🎉', 'success');
+      showFeedback(status === 'draft' ? 'Draft saved successfully! 💾' : 'Lyrics published successfully! 🎉', 'success');
       setTimeout(() => {
         navigate('/');
       }, 1500);
     } catch (err) {
-      showFeedback('Failed to publish song.', 'error');
+      showFeedback(status === 'draft' ? 'Failed to save song draft.' : 'Failed to publish song.', 'error');
     } finally {
       setPublishing(false);
     }
@@ -526,7 +527,7 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
           <div className="post-topbar-actions">
             {contentType === 'songs' ? (
               <button className="btn-publish" onClick={handlePublishSong} disabled={publishing}>
-                {publishing ? 'Publishing...' : '🚀 Publish Song'}
+                {publishing ? 'Saving...' : status === 'draft' ? '💾 Save Song Draft' : '🚀 Publish Song'}
               </button>
             ) : (
               <>
@@ -786,23 +787,23 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
               </select>
             </div>
 
+            {/* Status */}
+            <div className="settings-group">
+              <label className="settings-label">Status</label>
+              <div className="status-toggle">
+                <button
+                  className={`status-btn ${status === 'draft' ? 'active' : ''}`}
+                  onClick={() => setStatus('draft')}
+                >📄 Draft</button>
+                <button
+                  className={`status-btn ${status === 'published' ? 'active' : ''}`}
+                  onClick={() => setStatus('published')}
+                >🌐 Published</button>
+              </div>
+            </div>
+
             {contentType !== 'songs' && (
               <>
-                {/* Status */}
-                <div className="settings-group">
-                  <label className="settings-label">Status</label>
-                  <div className="status-toggle">
-                    <button
-                      className={`status-btn ${status === 'draft' ? 'active' : ''}`}
-                      onClick={() => setStatus('draft')}
-                    >📄 Draft</button>
-                    <button
-                      className={`status-btn ${status === 'published' ? 'active' : ''}`}
-                      onClick={() => setStatus('published')}
-                    >🌐 Published</button>
-                  </div>
-                </div>
-
                 {/* Story Type */}
                 <div className="settings-group">
                   <label className="settings-label">Story Type</label>
@@ -851,7 +852,7 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
             <div className="settings-actions">
               {contentType === 'songs' ? (
                 <button className="btn-publish btn-full" onClick={handlePublishSong} disabled={publishing}>
-                  {publishing ? 'Publishing...' : '🚀 Publish Song'}
+                  {publishing ? 'Saving...' : status === 'draft' ? '💾 Save Song Draft' : '🚀 Publish Song'}
                 </button>
               ) : (
                 <>

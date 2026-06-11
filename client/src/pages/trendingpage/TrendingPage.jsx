@@ -16,12 +16,9 @@ const TrendingPage = ({ collapsed }) => {
     const fetchStories = async () => {
       try {
         const response = await axios.get(
-          `${API_BASE_URL}/story/all`
+          `${API_BASE_URL}/story/trending`
         );
-        const sortedStories = response.data.sort(
-          (a, b) => b.likes - a.likes
-        );
-        setStories(sortedStories);
+        setStories(response.data);
       } catch (err) {
         console.log(err);
       }

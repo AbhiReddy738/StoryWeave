@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import LazyImage from '../../components/LazyImage';
 import './AccountPage.css';
 
-const AccountPage = ({ collapsed }) => {
+const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
   const { user: authUser, token, login: updateAuthSession } = useAuth();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -60,8 +60,13 @@ const AccountPage = ({ collapsed }) => {
           profileImage: user.profileImage || ''
         });
 
-        const postsRes = await axios.get(`${API_BASE_URL}/user/posts/${userId}`);
-        setPosts(postsRes.data);
+        if (activeGlobalTab === 'songs') {
+          const postsRes = await axios.get(`${API_BASE_URL}/user/songs/${userId}`);
+          setPosts(postsRes.data);
+        } else {
+          const postsRes = await axios.get(`${API_BASE_URL}/user/posts/${userId}`);
+          setPosts(postsRes.data);
+        }
       } catch (err) {
         console.error(err);
         setError('Failed to load profile data. Please try again.');
@@ -71,7 +76,7 @@ const AccountPage = ({ collapsed }) => {
     };
 
     fetchData();
-  }, [userId]);
+  }, [userId, activeGlobalTab]);
 
   const handleChange = (e) => {
     setProfile({
@@ -106,15 +111,21 @@ const AccountPage = ({ collapsed }) => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this story?")) {
+    const isSong = activeGlobalTab === 'songs';
+    if (!window.confirm(`Are you sure you want to delete this ${isSong ? 'song' : 'story'}?`)) {
       return;
     }
     try {
-      await axios.delete(`${API_BASE_URL}/story/delete/${id}`);
+      if (isSong) {
+        await axios.delete(`${API_BASE_URL}/song/${id}`);
+        showFeedback("Song Deleted Successfully", 'success');
+      } else {
+        await axios.delete(`${API_BASE_URL}/story/delete/${id}`);
+        showFeedback("Story Deleted Successfully", 'success');
+      }
       setPosts(posts.filter(post => post._id !== id));
-      showFeedback("Story Deleted Successfully", 'success');
     } catch (err) {
-      showFeedback("Failed to delete story.", 'error');
+      showFeedback(`Failed to delete ${isSong ? 'song' : 'story'}.`, 'error');
     }
   };
 
@@ -280,48 +291,76 @@ const AccountPage = ({ collapsed }) => {
           </div>
         </div>
 
+        <div className="home-tabs" style={{ marginBottom: '24px' }}>
+          <button
+            className={`tab-btn ${activeGlobalTab === 'stories' ? 'active-tab' : ''}`}
+            onClick={() => setActiveGlobalTab('stories')}
+          >
+            📖 Stories
+          </button>
+          <button
+            className={`tab-btn ${activeGlobalTab === 'songs' ? 'active-tab' : ''}`}
+            onClick={() => setActiveGlobalTab('songs')}
+          >
+            🎵 Songs
+          </button>
+        </div>
+
         <h2 className="posts-title">Your Posts</h2>
 
         <div className="posts-grid">
           {posts.length === 0 ? (
             <div className="no-posts" style={{ gridColumn: '1/-1', textAlign: 'center', color: 'var(--secondary-text)', marginTop: '20px', fontSize: '16px' }}>
-              You haven't posted any stories yet.
+              You haven't posted any {activeGlobalTab === 'stories' ? 'stories' : 'songs'} yet.
             </div>
           ) : (
-            posts.map((post) => (
-              <div 
-                key={post._id} 
-                className="post-card book-thumbnail-card"
-                onClick={() => navigate(`/card/${post.slug}-${post._id}`)}
-              >
-                <div className="post-card-thumbnail">
-                  <LazyImage 
-                    src={post.coverImage} 
-                    alt={post.title} 
-                  />
-                </div>
-                <div className="post-card-details">
-                  <div className="story-name" title={post.title}>{post.title}</div>
-                  <div className="middle-box">
-                    <span className="genre">{post.genre}</span>
-                    {post.createdAt && (
-                      <span className="posted-on">
-                        📅 {new Date(post.createdAt).toLocaleDateString()}
-                      </span>
-                    )}
+            posts.map((post) => {
+              const isSong = activeGlobalTab === 'songs';
+              return (
+                <div 
+                  key={post._id} 
+                  className={`post-card ${isSong ? 'song-thumbnail-card' : 'book-thumbnail-card'}`}
+                  onClick={() => navigate(isSong ? `/song/${post._id}` : `/card/${post.slug}-${post._id}`)}
+                >
+                  <div className="post-card-thumbnail">
+                    <LazyImage 
+                      src={post.coverImage} 
+                      alt={post.title} 
+                    />
                   </div>
-                  <button
-                    className="delete-icon-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(post._id);
-                    }}
-                  >
-                    Delete
-                  </button>
+                  <div className="post-card-details">
+                    <div className="story-name" title={post.title}>{post.title}</div>
+                    <div className="middle-box">
+                      <span className="genre">{post.genre}</span>
+                      {isSong && post.artistName && (
+                        <span className="song-card-artist" style={{ fontSize: '13px', color: 'var(--secondary-text)', marginRight: '10px' }}>
+                          🎤 {post.artistName}
+                        </span>
+                      )}
+                      {post.createdAt && (
+                        <span className="posted-on">
+                          📅 {new Date(post.createdAt).toLocaleDateString()}
+                        </span>
+                      )}
+                      {post.status === 'draft' && (
+                        <span className="status-badge" style={{ background: 'rgba(255, 165, 0, 0.2)', color: 'orange', padding: '2px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', marginLeft: '10px' }}>
+                          📄 Draft
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      className="delete-icon-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(post._id);
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

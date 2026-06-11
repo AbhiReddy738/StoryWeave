@@ -3,23 +3,40 @@ import multer from "multer";
 import path from "path";
 import User from "../models/user.js";
 import Story from "../models/Story.js";
+import Song from "../models/Song.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Multer Config for Profile Photo upload
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, "uploads/");
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
+import cloudinary from "../config/cloudinary.js";
+
+const storage = multer.memoryStorage();
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error("Only .jpg, .jpeg, .png, and .webp formats are allowed"), false);
+        }
     }
 });
 
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
-});
+// Helper: upload a buffer to Cloudinary and return the secure URL
+const uploadToCloudinary = (buffer, folder) => {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            { folder, resource_type: "image" },
+            (error, result) => {
+                if (error) return reject(error);
+                resolve(result.secure_url);
+            }
+        );
+        stream.end(buffer);
+    });
+};
 
 // GET user profile
 router.get("/:id", async (req, res) => {
@@ -43,8 +60,11 @@ router.get("/:id", async (req, res) => {
 });
 
 // PUT update user profile
-router.put("/update/:id", async (req, res) => {
+router.put("/update/:id", authMiddleware, async (req, res) => {
     try {
+        if (req.params.id !== req.user.id) {
+            return res.status(403).json({ message: "Forbidden: You are not authorized to update this profile" });
+        }
         const { username, authorName, interests, bio, profileImage } = req.body;
         const user = await User.findById(req.params.id);
         if (!user) {
@@ -79,15 +99,46 @@ router.put("/update/:id", async (req, res) => {
 });
 
 // POST upload profile photo
-router.post("/upload", upload.single("profileImage"), (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ message: "No file uploaded" });
+router.post("/upload", authMiddleware, (req, res, next) => {
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+        return res.status(400).json({
+            success: false,
+            message: "Cloudinary credentials missing"
+        });
+    }
+    const uploadSingle = upload.single("profileImage");
+    uploadSingle(req, res, (err) => {
+        if (err instanceof multer.MulterError) {
+            if (err.code === "LIMIT_FILE_SIZE") {
+                return res.status(400).json({ success: false, message: "Image exceeds 5MB" });
+            }
+            return res.status(400).json({ success: false, message: err.message });
+        } else if (err) {
+            let errMsg = err.message;
+            if (errMsg.includes("format") || errMsg.includes("allowed")) {
+                errMsg = "Invalid image type";
+            } else if (errMsg.includes("cloud_name") || errMsg.includes("disabled")) {
+                errMsg = "Cloudinary connection failed";
+            } else {
+                errMsg = "Image upload failed";
+            }
+            return res.status(400).json({ success: false, message: errMsg });
         }
-        const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-        res.status(200).json({ url: fileUrl });
+        
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: "No image file provided" });
+        }
+        next();
+    });
+}, async (req, res) => {
+    try {
+        console.log(`[DEBUG - SERVER] User profile upload file:`, req.file);
+        const url = await uploadToCloudinary(req.file.buffer, "storyweave/profiles");
+        console.log(`[DEBUG - SERVER] User profile uploaded successfully. URL: ${url}`);
+        res.status(200).json({ url });
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        console.error(`[DEBUG - SERVER] User profile upload error:`, err);
+        res.status(500).json({ message: "Image upload failed", error: err.message });
     }
 });
 
@@ -109,6 +160,29 @@ router.get("/posts/:userId", async (req, res) => {
         });
         
         res.status(200).json(stories);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// GET songs by user ID
+router.get("/songs/:userId", async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        
+        // Find songs where authorId matches userId OR author matches the user's authorName or username (backward compatibility)
+        const songs = await Song.find({
+            $or: [
+                { authorId: user._id },
+                { author: user.authorName },
+                { author: user.username }
+            ]
+        }).sort({ createdAt: -1 });
+        
+        res.status(200).json(songs);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
