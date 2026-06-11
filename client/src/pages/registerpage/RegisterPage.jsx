@@ -2,10 +2,13 @@ import { useState } from 'react'
 import './RegisterPage.css'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { useAuth } from '../../context/AuthContext.jsx'
+import { API_BASE_URL } from '../../config'
 
 const RegisterPage = () => {
 
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
@@ -36,7 +39,7 @@ const RegisterPage = () => {
       setError("")
 
       const res = await axios.post(
-        "https://storyweave-fxdt.onrender.com/api/auth/register",
+        `${API_BASE_URL}/auth/register`,
         {
           username,
           email,
@@ -44,8 +47,7 @@ const RegisterPage = () => {
         }
       )
 
-      localStorage.setItem("token", "registered")
-      localStorage.setItem("username", username)
+      login(res.data.token, res.data.user)
 
       setUsername("")
       setEmail("")
@@ -53,7 +55,6 @@ const RegisterPage = () => {
       setConfirmPassword("")
 
       navigate("/")
-      window.location.reload()
 
     } catch (err) {
 

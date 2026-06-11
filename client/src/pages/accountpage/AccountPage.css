@@ -201,10 +201,61 @@
   cursor: pointer;
 }
 
+.post-card.book-thumbnail-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 22px;
+  min-height: 160px;
+  padding: 16px 60px 16px 16px; /* extra right padding for delete button */
+}
+
 .post-card:hover {
   transform: translateY(-8px);
   border-color: var(--accent-color);
   box-shadow: 0 12px 30px var(--shadow-color);
+}
+
+.post-card-thumbnail {
+  width: 95px;
+  height: 135px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 16px var(--shadow-color);
+  flex-shrink: 0;
+}
+
+.post-card-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.post-card:hover .post-card-thumbnail img {
+  transform: scale(1.06);
+}
+
+.post-card-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.post-card-details .story-name {
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.post-card-details .middle-box {
+  margin-bottom: 0;
 }
 
 /* =====================================================

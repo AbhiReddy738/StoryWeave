@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
+import LazyImage from '../../components/LazyImage';
 import './CategoriesPage.css';
 
 const STORY_GENRES = [
@@ -54,11 +56,11 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
       setLoading(true);
       try {
         if (activeGlobalTab === 'stories') {
-          const res = await axios.get('https://storyweave-fxdt.onrender.com/api/story/all');
+          const res = await axios.get(`${API_BASE_URL}/story/all`);
           const filtered = res.data.filter(s => s.genre?.toLowerCase() === selectedGenre.toLowerCase());
           setItems(filtered);
         } else {
-          const res = await axios.get('https://storyweave-fxdt.onrender.com/api/song/all');
+          const res = await axios.get(`${API_BASE_URL}/song/all`);
           const filtered = res.data.filter(s => s.genre?.toLowerCase() === selectedGenre.toLowerCase());
           setItems(filtered);
         }
@@ -85,9 +87,9 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user?._id) return;
     try {
-      await axios.put(`https://storyweave-fxdt.onrender.com/api/song/save/${songId}`, { userId: user._id });
+      await axios.put(`${API_BASE_URL}/song/save/${songId}`, { userId: user._id });
       // Reload items to show updated state
-      const res = await axios.get('https://storyweave-fxdt.onrender.com/api/song/all');
+      const res = await axios.get(`${API_BASE_URL}/song/all`);
       const filtered = res.data.filter(s => s.genre?.toLowerCase() === selectedGenre.toLowerCase());
       setItems(filtered);
     } catch {
@@ -157,18 +159,33 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
                     return (
                       <div 
                         key={item._id}
-                        className="story-list-card"
+                        className="story-list-card book-card"
                         onClick={() => handleCardClick(item)}
                       >
-                        <div className="story-name">{item.title}</div>
-                        <div className="middle-box">
-                          <span className="genre">{item.genre}</span>
-                          <span className="likes">❤️ {item.likes || 0}</span>
-                          <span className="posted-on">📅 {new Date(item.createdAt).toLocaleDateString()}</span>
+                        <div className="card-cover">
+                          <LazyImage 
+                            src={item.coverImage} 
+                            alt={item.title} 
+                          />
+                          <div className="card-cover-overlay"></div>
+                          <span className="genre-badge" onClick={e => e.stopPropagation()}>
+                            {item.genre}
+                          </span>
                         </div>
-                        <div className="summary">
-                          <p className="summary-heading">Summary</p>
-                          <p className="summary-lines">{item.summary || 'No summary available.'}</p>
+                        <div className="book-card-body">
+                          <div className="story-name" title={item.title}>{item.title}</div>
+                          <div className="story-author">By {item.author || 'Unknown'}</div>
+                          <div className="middle-box">
+                            <span className="likes">❤️ {item.likedBy?.length ?? item.likes ?? 0}</span>
+                            <span className="comments-count">💬 {item.comments?.length || 0}</span>
+                            <span className="posted-on">
+                              📅 {new Date(item.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="summary">
+                            <p className="summary-heading">Summary</p>
+                            <p className="summary-lines">{item.summary || 'No summary available.'}</p>
+                          </div>
                         </div>
                       </div>
                     );

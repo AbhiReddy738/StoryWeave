@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
+import LazyImage from '../../components/LazyImage';
 import './SongPage.css';
 
-const API = 'https://storyweave-fxdt.onrender.com/api/song';
+const API = `${API_BASE_URL}/song`;
 
 const SongPage = ({ collapsed }) => {
   const { id } = useParams();
@@ -244,10 +246,7 @@ const SongPage = ({ collapsed }) => {
         <div className="song-hero-overlay" />
         <div className="song-hero-content">
           <div className="song-cover-art">
-            {song.coverImage
-              ? <img src={song.coverImage} alt={song.title} />
-              : <div className="song-cover-placeholder">🎵</div>
-            }
+            <LazyImage src={song.coverImage} alt={song.title} />
           </div>
           <div className="song-hero-info">
             <span className="song-genre-badge">{song.genre}</span>
@@ -453,10 +452,7 @@ const SongPage = ({ collapsed }) => {
                   onClick={() => navigate(`/song/${rs._id}`)}
                 >
                   <div className="related-song-cover">
-                    {rs.coverImage
-                      ? <img src={rs.coverImage} alt={rs.title} />
-                      : <div className="related-song-placeholder">🎵</div>
-                    }
+                    <LazyImage src={rs.coverImage} alt={rs.title} />
                   </div>
                   <div className="related-song-info">
                     <p className="related-song-title">{rs.title}</p>

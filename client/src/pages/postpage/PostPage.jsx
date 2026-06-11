@@ -2,10 +2,36 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
+import LazyImage from '../../components/LazyImage';
 import StoryReader from '../../components/storyreader/StoryReader';
 import './PostPage.css';
+import { API_BASE_URL } from '../../config';
 
-const API = 'https://storyweave-fxdt.onrender.com/api/story';
+const API = `${API_BASE_URL}/story`;
+
+// Self-contained component to fix cursor jump and backwards typing issues (Issue 4)
+const TextBlock = ({ value, onChange, placeholder }) => {
+  const editorRef = useRef(null);
+
+  // Synchronize value from state to DOM innerHTML only if they differ.
+  // This prevents resetting selection/caret position back to index 0 on keystrokes.
+  useEffect(() => {
+    if (editorRef.current && editorRef.current.innerHTML !== value) {
+      editorRef.current.innerHTML = value;
+    }
+  }, [value]);
+
+  return (
+    <div
+      ref={editorRef}
+      className="text-block"
+      contentEditable
+      suppressContentEditableWarning
+      data-placeholder={placeholder || "Tell your story..."}
+      onInput={(e) => onChange(e.currentTarget.innerHTML)}
+    />
+  );
+};
 
 const GENRES = [
   'Fantasy', 'Science Fiction', 'Romance', 'Mystery', 'Thriller',
@@ -53,6 +79,7 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
   // ── Cover image ────────────────────────────────────────────────────────────
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [coverUploading, setCoverUploading] = useState(false);
+  const [coverUploadError, setCoverUploadError] = useState('');
   const coverInputRef = useRef(null);
 
   // ── Block-based content editor (stories only) ──────────────────────────────
@@ -97,6 +124,7 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
     setGenre('');
     setTags([]);
     setCoverImageUrl('');
+    setCoverUploadError('');
     setLyrics('');
     setArtistName('');
     setBlocks([{ id: Date.now(), type: 'text', value: '' }]);
@@ -141,9 +169,13 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
     const wordCountVal = textContent.trim().split(/\s+/).filter(Boolean).length;
     const readingTime = Math.max(1, Math.ceil(wordCountVal / 200));
 
+    const targetStatus = overrideStatus !== undefined ? overrideStatus : status;
+
     return {
-      title: title || 'Untitled',
-      summary,
+      // Drafts can default to 'Untitled' so MongoDB doesn't throw a validation error.
+      // Published stories send the exact title string to let backend validate properly.
+      title: title.trim() || (targetStatus === 'draft' ? 'Untitled' : ''),
+      summary: summary.trim(),
       genre,
       content: blocks,
       author,
@@ -152,7 +184,7 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
       tags,
       authorNote,
       readingTime,
-      status: overrideStatus !== undefined ? overrideStatus : status,
+      status: targetStatus,
       storyType,
       likes: 0
     };
@@ -191,19 +223,52 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
   const handleCoverUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setCoverUploadError('');
+    console.log('[DEBUG - CLIENT] Starting cover image upload for file:', file.name);
+
+    // Validate type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      const errMsg = 'Invalid file type. Only JPG, JPEG, PNG, and WEBP formats are allowed.';
+      setCoverUploadError(errMsg);
+      showFeedback(errMsg, 'error');
+      if (coverInputRef.current) coverInputRef.current.value = '';
+      return;
+    }
+
+    // Validate size (Max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      const errMsg = 'File is too large. Maximum size is 5MB.';
+      setCoverUploadError(errMsg);
+      showFeedback(errMsg, 'error');
+      if (coverInputRef.current) coverInputRef.current.value = '';
+      return;
+    }
+
     setCoverUploading(true);
     try {
       const fd = new FormData();
       fd.append('image', file);
       const uploadAPI = contentType === 'songs'
-        ? 'https://storyweave-fxdt.onrender.com/api/song/upload-cover'
-        : 'https://storyweave-fxdt.onrender.com/api/story/upload-cover';
+        ? `${API_BASE_URL}/song/upload-cover`
+        : `${API_BASE_URL}/story/upload-cover`;
       const res = await axios.post(uploadAPI, fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      setCoverImageUrl(res.data.url);
+      const url = res.data.imageUrl || res.data.url;
+      if (!url) {
+        throw new Error('Upload succeeded but no image URL was returned.');
+      }
+      console.log('[DEBUG - CLIENT] Cover image uploaded successfully. URL:', url);
+      setCoverImageUrl(url);
+      setCoverUploadError('');
     } catch (err) {
-      showFeedback('Cover image upload failed.', 'error');
+      const errorMsg = err.response?.data?.message || err.message || 'Cover image upload failed.';
+      console.error('[DEBUG - CLIENT] Cover image upload failed:', err);
+      setCoverUploadError(errorMsg);
+      showFeedback(errorMsg, 'error');
+      setCoverImageUrl('');
     } finally {
       setCoverUploading(false);
       if (coverInputRef.current) coverInputRef.current.value = '';
@@ -233,6 +298,20 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
 
   const handleInlineImageUpload = async (afterIndex, file) => {
     if (!file) return;
+
+    // Validate type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      showFeedback('Invalid file type. Only JPG, JPEG, PNG, and WEBP formats are allowed.', 'error');
+      return;
+    }
+
+    // Validate size (Max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showFeedback('File is too large. Maximum size is 5MB.', 'error');
+      return;
+    }
+
     const tempId = Date.now();
     setUploadingBlockId(tempId);
     // Insert placeholder immediately
@@ -249,12 +328,14 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
       const res = await axios.post(`${API}/upload-image`, fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+      const url = res.data.imageUrl || res.data.url;
       setBlocks(prev => prev.map(b =>
-        b.id === tempId ? { ...b, value: res.data.url, uploading: false } : b
+        b.id === tempId ? { ...b, value: url, uploading: false } : b
       ));
     } catch (err) {
       setBlocks(prev => prev.filter(b => b.id !== tempId));
-      showFeedback('Image upload failed.', 'error');
+      const errorMsg = err.response?.data?.message || 'Image upload failed.';
+      showFeedback(errorMsg, 'error');
     } finally {
       setUploadingBlockId(null);
     }
@@ -305,10 +386,33 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
 
   // ── Publish Story (stories only) ───────────────────────────────────────────
   const handlePublish = async () => {
-    if (!title || !genre || !author) {
-      showFeedback('Title, Genre, and Author are required to publish.', 'error');
+    // Validate title
+    if (!title || !title.trim()) {
+      showFeedback('Please enter title', 'error');
       return;
     }
+    // Validate genre
+    if (!genre) {
+      showFeedback('Please enter genre', 'error');
+      return;
+    }
+    // Validate summary
+    if (!summary || !summary.trim()) {
+      showFeedback('Please enter summary', 'error');
+      return;
+    }
+    // Validate content (at least one text block with text or one image block with url)
+    const hasText = blocks.some(b => b.type === 'text' && b.value && b.value.replace(/<[^>]*>/g, '').trim().length > 0);
+    const hasImage = blocks.some(b => b.type === 'image' && b.value);
+    if (!hasText && !hasImage) {
+      showFeedback('Please enter content', 'error');
+      return;
+    }
+    if (!author) {
+      showFeedback('Author session is missing. Please log in again.', 'error');
+      return;
+    }
+
     setPublishing(true);
     try {
       const payload = buildPayload('published');
@@ -318,12 +422,13 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
         const res = await axios.post(`${API}/create`, payload);
         setStoryId(res.data.story._id);
       }
-      showFeedback('Story published successfully! 🎉', 'success');
+      showFeedback('Story Published Successfully', 'success');
       setTimeout(() => {
         navigate('/');
       }, 1500);
     } catch (err) {
-      showFeedback('Failed to publish story.', 'error');
+      const errorMsg = err.response?.data?.message || 'Failed to publish story.';
+      showFeedback(errorMsg, 'error');
     } finally {
       setPublishing(false);
     }
@@ -348,7 +453,7 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
         author,
         authorId
       };
-      await axios.post(`https://storyweave-fxdt.onrender.com/api/song/create`, payload);
+      await axios.post(`${API_BASE_URL}/song/create`, payload);
       showFeedback('Lyrics published successfully! 🎉', 'success');
       setTimeout(() => {
         navigate('/');
@@ -432,8 +537,8 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
                 <button className="btn-outline btn-preview" onClick={() => setShowPreview(true)}>
                   👁 Preview
                 </button>
-                <button className="btn-publish" onClick={handlePublish} disabled={publishing}>
-                  {publishing ? 'Publishing...' : '🚀 Publish'}
+                <button className="btn-publish" onClick={handlePublish} disabled={publishing || coverUploading || uploadingBlockId !== null || !!coverUploadError}>
+                  {coverUploading ? 'Uploading Cover Image...' : publishing ? 'Publishing Story...' : '🚀 Publish'}
                 </button>
               </>
             )}
@@ -446,10 +551,12 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
           <div className="editor-main">
 
             {/* Cover image */}
-            <div
-              className={`cover-upload-area ${coverImageUrl ? 'has-image' : ''}`}
-              style={coverImageUrl ? { backgroundImage: `url(${coverImageUrl})` } : {}}
-            >
+            <div className={`cover-upload-area ${coverImageUrl ? 'has-image' : ''} ${coverUploadError ? 'has-error' : ''}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {coverUploadError && (
+                <div style={{ color: '#ff4d4f', padding: '10px', fontSize: '14px', textAlign: 'center', background: 'rgba(255,77,79,0.1)', borderRadius: '8px', marginBottom: '10px', width: '100%' }}>
+                  ⚠️ {coverUploadError}
+                </div>
+              )}
               {!coverImageUrl ? (
                 <div className="cover-placeholder" onClick={() => coverInputRef.current?.click()}>
                   {coverUploading
@@ -458,19 +565,26 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
                   }
                 </div>
               ) : (
-                <div className="cover-actions">
-                  <button className="cover-btn" onClick={() => coverInputRef.current?.click()}>
-                    🔄 Change
-                  </button>
-                  <button className="cover-btn cover-btn-remove" onClick={() => setCoverImageUrl('')}>
-                    🗑 Remove
-                  </button>
-                </div>
+                <>
+                  <LazyImage src={coverImageUrl} alt="Cover Preview" className="cover-preview-img" />
+                  <div className="cover-actions">
+                    <button className="cover-btn" onClick={() => coverInputRef.current?.click()}>
+                      🔄 Change
+                    </button>
+                    <button className="cover-btn cover-btn-remove" onClick={() => {
+                      console.log('[DEBUG - CLIENT] Removing cover image.');
+                      setCoverImageUrl('');
+                      setCoverUploadError('');
+                    }}>
+                      🗑 Remove
+                    </button>
+                  </div>
+                </>
               )}
               <input
                 ref={coverInputRef}
                 type="file"
-                accept="image/*"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                 style={{ display: 'none' }}
                 onChange={handleCoverUpload}
               />
@@ -567,19 +681,16 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
                   {blocks.map((block, idx) => (
                     <div key={block.id} className="block-wrapper">
                       {block.type === 'text' ? (
-                        <div
-                          className="text-block"
-                          contentEditable
-                          suppressContentEditableWarning
-                          data-placeholder="Tell your story..."
-                          onInput={e => updateBlock(block.id, e.currentTarget.innerHTML)}
-                          dangerouslySetInnerHTML={{ __html: block.value }}
-                        />
+                          <TextBlock
+                            value={block.value}
+                            placeholder="Tell your story..."
+                            onChange={val => updateBlock(block.id, val)}
+                          />
                       ) : (
-                        <div className={`image-block ${block.uploading ? 'uploading' : ''}`}>
+                        <div className={`image-block ${block.uploading ? 'uploading' : ''}`} style={{ height: '300px', position: 'relative' }}>
                           {block.uploading
                             ? <div className="image-block-loader">⟳ Uploading image...</div>
-                            : <img src={block.value} alt={`Story image ${idx}`} />
+                            : <LazyImage src={block.value} alt={`Story image ${idx}`} className="editor-inline-image" />
                           }
                         </div>
                       )}
@@ -747,8 +858,8 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
                   <button className="btn-outline btn-full" onClick={handleSaveDraft} disabled={saving}>
                     💾 Save Draft
                   </button>
-                  <button className="btn-publish btn-full" onClick={handlePublish} disabled={publishing}>
-                    {publishing ? 'Publishing...' : '🚀 Publish Story'}
+                  <button className="btn-publish btn-full" onClick={handlePublish} disabled={publishing || coverUploading}>
+                    {coverUploading ? 'Uploading Cover Image...' : publishing ? 'Publishing Story...' : '🚀 Publish Story'}
                   </button>
                 </>
               )}

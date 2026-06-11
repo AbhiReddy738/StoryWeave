@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '../../context/ThemeContext';
+import LazyImage from '../LazyImage';
 import './StoryReader.css';
 
 const StoryReader = ({ story, onClose }) => {
@@ -126,37 +127,54 @@ const StoryReader = ({ story, onClose }) => {
           </button>
         </div>
 
-        {/* Minimalist Top Header Section */}
-        <header className="story-reader-header">
-          <h1 className="story-reader-title">{story?.title || 'Untitled'}</h1>
-          <div className="story-reader-meta">
-            <span>By {story?.author || 'Unknown'}</span>
-            {story?.genre && <span className="genre-tag">• {story.genre}</span>}
-            {story?.createdAt && (
-              <span>
-                • {new Date(story.createdAt).toLocaleDateString(undefined, {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </span>
-            )}
-          </div>
-          {/* Cover image inside reader header */}
-          {story?.coverImage && (
-            <div
-              className="reader-cover-image"
-              style={{ backgroundImage: `url(${story.coverImage})` }}
-            />
-          )}
-        </header>
-
         {/* Main Distraction-Free Book Page */}
         <main
           ref={scrollContainerRef}
           className="story-reader-scrollable"
           onScroll={handleScroll}
         >
+          {/* Minimalist Top Header Section */}
+          <header className="story-reader-header">
+            {/* Cover image inside reader header */}
+            {story?.coverImage && (
+              <div className="reader-cover-container">
+                <LazyImage 
+                  src={story?.coverImage} 
+                  alt={story?.title} 
+                  className="reader-cover-img"
+                />
+              </div>
+            )}
+            <h1 className="story-reader-title">{story?.title || 'Untitled'}</h1>
+            <div className="story-reader-meta">
+              <span>By {story?.author || 'Unknown'}</span>
+              {story?.genre && <span className="genre-tag">• {story.genre}</span>}
+              {story?.createdAt && (
+                <span>
+                  • {new Date(story.createdAt).toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </span>
+              )}
+            </div>
+            {story?.summary && (
+              <p className="story-reader-summary" style={{
+                marginTop: '20px',
+                fontStyle: 'italic',
+                color: 'var(--reader-secondary-text)',
+                lineHeight: '1.6',
+                fontSize: '1.05rem',
+                borderLeft: '3px solid var(--reader-accent)',
+                paddingLeft: '15px',
+                textAlign: 'left'
+              }}>
+                {story.summary}
+              </p>
+            )}
+          </header>
+
           <article className="story-reader-body">
             {finalParagraphs.length === 0 && (
               <p style={{ fontStyle: 'italic', textAlign: 'center', opacity: 0.5 }}>
@@ -167,8 +185,8 @@ const StoryReader = ({ story, onClose }) => {
               // image block
               if (block.type === 'image') {
                 return (
-                  <figure key={block.id ?? idx} className="reader-image-block">
-                    <img src={block.value} alt={`Story image ${idx + 1}`} />
+                  <figure key={block.id ?? idx} className="reader-image-block" style={{ height: '350px' }}>
+                    <LazyImage src={block.value} alt={`Story image ${idx + 1}`} />
                   </figure>
                 );
               }
