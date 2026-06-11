@@ -3,18 +3,20 @@ import multer from "multer";
 import Song from "../models/Song.js";
 import User from "../models/user.js";
 import cloudinary from "../config/cloudinary.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 const storage = multer.memoryStorage();
 const upload = multer({
     storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB limit for cover images
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB limit
     fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith("image/")) {
+        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+        if (allowedTypes.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error("Only image files are allowed"), false);
+            cb(new Error("Only .jpg, .jpeg, .png, and .webp formats are allowed"), false);
         }
     }
 });
@@ -33,18 +35,52 @@ const uploadToCloudinary = (buffer, folder) => {
     });
 };
 
+// Custom middleware to handle Multer validation errors gracefully for songs
+const uploadSongCoverMiddleware = (req, res, next) => {
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+        return res.status(400).json({
+            success: false,
+            message: "Cloudinary credentials missing"
+        });
+    }
+    const uploadSingle = upload.single("image");
+    uploadSingle(req, res, (err) => {
+        if (err instanceof multer.MulterError) {
+            if (err.code === "LIMIT_FILE_SIZE") {
+                return res.status(400).json({ success: false, message: "Image exceeds 5MB" });
+            }
+            return res.status(400).json({ success: false, message: err.message });
+        } else if (err) {
+            let errMsg = err.message;
+            if (errMsg.includes("format") || errMsg.includes("allowed")) {
+                errMsg = "Invalid image type";
+            } else if (errMsg.includes("cloud_name") || errMsg.includes("disabled")) {
+                errMsg = "Cloudinary connection failed";
+            } else {
+                errMsg = "Image upload failed";
+            }
+            return res.status(400).json({ success: false, message: errMsg });
+        }
+        
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: "No image file provided" });
+        }
+        next();
+    });
+};
+
 // ─── COVER UPLOAD ──────────────────────────────────────────────────────────
 
 // POST /song/upload-cover
-router.post("/upload-cover", upload.single("image"), async (req, res) => {
+router.post("/upload-cover", uploadSongCoverMiddleware, async (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ message: "No image file provided" });
-        }
+        console.log(`[DEBUG - SERVER] Song cover upload file:`, req.file);
         const url = await uploadToCloudinary(req.file.buffer, "storyweave/song-covers");
-        res.status(200).json({ url });
+        console.log(`[DEBUG - SERVER] Song cover uploaded successfully. URL: ${url}`);
+        res.status(200).json({ success: true, imageUrl: url });
     } catch (err) {
-        res.status(500).json({ message: "Cover upload failed", error: err.message });
+        console.error(`[DEBUG - SERVER] Song cover upload error:`, err);
+        res.status(500).json({ success: false, message: "Cover upload failed", error: err.message });
     }
 });
 
@@ -53,7 +89,7 @@ router.post("/upload-cover", upload.single("image"), async (req, res) => {
 // GET /song/all — Retrieve all songs
 router.get("/all", async (req, res) => {
     try {
-        const songs = await Song.find().sort({ createdAt: -1 });
+        const songs = await Song.find({ status: { $ne: "draft" } }).sort({ createdAt: -1 });
         res.status(200).json(songs);
     } catch (err) {
         res.status(500).json(err);
@@ -63,11 +99,11 @@ router.get("/all", async (req, res) => {
 // GET /song/trending — Retrieve trending songs
 router.get("/trending", async (req, res) => {
     try {
-        // Sort by likes, comments length, and contributions length combined
-        const songs = await Song.find();
+        // Sort by likes, comments length, contributions length combined, and recency
+        const songs = await Song.find({ status: { $ne: "draft" } });
         const sorted = songs.sort((a, b) => {
-            const scoreA = (a.likes || 0) * 3 + (a.contributions?.length || 0) + (a.comments?.length || 0) * 2;
-            const scoreB = (b.likes || 0) * 3 + (b.contributions?.length || 0) + (b.comments?.length || 0) * 2;
+            const scoreA = (a.likes || 0) * 3 + (a.contributions?.length || 0) + (a.comments?.length || 0) * 2 + new Date(a.updatedAt || a.createdAt).getTime() / (1000 * 60 * 60 * 24);
+            const scoreB = (b.likes || 0) * 3 + (b.contributions?.length || 0) + (b.comments?.length || 0) * 2 + new Date(b.updatedAt || b.createdAt).getTime() / (1000 * 60 * 60 * 24);
             return scoreB - scoreA;
         });
         res.status(200).json(sorted);
@@ -81,6 +117,7 @@ router.get("/search", async (req, res) => {
     try {
         const q = req.query.q || "";
         const songs = await Song.find({
+            status: { $ne: "draft" },
             $or: [
                 { title: { $regex: q, $options: "i" } },
                 { artistName: { $regex: q, $options: "i" } },
@@ -95,8 +132,11 @@ router.get("/search", async (req, res) => {
 });
 
 // GET /song/saved/:userId — Retrieve user's saved songs
-router.get("/saved/:userId", async (req, res) => {
+router.get("/saved/:userId", authMiddleware, async (req, res) => {
     try {
+        if (req.params.userId !== req.user.id) {
+            return res.status(403).json({ message: "Forbidden: You cannot access saved songs of another user" });
+        }
         const user = await User.findById(req.params.userId).populate("savedSongs");
         if (!user) return res.status(404).json({ message: "User not found" });
         res.status(200).json(user.savedSongs || []);
@@ -106,8 +146,11 @@ router.get("/saved/:userId", async (req, res) => {
 });
 
 // GET /song/is-saved/:songId/:userId — Check if saved
-router.get("/is-saved/:songId/:userId", async (req, res) => {
+router.get("/is-saved/:songId/:userId", authMiddleware, async (req, res) => {
     try {
+        if (req.params.userId !== req.user.id) {
+            return res.status(403).json({ message: "Forbidden: You cannot access saved state of another user" });
+        }
         const user = await User.findById(req.params.userId);
         if (!user) return res.status(404).json({ message: "User not found" });
         const isSaved = (user.savedSongs || []).includes(req.params.songId);
@@ -135,12 +178,14 @@ router.get("/:id", async (req, res) => {
 });
 
 // POST /song/create — Create song
-router.post("/create", async (req, res) => {
+router.post("/create", authMiddleware, async (req, res) => {
     try {
         const {
             title, artistName, genre, coverImage,
-            lyrics, summary, tags, author, authorId
+            lyrics, summary, tags, author
         } = req.body;
+
+        const authorId = req.user.id; // Enforce authenticated user as author
 
         const slug =
             (title || "song")
@@ -165,12 +210,10 @@ router.post("/create", async (req, res) => {
 
         const savedSong = await song.save();
 
-        // Push to user's uploaded songs array if logged in
-        if (authorId) {
-            await User.findByIdAndUpdate(authorId, {
-                $push: { uploadedSongs: savedSong._id }
-            });
-        }
+        // Push to user's uploaded songs array
+        await User.findByIdAndUpdate(authorId, {
+            $push: { uploadedSongs: savedSong._id }
+        });
 
         res.status(201).json({ message: "Song published successfully", song: savedSong });
     } catch (err) {
@@ -179,17 +222,22 @@ router.post("/create", async (req, res) => {
 });
 
 // DELETE /song/:id — Delete a song
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authMiddleware, async (req, res) => {
     try {
-        const song = await Song.findByIdAndDelete(req.params.id);
+        const song = await Song.findById(req.params.id);
         if (!song) return res.status(404).json({ message: "Song not found" });
 
-        // Pull from user's uploaded songs
-        if (song.authorId) {
-            await User.findByIdAndUpdate(song.authorId, {
-                $pull: { uploadedSongs: song._id }
-            });
+        // Verify ownership
+        if (song.authorId && song.authorId.toString() !== req.user.id) {
+            return res.status(403).json({ message: "Forbidden: You are not authorized to delete this song" });
         }
+
+        await Song.findByIdAndDelete(req.params.id);
+
+        // Pull from user's uploaded songs
+        await User.findByIdAndUpdate(req.user.id, {
+            $pull: { uploadedSongs: song._id }
+        });
 
         res.status(200).json({ message: "Song deleted successfully" });
     } catch (err) {
@@ -200,10 +248,9 @@ router.delete("/:id", async (req, res) => {
 // ─── LIKES & SAVES TOGGLES ────────────────────────────────────────────────────
 
 // PUT /song/like/:id — Toggle like
-router.put("/like/:id", async (req, res) => {
+router.put("/like/:id", authMiddleware, async (req, res) => {
     try {
-        const { userId } = req.body;
-        if (!userId) return res.status(400).json({ message: "userId required" });
+        const userId = req.user.id;
 
         const song = await Song.findById(req.params.id);
         if (!song) return res.status(404).json({ message: "Song not found" });
@@ -232,10 +279,9 @@ router.put("/like/:id", async (req, res) => {
 });
 
 // PUT /song/save/:id — Toggle save
-router.put("/save/:id", async (req, res) => {
+router.put("/save/:id", authMiddleware, async (req, res) => {
     try {
-        const { userId } = req.body;
-        if (!userId) return res.status(400).json({ message: "userId required" });
+        const userId = req.user.id;
 
         const song = await Song.findById(req.params.id);
         if (!song) return res.status(404).json({ message: "Song not found" });
@@ -267,9 +313,9 @@ router.put("/save/:id", async (req, res) => {
 });
 
 // POST /song/save/:id — Add save (mirroring story save)
-router.post("/save/:id", async (req, res) => {
+router.post("/save/:id", authMiddleware, async (req, res) => {
     try {
-        const { userId } = req.body;
+        const userId = req.user.id;
         const songId = req.params.id;
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: "User not found" });
@@ -294,9 +340,9 @@ router.post("/save/:id", async (req, res) => {
 });
 
 // POST /song/unsave/:id — Remove save (mirroring story unsave)
-router.post("/unsave/:id", async (req, res) => {
+router.post("/unsave/:id", authMiddleware, async (req, res) => {
     try {
-        const { userId } = req.body;
+        const userId = req.user.id;
         const songId = req.params.id;
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: "User not found" });

@@ -36,8 +36,12 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
     const fetchStories = async () => {
       try {
         const res = await axios.get(`${STORY_API}/all`);
+        console.log('[DEBUG - CLIENT] Stories fetched from API:', res.data);
+        console.log('[DEBUG - CLIENT] Homepage story count:', res.data.length);
         setStories(res.data);
-      } catch { /* silent */ }
+      } catch (err) {
+        console.error('[DEBUG - CLIENT] Failed to fetch stories:', err);
+      }
       finally { setLoadingStories(false); }
     };
     fetchStories();
@@ -47,8 +51,12 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
     const fetchSongs = async () => {
       try {
         const res = await axios.get(`${SONG_API}/all`);
+        console.log('[DEBUG - CLIENT] Songs fetched from API:', res.data);
+        console.log('[DEBUG - CLIENT] Homepage song count:', res.data.length);
         setSongs(res.data);
-      } catch { /* silent */ }
+      } catch (err) {
+        console.error('[DEBUG - CLIENT] Failed to fetch songs:', err);
+      }
       finally { setLoadingSongs(false); }
     };
     fetchSongs();

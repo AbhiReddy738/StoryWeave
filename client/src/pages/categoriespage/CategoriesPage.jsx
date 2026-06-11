@@ -48,6 +48,17 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
     setItems([]);
   }, [activeGlobalTab]);
 
+  const genresMatch = (itemGenre, targetGenre) => {
+    if (!itemGenre || !targetGenre) return false;
+    const ig = itemGenre.toLowerCase().trim();
+    const tg = targetGenre.toLowerCase().trim();
+    if (ig === tg) return true;
+    if ((ig === 'sci-fi' || ig === 'science fiction') && (tg === 'sci-fi' || tg === 'science fiction')) {
+      return true;
+    }
+    return false;
+  };
+
   // Load items when a genre is selected
   useEffect(() => {
     if (!selectedGenre) return;
@@ -57,11 +68,11 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
       try {
         if (activeGlobalTab === 'stories') {
           const res = await axios.get(`${API_BASE_URL}/story/all`);
-          const filtered = res.data.filter(s => s.genre?.toLowerCase() === selectedGenre.toLowerCase());
+          const filtered = res.data.filter(s => genresMatch(s.genre, selectedGenre));
           setItems(filtered);
         } else {
           const res = await axios.get(`${API_BASE_URL}/song/all`);
-          const filtered = res.data.filter(s => s.genre?.toLowerCase() === selectedGenre.toLowerCase());
+          const filtered = res.data.filter(s => genresMatch(s.genre, selectedGenre));
           setItems(filtered);
         }
       } catch (err) {

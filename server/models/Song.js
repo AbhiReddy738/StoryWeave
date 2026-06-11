@@ -89,6 +89,12 @@ const songSchema = new mongoose.Schema(
     slug: {
         type: String,
         unique: true
+    },
+
+    status: {
+        type: String,
+        enum: ['draft', 'published'],
+        default: 'published'
     }
 },
 {
