@@ -2,12 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config';
-import LazyImage from '../../components/LazyImage';
-import CoverPlaceholder from '../../components/CoverPlaceholder';
 import SkeletonCard from '../../components/SkeletonCard';
 import { getCache, setCache } from '../../utils/cache';
-import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
-import { BookOpen, Music, Heart, MessageSquare, Calendar, Sparkles, Bookmark } from 'lucide-react';
+import { BookOpen, Music, Bookmark } from 'lucide-react';
+import ContentCard from '../../components/ContentCard';
 import './CategoriesPage.css';
 
 const STORY_GENRES = [
@@ -106,14 +104,6 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
     fetchFiltered();
   }, [selectedGenre, activeGlobalTab]);
 
-  const handleCardClick = (item) => {
-    if (activeGlobalTab === 'stories') {
-      navigate(`/card/${item.slug}-${item._id}`);
-    } else {
-      navigate(`/song/${item._id}`);
-    }
-  };
-
   const handleSaveToggle = async (e, songId, isCurrentlySaved) => {
     e.stopPropagation();
     const user = JSON.parse(localStorage.getItem('user'));
@@ -195,96 +185,50 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
                 {items.map((item) => {
                   if (activeGlobalTab === 'stories') {
                     return (
-                      <div 
+                      <ContentCard
                         key={item._id}
-                        className="story-list-card book-card"
-                        onClick={() => handleCardClick(item)}
-                      >
-                        <div className="card-cover">
-                          {item.coverImage ? (
-                            <>
-                              <LazyImage 
-                                src={optimizeCloudinaryUrl(item.coverImage, 400)} 
-                                alt={item.title} 
-                              />
-                              <div className="card-cover-overlay"></div>
-                              <span className="genre-badge" onClick={e => e.stopPropagation()}>
-                                {item.genre}
-                              </span>
-                            </>
-                          ) : (
-                            <CoverPlaceholder type="story" genre={item.genre} title={item.title} />
-                          )}
-                        </div>
-                        <div className="book-card-body">
-                          <div className="story-name" title={item.title}>{item.title}</div>
-                          <div 
-                            className="story-author"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(item.authorId ? `/author/${item.authorId}` : `/author/${item.author || 'Unknown'}`);
-                            }}
-                            style={{ cursor: 'pointer', textDecoration: 'underline' }}
-                          >
-                            By {item.author || 'Unknown'}
-                          </div>
-                          <div className="middle-box">
-                            <span className="likes"><Heart size={13} /> {item.likedBy?.length ?? item.likes ?? 0}</span>
-                            <span className="comments-count"><MessageSquare size={13} /> {item.comments?.length || 0}</span>
-                            <span className="posted-on">
-                              <Calendar size={13} /> {new Date(item.createdAt).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <div className="summary">
-                            <p className="summary-heading">Summary</p>
-                            <p className="summary-lines">{item.summary || 'No summary available.'}</p>
-                          </div>
-                        </div>
-                      </div>
+                        type="story"
+                        title={item.title}
+                        author={item.author}
+                        authorId={item.authorId}
+                        summary={item.summary}
+                        coverImage={item.coverImage}
+                        genre={item.genre}
+                        likes={item.likedBy?.length ?? item.likes ?? 0}
+                        comments={item.comments?.length || 0}
+                        date={item.createdAt}
+                        slug={item.slug}
+                        id={item._id}
+                      />
                     );
                   } else {
                     const isSaved = user?._id ? (item.savedBy || []).some(id => id.toString() === user._id) : false;
                     return (
-                      <div 
+                      <ContentCard
                         key={item._id}
-                        className="category-song-card"
-                        onClick={() => handleCardClick(item)}
-                      >
-                        {item.coverImage ? (
-                          <div className="song-card-img" style={{ backgroundImage: `url(${optimizeCloudinaryUrl(item.coverImage, 400)})` }} />
-                        ) : (
-                          <div className="song-card-img" style={{ border: 'none', background: 'none', boxShadow: 'none' }}>
-                            <CoverPlaceholder type="song" genre={item.genre} title={item.title} />
-                          </div>
-                        )}
-                        <div className="song-card-info">
-                          <div className="song-title">{item.title}</div>
-                          <div 
-                            className="song-artist"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(item.authorId ? `/author/${item.authorId}` : `/author/${item.artistName || item.author}`);
-                            }}
-                            style={{ cursor: 'pointer', textDecoration: 'underline' }}
-                          >
-                            {item.artistName || item.author}
-                          </div>
-                          <div className="song-meta">
-                            <span className="song-genre">{item.genre}</span>
-                            <span className="song-likes"><Heart size={12} /> {item.likes || 0}</span>
-                            <span className="song-contributions"><Sparkles size={12} /> {item.contributions?.length || 0}</span>
-                          </div>
-                        </div>
-                        <div className="song-card-actions" onClick={e => e.stopPropagation()}>
-                          <button 
-                            className={`song-save-btn ${isSaved ? 'saved' : ''}`}
-                            onClick={(e) => handleSaveToggle(e, item._id, isSaved)}
-                          >
-                            <Bookmark size={12} fill={isSaved ? 'currentColor' : 'none'} />
-                            <span>{isSaved ? 'Saved' : 'Save'}</span>
-                          </button>
-                        </div>
-                      </div>
+                        type="song"
+                        title={item.title}
+                        author={item.artistName || item.author || 'Unknown'}
+                        authorId={item.authorId}
+                        summary={item.summary}
+                        coverImage={item.coverImage}
+                        genre={item.genre}
+                        likes={item.likes || 0}
+                        comments={item.contributions?.length || 0}
+                        date={item.createdAt}
+                        id={item._id}
+                        actionButton={
+                          user?._id ? (
+                            <button 
+                              className={`song-save-btn ${isSaved ? 'saved' : ''}`}
+                              onClick={(e) => handleSaveToggle(e, item._id, isSaved)}
+                            >
+                              <Bookmark size={12} fill={isSaved ? 'currentColor' : 'none'} />
+                              <span>{isSaved ? 'Saved' : 'Save'}</span>
+                            </button>
+                          ) : null
+                        }
+                      />
                     );
                   }
                 })}

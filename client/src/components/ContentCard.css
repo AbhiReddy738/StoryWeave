@@ -1,0 +1,174 @@
+/* =====================================================
+   STANDARDIZED CONTENT CARD SYSTEM
+   ===================================================== */
+
+.content-card {
+  position: relative;
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 22px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 520px;
+}
+
+.content-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--accent-color);
+  box-shadow: 0 12px 30px var(--shadow-color);
+}
+
+/* Cover Section */
+.content-card .card-cover {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 18px;
+  box-shadow: 0 8px 20px var(--shadow-color);
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(18, 18, 32, 0.95));
+}
+
+.content-card .card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.content-card:hover .card-cover img {
+  transform: scale(1.06);
+}
+
+.content-card .card-cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(0, 0, 0, 0.4) 100%);
+  pointer-events: none;
+}
+
+.content-card .genre-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: var(--accent-color);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+.content-card .genre-badge:hover {
+  background: var(--accent-color);
+  color: var(--accent-text);
+  border-color: var(--accent-color);
+}
+
+/* Card Body Section */
+.content-card .card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.content-card.has-action .card-body {
+  padding-bottom: 50px; /* Leave room for absolute positioned buttons */
+}
+
+.content-card .card-title-text {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.content-card .card-author-text {
+  font-size: 13.5px;
+  color: var(--secondary-text);
+  margin-bottom: 12px;
+  font-weight: 500;
+  width: fit-content;
+}
+
+.content-card .card-author-text:hover {
+  color: var(--accent-color);
+}
+
+/* Metrics Section */
+.content-card .card-middle-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+  font-size: 13.5px;
+  color: var(--secondary-text);
+}
+
+.content-card .card-middle-metrics span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
+
+.content-card .card-metriclikes,
+.content-card .card-metriccomments {
+  color: var(--accent-color);
+}
+
+.content-card .card-metricdate {
+  color: var(--secondary-text);
+}
+
+/* Summary / Lyrics Section */
+.content-card .card-summary-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-card .card-summary-heading {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-color);
+}
+
+.content-card .card-summary-lines {
+  color: var(--secondary-text);
+  line-height: 1.6;
+  font-size: 13.5px;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Card Action Button Section */
+.content-card .card-action-wrapper {
+  position: absolute;
+  right: 22px;
+  bottom: 22px;
+  z-index: 5;
+}
+
+/* Make sure buttons styled from parent page behave nicely */
+.content-card .card-action-wrapper button {
+  margin: 0;
+}

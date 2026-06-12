@@ -7,6 +7,7 @@ import LazyImage from '../../components/LazyImage';
 import CoverPlaceholder from '../../components/CoverPlaceholder';
 import SkeletonCard from '../../components/SkeletonCard';
 import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
+import ContentCard from '../../components/ContentCard';
 import './AuthorProfile.css';
 
 const AuthorProfile = ({ collapsed }) => {
@@ -335,32 +336,21 @@ const AuthorProfile = ({ collapsed }) => {
                   stories.length > 0 ? (
                     <div className="profile-cards-grid">
                       {stories.map(story => (
-                        <div 
+                        <ContentCard
                           key={story._id}
-                          className="card-container book-card"
-                          onClick={() => navigate(`/card/${story.slug}-${story._id}`)}
-                          style={{ cursor: 'pointer' }}
-                        >
-                          <div className="card-cover">
-                            {story.coverImage ? (
-                              <>
-                                <LazyImage src={optimizeCloudinaryUrl(story.coverImage, 400)} alt={story.title} />
-                                <div className="card-cover-overlay"></div>
-                                <span className="genre-badge" onClick={e => e.stopPropagation()}>{story.genre}</span>
-                              </>
-                            ) : (
-                              <CoverPlaceholder type="story" genre={story.genre} title={story.title} />
-                            )}
-                          </div>
-                          <div className="book-card-body">
-                            <div className="story-name" title={story.title}>{story.title}</div>
-                            <div className="middle-box">
-                              <span className="likes">❤️ {story.likes || 0}</span>
-                              <span className="comments-count">💬 {story.comments?.length || 0}</span>
-                            </div>
-                            {story.summary && <div className="summary-lines" style={{ fontSize: '13px', marginTop: '10px' }}>{story.summary}</div>}
-                          </div>
-                        </div>
+                          type="story"
+                          title={story.title}
+                          author={profile.username}
+                          authorId={profile._id}
+                          summary={story.summary}
+                          coverImage={story.coverImage}
+                          genre={story.genre}
+                          likes={story.likes}
+                          comments={story.comments?.length || 0}
+                          date={story.createdAt}
+                          slug={story.slug}
+                          id={story._id}
+                        />
                       ))}
                     </div>
                   ) : (
@@ -376,31 +366,20 @@ const AuthorProfile = ({ collapsed }) => {
                   songs.length > 0 ? (
                     <div className="profile-cards-grid">
                       {songs.map(song => (
-                        <div 
+                        <ContentCard
                           key={song._id}
-                          className="song-card"
-                          onClick={() => navigate(`/song/${song._id}`)}
-                          style={{ cursor: 'pointer' }}
-                        >
-                          <div className="song-card-cover">
-                            {song.coverImage ? (
-                              <>
-                                <LazyImage src={optimizeCloudinaryUrl(song.coverImage, 400)} alt={song.title} />
-                                <div className="song-card-read-overlay">📝</div>
-                              </>
-                            ) : (
-                              <CoverPlaceholder type="song" genre={song.genre} title={song.title} />
-                            )}
-                          </div>
-                          <div className="song-card-body">
-                            <div className="song-card-title">{song.title}</div>
-                            <div className="song-card-artist">🎤 {song.artistName || song.author}</div>
-                            <div className="song-card-meta">
-                              <span className="genre">{song.genre}</span>
-                              <span className="likes">❤️ {song.likes || 0}</span>
-                            </div>
-                          </div>
-                        </div>
+                          type="song"
+                          title={song.title}
+                          author={song.artistName || profile.username}
+                          authorId={profile._id}
+                          summary={song.summary}
+                          coverImage={song.coverImage}
+                          genre={song.genre}
+                          likes={song.likes}
+                          comments={song.contributions?.length || 0}
+                          date={song.createdAt}
+                          id={song._id}
+                        />
                       ))}
                     </div>
                   ) : (

@@ -2,11 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config';
-import LazyImage from '../../components/LazyImage';
-import CoverPlaceholder from '../../components/CoverPlaceholder';
 import SkeletonCard from '../../components/SkeletonCard';
-import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
-import { Heart, MessageSquare, Calendar, BookOpen, Music } from 'lucide-react';
+import { BookOpen, Music } from 'lucide-react';
+import ContentCard from '../../components/ContentCard';
 import './SavedPage.css';
 
 const SavedPage = ({ collapsed }) => {
@@ -126,51 +124,21 @@ const SavedPage = ({ collapsed }) => {
               {activeTab === 'stories' && (
                 savedStories.length > 0 ? (
                   savedStories.map((story) => (
-                    <div
+                    <ContentCard
                       key={story._id || story.id}
-                      className="saved-card book-card"
-                      onClick={() => navigate(`/card/${story.slug}-${story._id}`)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <div className="card-cover">
-                        {story.coverImage ? (
-                          <>
-                            <LazyImage 
-                              src={optimizeCloudinaryUrl(story.coverImage, 400)} 
-                              alt={story.title} 
-                            />
-                            <div className="card-cover-overlay"></div>
-                            <span className="genre-badge" onClick={e => e.stopPropagation()}>
-                              {story.genre}
-                            </span>
-                          </>
-                        ) : (
-                          <CoverPlaceholder type="story" genre={story.genre} title={story.title} />
-                        )}
-                      </div>
-                      <div className="book-card-body">
-                        <div className="story-name" title={story.title}>{story.title}</div>
-                        <div 
-                          className="story-author"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(story.authorId ? `/author/${story.authorId}` : `/author/${story.author || 'Unknown'}`);
-                          }}
-                          style={{ cursor: 'pointer', textDecoration: 'underline' }}
-                        >
-                          By {story.author || 'Unknown'}
-                        </div>
-                        <div className="middle-box">
-                          <span className="likes"><Heart size={14} /> {story.likedBy?.length ?? story.likes ?? 0}</span>
-                          <span className="comments-count"><MessageSquare size={14} /> {story.comments?.length || 0}</span>
-                          <span className="posted-on">
-                            <Calendar size={14} /> {new Date(story.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div className="summary">
-                          <p className="summary-heading">Summary</p>
-                          <p className="summary-lines">{story.summary}</p>
-                        </div>
+                      type="story"
+                      title={story.title}
+                      author={story.author || 'Unknown'}
+                      authorId={story.authorId}
+                      summary={story.summary}
+                      coverImage={story.coverImage}
+                      genre={story.genre}
+                      likes={story.likedBy?.length ?? story.likes ?? 0}
+                      comments={story.comments?.length || 0}
+                      date={story.createdAt}
+                      slug={story.slug}
+                      id={story._id || story.id}
+                      actionButton={
                         <button
                           className="remove-btn"
                           onClick={(e) => {
@@ -180,8 +148,8 @@ const SavedPage = ({ collapsed }) => {
                         >
                           Remove
                         </button>
-                      </div>
-                    </div>
+                      }
+                    />
                   ))
                 ) : (
                   <div className="empty-box">
@@ -194,56 +162,31 @@ const SavedPage = ({ collapsed }) => {
               {activeTab === 'songs' && (
                 savedSongs.length > 0 ? (
                   savedSongs.map((song) => (
-                    <div
+                    <ContentCard
                       key={song._id || song.id}
-                      className="saved-card"
-                      onClick={() => navigate(`/song/${song._id || song.id}`)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <div className="story-name">
-                        {song.title}
-                      </div>
-                      <div 
-                        className="song-artist"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(song.authorId ? `/author/${song.authorId}` : `/author/${song.artistName || song.author || 'Unknown'}`);
-                        }}
-                        style={{ cursor: 'pointer', fontSize: '13px', color: 'var(--secondary-text)', marginTop: '4px', textDecoration: 'underline' }}
-                      >
-                        By {song.artistName || song.author || 'Unknown'}
-                      </div>
-
-                      <div className="middle-box">
-                        <span className="genre" onClick={e => e.stopPropagation()}>
-                          {song.genre}
-                        </span>
-
-                        <span className="likes">
-                          <Heart size={14} /> {song.likes}
-                        </span>
-                      </div>
-
-                      <div className="summary">
-                        <p className="summary-heading">
-                          Lyrics
-                        </p>
-
-                        <p className="summary-lines">
-                          {song.summary}
-                        </p>
-                      </div>
-
-                      <button
-                        className="remove-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeSong(song._id || song.id);
-                        }}
-                      >
-                        Remove
-                      </button>
-                    </div>
+                      type="song"
+                      title={song.title}
+                      author={song.artistName || song.author || 'Unknown'}
+                      authorId={song.authorId}
+                      summary={song.summary}
+                      coverImage={song.coverImage}
+                      genre={song.genre}
+                      likes={song.likes}
+                      comments={song.contributions?.length || 0}
+                      date={song.createdAt}
+                      id={song._id || song.id}
+                      actionButton={
+                        <button
+                          className="remove-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeSong(song._id || song.id);
+                          }}
+                        >
+                          Remove
+                        </button>
+                      }
+                    />
                   ))
                 ) : (
                   <div className="empty-box">
