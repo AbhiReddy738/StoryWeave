@@ -16,6 +16,7 @@ import AccountPage from './pages/accountpage/AccountPage';
 import SavedPage from './pages/savedpage/SavedPage';
 import CategoriesPage from './pages/categoriespage/CategoriesPage';
 import SongPage from './pages/songpage/SongPage';
+import AuthorProfile from './pages/authorprofile/AuthorProfile';
 
 // Protected Route Wrapper Component
 const ProtectedRoute = ({ children }) => {
@@ -166,6 +167,7 @@ function AppContent() {
           } 
         />
         <Route path="/song/:id" element={<SongPage collapsed={collapsed} />} />
+        <Route path="/author/:id" element={<AuthorProfile collapsed={collapsed} />} />
       </Routes>
     </div>
   );

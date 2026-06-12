@@ -2,7 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config';
+import { useAuth } from '../../context/AuthContext.jsx';
 import LazyImage from '../../components/LazyImage';
+import CoverPlaceholder from '../../components/CoverPlaceholder';
+import SkeletonCard from '../../components/SkeletonCard';
+import { getCache, setCache } from '../../utils/cache';
+import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
 import './HomePage.css';
 
 const STORY_API = `${API_BASE_URL}/story`;
@@ -10,61 +15,192 @@ const SONG_API  = `${API_BASE_URL}/song`;
 
 const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }) => {
   const navigate = useNavigate();
+  const { isLoggedIn, user: authUser } = useAuth();
 
+  // Feed type & lists
+  const [feedType, setFeedType] = useState('foryou'); // 'foryou' | 'following'
   const [stories, setStories] = useState([]);
   const [songs,   setSongs]   = useState([]);
+  const [followingStories, setFollowingStories] = useState([]);
+  const [followingSongs, setFollowingSongs] = useState([]);
+  
   const [loadingStories, setLoadingStories] = useState(true);
   const [loadingSongs,   setLoadingSongs]   = useState(true);
+  const [loadingFollowing, setLoadingFollowing] = useState(false);
+
+  // Recommended sidebar state
+  const [recommendedAuthors, setRecommendedAuthors] = useState([]);
+  const [loadingRecommended, setLoadingRecommended] = useState(true);
 
   // Active tab defaults to prop (global state) or 'stories'
   const activeTab = activeGlobalTab || 'stories';
 
-  const filteredStories = stories.filter(story =>
-    (story.title?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
-    (story.author?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
-    (story.genre?.toLowerCase().includes((searchTerm || '').toLowerCase()))
-  );
+  // Fetch Recommended Authors
+  useEffect(() => {
+    const fetchRecommended = async () => {
+      const cacheKey = `recommended-authors-${authUser?._id || 'anon'}`;
+      const cached = getCache(cacheKey);
+      if (cached) {
+        setRecommendedAuthors(cached);
+        setLoadingRecommended(false);
+        return;
+      }
+      try {
+        const res = await axios.get(`${API_BASE_URL}/user/recommended-authors`);
+        setRecommendedAuthors(res.data || []);
+        setCache(cacheKey, res.data || []);
+      } catch (err) {
+        console.error("Failed to fetch recommended authors", err);
+      } finally {
+        setLoadingRecommended(false);
+      }
+    };
+    fetchRecommended();
+  }, [authUser]);
 
-  const filteredSongs = songs.filter(song =>
-    (song.title?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
-    (song.artistName?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
-    (song.author?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
-    (song.genre?.toLowerCase().includes((searchTerm || '').toLowerCase()))
-  );
+  // Fetch Following Feed Content
+  useEffect(() => {
+    if (!isLoggedIn || feedType !== 'following') return;
+    const fetchFollowingFeed = async () => {
+      setLoadingFollowing(true);
+      try {
+        const res = await axios.get(`${API_BASE_URL}/user/following-feed`);
+        setFollowingStories(res.data.stories || []);
+        setFollowingSongs(res.data.songs || []);
+      } catch (err) {
+        console.error("Failed to fetch following feed", err);
+      } finally {
+        setLoadingFollowing(false);
+      }
+    };
+    fetchFollowingFeed();
+  }, [feedType, isLoggedIn]);
 
+  // Fetch all stories & songs
   useEffect(() => {
     const fetchStories = async () => {
+      const cached = getCache('homepage-stories');
+      if (cached) {
+        setStories(cached);
+        setLoadingStories(false);
+        return;
+      }
       try {
         const res = await axios.get(`${STORY_API}/all`);
-        console.log('[DEBUG - CLIENT] Stories fetched from API:', res.data);
-        console.log('[DEBUG - CLIENT] Homepage story count:', res.data.length);
         setStories(res.data);
+        setCache('homepage-stories', res.data);
       } catch (err) {
         console.error('[DEBUG - CLIENT] Failed to fetch stories:', err);
+      } finally {
+        setLoadingStories(false);
       }
-      finally { setLoadingStories(false); }
     };
     fetchStories();
   }, []);
 
   useEffect(() => {
     const fetchSongs = async () => {
+      const cached = getCache('homepage-songs');
+      if (cached) {
+        setSongs(cached);
+        setLoadingSongs(false);
+        return;
+      }
       try {
         const res = await axios.get(`${SONG_API}/all`);
-        console.log('[DEBUG - CLIENT] Songs fetched from API:', res.data);
-        console.log('[DEBUG - CLIENT] Homepage song count:', res.data.length);
         setSongs(res.data);
+        setCache('homepage-songs', res.data);
       } catch (err) {
         console.error('[DEBUG - CLIENT] Failed to fetch songs:', err);
+      } finally {
+        setLoadingSongs(false);
       }
-      finally { setLoadingSongs(false); }
     };
     fetchSongs();
   }, []);
 
+  // Handle follow/unfollow in suggested sidebar
+  const handleFollowRecommended = async (authorId, isCurrentlyFollowing) => {
+    if (!isLoggedIn) {
+      alert("Please log in to follow authors.");
+      navigate('/login');
+      return;
+    }
+
+    // Optimistic state update
+    setRecommendedAuthors(prev => prev.map(author => {
+      if (author._id === authorId) {
+        const isFollowed = author.followers.some(id => id.toString() === authUser._id.toString());
+        return {
+          ...author,
+          followers: isFollowed
+            ? author.followers.filter(id => id.toString() !== authUser._id.toString())
+            : [...author.followers, authUser._id]
+        };
+      }
+      return author;
+    }));
+
+    try {
+      const endpoint = isCurrentlyFollowing ? 'unfollow' : 'follow';
+      await axios.post(`${API_BASE_URL}/user/${endpoint}/${authorId}`);
+    } catch (err) {
+      // Revert on failure
+      setRecommendedAuthors(prev => prev.map(author => {
+        if (author._id === authorId) {
+          const isFollowed = author.followers.some(id => id.toString() === authUser._id.toString());
+          return {
+            ...author,
+            followers: isFollowed
+              ? author.followers.filter(id => id.toString() !== authUser._id.toString())
+              : [...author.followers, authUser._id]
+          };
+        }
+        return author;
+      }));
+      alert("Action failed. Please try again.");
+    }
+  };
+
+  // Determine lists to show
+  const currentStories = feedType === 'following' ? followingStories : stories;
+  const currentSongs = feedType === 'following' ? followingSongs : songs;
+  const currentLoading = feedType === 'following' ? loadingFollowing : (activeTab === 'stories' ? loadingStories : loadingSongs);
+
+  const filteredStories = currentStories.filter(story =>
+    (story.title?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
+    (story.author?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
+    (story.genre?.toLowerCase().includes((searchTerm || '').toLowerCase()))
+  );
+
+  const filteredSongs = currentSongs.filter(song =>
+    (song.title?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
+    (song.artistName?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
+    (song.author?.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
+    (song.genre?.toLowerCase().includes((searchTerm || '').toLowerCase()))
+  );
+
   return (
     <div className="page-container">
-      <main className={`main-container ${collapsed ? 'main-expanded' : ''}`}>
+      <main className={`main-container ${collapsed ? 'main-expanded' : ''}`} style={{ paddingRight: '12px' }}>
+
+        {/* ── Feed Selection ── */}
+        {isLoggedIn && (
+          <div className="feed-toggle-wrapper">
+            <button 
+              className={`feed-toggle-btn ${feedType === 'foryou' ? 'active-feed' : ''}`}
+              onClick={() => setFeedType('foryou')}
+            >
+              ✨ For You
+            </button>
+            <button 
+              className={`feed-toggle-btn ${feedType === 'following' ? 'active-feed' : ''}`}
+              onClick={() => setFeedType('following')}
+            >
+              👥 Following
+            </button>
+          </div>
+        )}
 
         {/* ── Global Toggle ── */}
         <div className="home-tabs">
@@ -85,31 +221,54 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
         {/* ── STORIES TAB ── */}
         {activeTab === 'stories' && (
           <>
-            {loadingStories && (
-              <div className="empty-songs">⏳ Loading stories...</div>
+            {currentLoading && (
+              <>
+                <SkeletonCard type="story" />
+                <SkeletonCard type="story" />
+                <SkeletonCard type="story" />
+              </>
             )}
-            {!loadingStories && filteredStories.length === 0 && (
-              <div className="empty-songs">🔍 No Stories Found</div>
+            {!currentLoading && filteredStories.length === 0 && (
+              <div className="empty-songs">
+                {feedType === 'following' 
+                  ? "📚 No stories from authors you follow yet." 
+                  : "🔍 No Stories Found"}
+              </div>
             )}
-            {filteredStories.map(story => (
+            {!currentLoading && filteredStories.map(story => (
               <div
                 key={story._id}
                 className="card-container book-card"
                 onClick={() => navigate(`/card/${story.slug}-${story._id}`)}
               >
                 <div className="card-cover">
-                  <LazyImage 
-                    src={story.coverImage} 
-                    alt={story.title} 
-                  />
-                  <div className="card-cover-overlay"></div>
-                  <span className="genre-badge" onClick={e => e.stopPropagation()}>
-                    {story.genre}
-                  </span>
+                  {story.coverImage ? (
+                    <>
+                      <LazyImage 
+                        src={optimizeCloudinaryUrl(story.coverImage, 400)} 
+                        alt={story.title} 
+                      />
+                      <div className="card-cover-overlay"></div>
+                      <span className="genre-badge" onClick={e => e.stopPropagation()}>
+                        {story.genre}
+                      </span>
+                    </>
+                  ) : (
+                    <CoverPlaceholder type="story" genre={story.genre} title={story.title} />
+                  )}
                 </div>
                 <div className="book-card-body">
                   <div className="story-name" title={story.title}>{story.title}</div>
-                  <div className="story-author">By {story.author || 'Unknown'}</div>
+                  <div 
+                    className="story-author" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(story.authorId ? `/author/${story.authorId}` : `/author/${story.author || 'Unknown'}`);
+                    }}
+                    style={{ cursor: 'pointer', transition: 'color 0.2s', fontWeight: 600 }}
+                  >
+                    By {story.author || 'Unknown'}
+                  </div>
                   <div className="middle-box">
                     <span className="likes">❤️ {story.likedBy?.length ?? story.likes ?? 0}</span>
                     <span className="comments-count">💬 {story.comments?.length || 0}</span>
@@ -130,26 +289,47 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
         {/* ── SONGS TAB ── */}
         {activeTab === 'songs' && (
           <>
-            {loadingSongs && (
-              <div className="empty-songs">⏳ Loading songs...</div>
+            {currentLoading && (
+              <>
+                <SkeletonCard type="song" />
+                <SkeletonCard type="song" />
+                <SkeletonCard type="song" />
+              </>
             )}
-            {!loadingSongs && filteredSongs.length === 0 && (
-              <div className="empty-songs">🎵 No Songs Found</div>
+            {!currentLoading && filteredSongs.length === 0 && (
+              <div className="empty-songs">
+                {feedType === 'following' 
+                  ? "🎵 No songs from authors you follow yet." 
+                  : "🎵 No Songs Found"}
+              </div>
             )}
-            {filteredSongs.map(song => (
+            {!currentLoading && filteredSongs.map(song => (
               <div
                 key={song._id}
                 className="song-card"
                 onClick={() => navigate(`/song/${song._id}`)}
               >
                 <div className="song-card-cover">
-                  <LazyImage src={song.coverImage} alt={song.title} />
-                  <div className="song-card-read-overlay">📝</div>
+                  {song.coverImage ? (
+                    <>
+                      <LazyImage src={optimizeCloudinaryUrl(song.coverImage, 400)} alt={song.title} />
+                      <div className="song-card-read-overlay">📝</div>
+                    </>
+                  ) : (
+                    <CoverPlaceholder type="song" genre={song.genre} title={song.title} />
+                  )}
                 </div>
                 <div className="song-card-body">
                   <div className="song-card-title">{song.title}</div>
-                  <div className="song-card-artist">
-                    🎤 {song.artistName || song.author}
+                  <div 
+                    className="song-card-artist"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(song.authorId ? `/author/${song.authorId}` : `/author/${song.artistName || song.author}`);
+                    }}
+                    style={{ cursor: 'pointer', transition: 'color 0.2s', fontWeight: 600 }}
+                  >
+                    By {song.artistName || song.author}
                   </div>
                   <div className="song-card-meta">
                     <span className="genre">{song.genre}</span>
@@ -168,6 +348,46 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
         )}
 
       </main>
+
+      {/* ── Suggested Sidebar ── */}
+      <aside className="homepage-sidebar">
+        <h3 className="sidebar-title">👥 Suggested Authors</h3>
+        {loadingRecommended ? (
+          <div style={{ color: 'var(--secondary-text)', fontSize: '14px', marginTop: '10px' }}>Loading...</div>
+        ) : recommendedAuthors.length === 0 ? (
+          <div style={{ color: 'var(--secondary-text)', fontSize: '14px', fontStyle: 'italic', marginTop: '10px' }}>No recommendations found.</div>
+        ) : (
+          <div className="sidebar-authors-list">
+            {recommendedAuthors.map(author => {
+              const isFollowingAuthor = authUser && author.followers.some(id => id.toString() === authUser._id.toString());
+              return (
+                <div key={author._id} className="sidebar-author-row" onClick={() => navigate(`/author/${author._id}`)}>
+                  <div className="sidebar-author-photo">
+                    <LazyImage
+                      src={optimizeCloudinaryUrl(author.profilePhoto || author.profileImage, 150)}
+                      alt={author.username}
+                      fallback="https://via.placeholder.com/150"
+                    />
+                  </div>
+                  <div className="sidebar-author-info">
+                    <div className="sidebar-author-username">{author.username}</div>
+                    <div className="sidebar-author-bio">{author.bio || "Writer on StoryWeave"}</div>
+                  </div>
+                  <button
+                    className={`sidebar-follow-btn ${isFollowingAuthor ? 'following' : 'follow'}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleFollowRecommended(author._id, isFollowingAuthor);
+                    }}
+                  >
+                    {isFollowingAuthor ? 'Following' : 'Follow'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </aside>
     </div>
   );
 };

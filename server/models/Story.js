@@ -115,6 +115,11 @@ const storySchema = new mongoose.Schema(
     timestamps: true
 });
 
+storySchema.index({ authorId: 1 });
+storySchema.index({ genre: 1 });
+storySchema.index({ createdAt: -1 });
+storySchema.index({ likes: -1 });
+
 const Story = mongoose.model("Story", storySchema);
 
 export default Story;

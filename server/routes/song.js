@@ -89,7 +89,9 @@ router.post("/upload-cover", uploadSongCoverMiddleware, async (req, res) => {
 // GET /song/all — Retrieve all songs
 router.get("/all", async (req, res) => {
     try {
-        const songs = await Song.find({ status: { $ne: "draft" } }).sort({ createdAt: -1 });
+        const songs = await Song.find({ status: { $ne: "draft" } })
+            .select("title artistName genre coverImage summary tags author authorId likes comments contributions slug status createdAt")
+            .sort({ createdAt: -1 });
         res.status(200).json(songs);
     } catch (err) {
         res.status(500).json(err);
@@ -100,7 +102,8 @@ router.get("/all", async (req, res) => {
 router.get("/trending", async (req, res) => {
     try {
         // Sort by likes, comments length, contributions length combined, and recency
-        const songs = await Song.find({ status: { $ne: "draft" } });
+        const songs = await Song.find({ status: { $ne: "draft" } })
+            .select("title artistName genre coverImage summary tags author authorId likes comments contributions slug status createdAt updatedAt");
         const sorted = songs.sort((a, b) => {
             const scoreA = (a.likes || 0) * 3 + (a.contributions?.length || 0) + (a.comments?.length || 0) * 2 + new Date(a.updatedAt || a.createdAt).getTime() / (1000 * 60 * 60 * 24);
             const scoreB = (b.likes || 0) * 3 + (b.contributions?.length || 0) + (b.comments?.length || 0) * 2 + new Date(b.updatedAt || b.createdAt).getTime() / (1000 * 60 * 60 * 24);

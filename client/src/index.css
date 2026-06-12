@@ -82,6 +82,9 @@
 }
 
 @media (max-width: 768px) {
+  :root {
+    --header-height: 60px;
+  }
   .app-container,
   .app-container.sidebar-collapsed {
     --sidebar-width: 0px !important;
@@ -107,6 +110,7 @@ html, body {
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
+  overflow-x: hidden;
 }
 
 #root {
@@ -223,5 +227,26 @@ img {
 @keyframes skeleton-loading-shimmer {
   100% {
     transform: translateX(100%);
+  }
+}
+
+/* =====================================================
+   MOBILE LAYOUT OVERRIDES (AUDIT CORRECTIONS)
+   ===================================================== */
+@media (max-width: 768px) {
+  .main-container,
+  .trending-container,
+  .categories-container,
+  .saved-container,
+  .account-container,
+  .author-profile-page,
+  .post-container,
+  .card-page,
+  .song-page,
+  .story-page-loading,
+  .story-page-error,
+  .song-page-loading,
+  .song-page-error {
+    padding-top: calc(var(--header-height) + 16px) !important;
   }
 }

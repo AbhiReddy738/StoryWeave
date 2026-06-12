@@ -703,11 +703,14 @@
   .song-hero-content { padding: 16px; }
   .song-cover-art { width: 100px; height: 100px; }
   .song-tabs {
-    flex-wrap: wrap;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
   }
   .song-tab-btn {
-    width: 100%;
+    flex: 1;
     text-align: center;
-    padding: 12px;
+    padding: 10px 0;
+    font-size: 14px;
   }
 }

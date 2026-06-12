@@ -6,6 +6,7 @@ import LazyImage from '../../components/LazyImage';
 import StoryReader from '../../components/storyreader/StoryReader';
 import './PostPage.css';
 import { API_BASE_URL } from '../../config';
+import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
 
 const API = `${API_BASE_URL}/story`;
 
@@ -567,7 +568,7 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
                 </div>
               ) : (
                 <>
-                  <LazyImage src={coverImageUrl} alt="Cover Preview" className="cover-preview-img" />
+                  <LazyImage src={optimizeCloudinaryUrl(coverImageUrl, 400)} alt="Cover Preview" className="cover-preview-img" />
                   <div className="cover-actions">
                     <button className="cover-btn" onClick={() => coverInputRef.current?.click()}>
                       🔄 Change
@@ -691,7 +692,7 @@ const PostPage = ({ collapsed, activeGlobalTab }) => {
                         <div className={`image-block ${block.uploading ? 'uploading' : ''}`} style={{ height: '300px', position: 'relative' }}>
                           {block.uploading
                             ? <div className="image-block-loader">⟳ Uploading image...</div>
-                            : <LazyImage src={block.value} alt={`Story image ${idx}`} className="editor-inline-image" />
+                            : <LazyImage src={optimizeCloudinaryUrl(block.value, 600)} alt={`Story image ${idx}`} className="editor-inline-image" />
                           }
                         </div>
                       )}

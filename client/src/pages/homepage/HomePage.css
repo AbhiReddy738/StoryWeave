@@ -357,3 +357,173 @@
   overflow: hidden;
   margin-top: 4px;
 }
+
+/* =====================================================
+   FEED TOGGLES (FOR YOU / FOLLOWING)
+   ===================================================== */
+
+.feed-toggle-wrapper {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 16px;
+}
+
+.feed-toggle-btn {
+  padding: 8px 20px;
+  border: none;
+  background: var(--card-color);
+  color: var(--secondary-text);
+  border: 1px solid var(--border-color);
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.feed-toggle-btn:hover {
+  background: var(--hover-color);
+  color: var(--text-color);
+}
+
+.feed-toggle-btn.active-feed {
+  background: var(--accent-gradient);
+  color: var(--accent-text);
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(201, 168, 76, 0.2);
+}
+
+/* =====================================================
+   SUGGESTED AUTHORS SIDEBAR (GLASSMORPHISM)
+   ===================================================== */
+
+.homepage-sidebar {
+  width: 320px;
+  height: 100vh;
+  border-left: 1px solid var(--border-color);
+  background: var(--card-color);
+  padding: 95px 24px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex-shrink: 0;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.sidebar-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent-color);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+  margin: 0;
+}
+
+.sidebar-authors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sidebar-author-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.light-theme .sidebar-author-row {
+  background: rgba(0, 0, 0, 0.01);
+}
+
+.sidebar-author-row:hover {
+  border-color: var(--accent-color);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.sidebar-author-photo {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1.5px solid var(--accent-color);
+}
+
+.sidebar-author-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sidebar-author-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-author-username {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-author-bio {
+  font-size: 11px;
+  color: var(--secondary-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.sidebar-follow-btn {
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.sidebar-follow-btn.follow {
+  background: var(--accent-gradient);
+  color: var(--accent-text);
+}
+
+.sidebar-follow-btn.following {
+  background: transparent;
+  color: var(--text-color);
+  border: 1.5px solid var(--border-color);
+}
+
+.sidebar-follow-btn:hover {
+  transform: scale(1.05);
+}
+
+/* =====================================================
+   RESPONSIVE OVERRIDES
+   ===================================================== */
+
+@media (max-width: 1024px) {
+  .homepage-sidebar {
+    display: none; /* Hide suggested authors on smaller screens */
+  }
+}

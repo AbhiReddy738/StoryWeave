@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config';
 import LazyImage from '../../components/LazyImage';
+import CoverPlaceholder from '../../components/CoverPlaceholder';
+import SkeletonCard from '../../components/SkeletonCard';
+import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
 import './SavedPage.css';
 
 const SavedPage = ({ collapsed }) => {
@@ -108,12 +111,14 @@ const SavedPage = ({ collapsed }) => {
 
         <div className="saved-grid">
           {loading ? (
-            <div className="empty-box">
-              ⏳ Loading Saved Items...
-            </div>
+            <>
+              <SkeletonCard type={activeTab === 'stories' ? 'story' : 'song'} />
+              <SkeletonCard type={activeTab === 'stories' ? 'story' : 'song'} />
+              <SkeletonCard type={activeTab === 'stories' ? 'story' : 'song'} />
+            </>
           ) : error ? (
             <div className="empty-box">
-              ⚠️ {error}
+              {error}
             </div>
           ) : (
             <>
@@ -127,18 +132,33 @@ const SavedPage = ({ collapsed }) => {
                       style={{ cursor: 'pointer' }}
                     >
                       <div className="card-cover">
-                        <LazyImage 
-                          src={story.coverImage} 
-                          alt={story.title} 
-                        />
-                        <div className="card-cover-overlay"></div>
-                        <span className="genre-badge" onClick={e => e.stopPropagation()}>
-                          {story.genre}
-                        </span>
+                        {story.coverImage ? (
+                          <>
+                            <LazyImage 
+                              src={optimizeCloudinaryUrl(story.coverImage, 400)} 
+                              alt={story.title} 
+                            />
+                            <div className="card-cover-overlay"></div>
+                            <span className="genre-badge" onClick={e => e.stopPropagation()}>
+                              {story.genre}
+                            </span>
+                          </>
+                        ) : (
+                          <CoverPlaceholder type="story" genre={story.genre} title={story.title} />
+                        )}
                       </div>
                       <div className="book-card-body">
                         <div className="story-name" title={story.title}>{story.title}</div>
-                        <div className="story-author">By {story.author || 'Unknown'}</div>
+                        <div 
+                          className="story-author"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(story.authorId ? `/author/${story.authorId}` : `/author/${story.author || 'Unknown'}`);
+                          }}
+                          style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                          By {story.author || 'Unknown'}
+                        </div>
                         <div className="middle-box">
                           <span className="likes">❤️ {story.likedBy?.length ?? story.likes ?? 0}</span>
                           <span className="comments-count">💬 {story.comments?.length || 0}</span>
@@ -180,6 +200,16 @@ const SavedPage = ({ collapsed }) => {
                     >
                       <div className="story-name">
                         {song.title}
+                      </div>
+                      <div 
+                        className="song-artist"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(song.authorId ? `/author/${song.authorId}` : `/author/${song.artistName || song.author || 'Unknown'}`);
+                        }}
+                        style={{ cursor: 'pointer', fontSize: '13px', color: 'var(--secondary-text)', marginTop: '4px', textDecoration: 'underline' }}
+                      >
+                        By {song.artistName || song.author || 'Unknown'}
                       </div>
 
                       <div className="middle-box">

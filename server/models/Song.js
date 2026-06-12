@@ -101,6 +101,11 @@ const songSchema = new mongoose.Schema(
     timestamps: true
 });
 
+songSchema.index({ authorId: 1 });
+songSchema.index({ genre: 1 });
+songSchema.index({ createdAt: -1 });
+songSchema.index({ likes: -1 });
+
 const Song = mongoose.model("Song", songSchema);
 
 export default Song;

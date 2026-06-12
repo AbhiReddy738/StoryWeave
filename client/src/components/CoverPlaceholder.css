@@ -1,0 +1,93 @@
+.cover-placeholder-container {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(18, 18, 32, 0.95));
+  border: 1px solid var(--border-color);
+  border-radius: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 15px;
+  text-align: center;
+}
+
+.placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.placeholder-icon {
+  font-size: 32px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  animation: placeholder-pulse 2s infinite ease-in-out;
+}
+
+.placeholder-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--secondary-text);
+  letter-spacing: 0.5px;
+}
+
+.placeholder-genre-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--accent-gradient);
+  color: var(--accent-text);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  z-index: 2;
+}
+
+/* Song specific styles if any */
+.song-placeholder .placeholder-icon {
+  font-size: 36px;
+}
+
+@keyframes placeholder-pulse {
+  0% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.9; }
+}
+
+/* Small Container Overrides */
+.post-card-thumbnail .cover-placeholder-container,
+.song-card-img .cover-placeholder-container,
+.related-story-cover .cover-placeholder-container,
+.related-song-cover .cover-placeholder-container {
+  padding: 5px;
+}
+
+.post-card-thumbnail .placeholder-icon,
+.song-card-img .placeholder-icon,
+.related-story-cover .placeholder-icon,
+.related-song-cover .placeholder-icon {
+  font-size: 24px;
+}
+
+.post-card-thumbnail .placeholder-text,
+.song-card-img .placeholder-text,
+.related-story-cover .placeholder-text,
+.related-song-cover .placeholder-text {
+  display: none;
+}
+
+.post-card-thumbnail .placeholder-genre-badge,
+.song-card-img .placeholder-genre-badge,
+.related-story-cover .placeholder-genre-badge,
+.related-song-cover .placeholder-genre-badge {
+  display: none;
+}

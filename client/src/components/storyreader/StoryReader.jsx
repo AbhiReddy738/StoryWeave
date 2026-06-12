@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import LazyImage from '../LazyImage';
+import CoverPlaceholder from '../CoverPlaceholder';
+import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
 import './StoryReader.css';
 
 const StoryReader = ({ story, onClose }) => {
@@ -136,15 +138,17 @@ const StoryReader = ({ story, onClose }) => {
           {/* Minimalist Top Header Section */}
           <header className="story-reader-header">
             {/* Cover image inside reader header */}
-            {story?.coverImage && (
-              <div className="reader-cover-container">
+            <div className="reader-cover-container">
+              {story?.coverImage ? (
                 <LazyImage 
-                  src={story?.coverImage} 
+                  src={optimizeCloudinaryUrl(story.coverImage, 400)} 
                   alt={story?.title} 
                   className="reader-cover-img"
                 />
-              </div>
-            )}
+              ) : (
+                <CoverPlaceholder type="story" genre={story?.genre} title={story?.title} />
+              )}
+            </div>
             <h1 className="story-reader-title">{story?.title || 'Untitled'}</h1>
             <div className="story-reader-meta">
               <span>By {story?.author || 'Unknown'}</span>
@@ -186,7 +190,7 @@ const StoryReader = ({ story, onClose }) => {
               if (block.type === 'image') {
                 return (
                   <figure key={block.id ?? idx} className="reader-image-block" style={{ height: '350px' }}>
-                    <LazyImage src={block.value} alt={`Story image ${idx + 1}`} />
+                    <LazyImage src={optimizeCloudinaryUrl(block.value, 800)} alt={`Story image ${idx + 1}`} />
                   </figure>
                 );
               }

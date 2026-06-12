@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config';
 import LazyImage from '../../components/LazyImage';
+import CoverPlaceholder from '../../components/CoverPlaceholder';
+import SkeletonCard from '../../components/SkeletonCard';
+import { getCache, setCache } from '../../utils/cache';
+import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
 import './CategoriesPage.css';
 
 const STORY_GENRES = [
@@ -67,12 +71,28 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
       setLoading(true);
       try {
         if (activeGlobalTab === 'stories') {
-          const res = await axios.get(`${API_BASE_URL}/story/all`);
-          const filtered = res.data.filter(s => genresMatch(s.genre, selectedGenre));
+          let data;
+          const cached = getCache('homepage-stories');
+          if (cached) {
+            data = cached;
+          } else {
+            const res = await axios.get(`${API_BASE_URL}/story/all`);
+            data = res.data;
+            setCache('homepage-stories', data);
+          }
+          const filtered = data.filter(s => genresMatch(s.genre, selectedGenre));
           setItems(filtered);
         } else {
-          const res = await axios.get(`${API_BASE_URL}/song/all`);
-          const filtered = res.data.filter(s => genresMatch(s.genre, selectedGenre));
+          let data;
+          const cached = getCache('homepage-songs');
+          if (cached) {
+            data = cached;
+          } else {
+            const res = await axios.get(`${API_BASE_URL}/song/all`);
+            data = res.data;
+            setCache('homepage-songs', data);
+          }
+          const filtered = data.filter(s => genresMatch(s.genre, selectedGenre));
           setItems(filtered);
         }
       } catch (err) {
@@ -158,7 +178,11 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
             </div>
 
             {loading ? (
-              <div className="loading-results">Loading category content...</div>
+              <div className="category-cards-grid">
+                <SkeletonCard type={activeGlobalTab === 'stories' ? 'story' : 'song'} />
+                <SkeletonCard type={activeGlobalTab === 'stories' ? 'story' : 'song'} />
+                <SkeletonCard type={activeGlobalTab === 'stories' ? 'story' : 'song'} />
+              </div>
             ) : items.length === 0 ? (
               <div className="empty-category-results">
                 No {activeGlobalTab === 'stories' ? 'stories' : 'songs'} available in this category yet.
@@ -174,18 +198,33 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
                         onClick={() => handleCardClick(item)}
                       >
                         <div className="card-cover">
-                          <LazyImage 
-                            src={item.coverImage} 
-                            alt={item.title} 
-                          />
-                          <div className="card-cover-overlay"></div>
-                          <span className="genre-badge" onClick={e => e.stopPropagation()}>
-                            {item.genre}
-                          </span>
+                          {item.coverImage ? (
+                            <>
+                              <LazyImage 
+                                src={optimizeCloudinaryUrl(item.coverImage, 400)} 
+                                alt={item.title} 
+                              />
+                              <div className="card-cover-overlay"></div>
+                              <span className="genre-badge" onClick={e => e.stopPropagation()}>
+                                {item.genre}
+                              </span>
+                            </>
+                          ) : (
+                            <CoverPlaceholder type="story" genre={item.genre} title={item.title} />
+                          )}
                         </div>
                         <div className="book-card-body">
                           <div className="story-name" title={item.title}>{item.title}</div>
-                          <div className="story-author">By {item.author || 'Unknown'}</div>
+                          <div 
+                            className="story-author"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(item.authorId ? `/author/${item.authorId}` : `/author/${item.author || 'Unknown'}`);
+                            }}
+                            style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                          >
+                            By {item.author || 'Unknown'}
+                          </div>
                           <div className="middle-box">
                             <span className="likes">❤️ {item.likedBy?.length ?? item.likes ?? 0}</span>
                             <span className="comments-count">💬 {item.comments?.length || 0}</span>
@@ -208,10 +247,25 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
                         className="category-song-card"
                         onClick={() => handleCardClick(item)}
                       >
-                        <div className="song-card-img" style={{ backgroundImage: `url(${item.coverImage || 'https://via.placeholder.com/300'})` }} />
+                        {item.coverImage ? (
+                          <div className="song-card-img" style={{ backgroundImage: `url(${optimizeCloudinaryUrl(item.coverImage, 400)})` }} />
+                        ) : (
+                          <div className="song-card-img" style={{ border: 'none', background: 'none', boxShadow: 'none' }}>
+                            <CoverPlaceholder type="song" genre={item.genre} title={item.title} />
+                          </div>
+                        )}
                         <div className="song-card-info">
                           <div className="song-title">{item.title}</div>
-                          <div className="song-artist">{item.artistName || item.author}</div>
+                          <div 
+                            className="song-artist"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(item.authorId ? `/author/${item.authorId}` : `/author/${item.artistName || item.author}`);
+                            }}
+                            style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                          >
+                            {item.artistName || item.author}
+                          </div>
                           <div className="song-meta">
                             <span className="song-genre">{item.genre}</span>
                             <span className="song-likes">❤️ {item.likes || 0}</span>
