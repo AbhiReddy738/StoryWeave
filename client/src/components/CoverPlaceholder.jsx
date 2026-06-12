@@ -1,9 +1,9 @@
 import React from 'react';
+import { BookOpen, Music } from 'lucide-react';
 import './CoverPlaceholder.css';
 
 const CoverPlaceholder = ({ type, genre, title }) => {
   const isSong = type === 'song';
-  const icon = isSong ? '🎵' : '📖';
   const text = 'No Cover Image';
 
   return (
@@ -12,7 +12,9 @@ const CoverPlaceholder = ({ type, genre, title }) => {
       title={title || text}
     >
       <div className="placeholder-content">
-        <span className="placeholder-icon">{icon}</span>
+        <span className="placeholder-icon">
+          {isSong ? <Music className="lucide-icon" /> : <BookOpen className="lucide-icon" />}
+        </span>
         <span className="placeholder-text">{text}</span>
       </div>
       {genre && (
@@ -23,3 +25,4 @@ const CoverPlaceholder = ({ type, genre, title }) => {
 };
 
 export default CoverPlaceholder;
+

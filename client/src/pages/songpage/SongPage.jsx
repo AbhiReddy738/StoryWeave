@@ -6,6 +6,28 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import LazyImage from '../../components/LazyImage';
 import CoverPlaceholder from '../../components/CoverPlaceholder';
 import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
+import { 
+  Play, 
+  Pause, 
+  SkipBack, 
+  SkipForward, 
+  Shuffle, 
+  Repeat, 
+  Volume2, 
+  VolumeX, 
+  Heart, 
+  Bookmark, 
+  Share2, 
+  MessageSquare, 
+  Sparkles, 
+  Calendar, 
+  ArrowLeft, 
+  Clock, 
+  UserPlus, 
+  UserCheck, 
+  Music,
+  Send
+} from 'lucide-react';
 import './SongPage.css';
 
 const API = `${API_BASE_URL}/song`;
@@ -13,8 +35,81 @@ const API = `${API_BASE_URL}/song`;
 const SongPage = ({ collapsed }) => {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const { user: authUser } = useAuth();
+
+  // Simulated Player States
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(214); // 3:34 mock duration
+  const [volume, setVolume] = useState(70);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isShuffle, setIsShuffle] = useState(false);
+  const [isRepeat, setIsRepeat] = useState(false);
+
+  useEffect(() => {
+    let interval = null;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setCurrentTime((prevTime) => {
+          if (prevTime >= duration) {
+            if (isRepeat) {
+              return 0;
+            } else {
+              setIsPlaying(false);
+              return 0;
+            }
+          }
+          return prevTime + 1;
+        });
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, duration, isRepeat]);
+
+  const handlePlayPause = () => {
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleVolumeChange = (e) => {
+    setVolume(Number(e.target.value));
+    if (isMuted) setIsMuted(false);
+  };
+
+  const handleMuteToggle = () => {
+    setIsMuted(!isMuted);
+  };
+
+  const handleShuffleToggle = () => {
+    setIsShuffle(!isShuffle);
+  };
+
+  const handleRepeatToggle = () => {
+    setIsRepeat(!isRepeat);
+  };
+
+  const handlePrevSong = () => {
+    setCurrentTime(0);
+  };
+
+  const handleNextSong = () => {
+    setCurrentTime(0);
+  };
+
+  const handleProgressClick = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const width = rect.width;
+    const clickPercent = clickX / width;
+    setCurrentTime(Math.floor(clickPercent * duration));
+  };
+
+  const formatTime = (time) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  };
 
   const [song, setSong] = useState(null);
   const [relatedSongs, setRelatedSongs] = useState([]);
@@ -276,9 +371,12 @@ const SongPage = ({ collapsed }) => {
 
   if (error || !song) return (
     <div className="song-page-error">
-      <span>🎵</span>
+      <span><Music size={48} /></span>
       <p>{error || 'Song not found'}</p>
-      <button onClick={() => navigate('/')}>← Back to Home</button>
+      <button onClick={() => navigate('/')}>
+        <ArrowLeft size={16} />
+        <span>Back to Home</span>
+      </button>
     </div>
   );
 
@@ -319,46 +417,40 @@ const SongPage = ({ collapsed }) => {
               {(!authUser || (song.authorId && authUser._id.toString() !== song.authorId.toString())) && (
                 <button
                   onClick={handleFollowToggle}
-                  style={{
-                    padding: '4px 12px',
-                    fontSize: '12px',
-                    borderRadius: '15px',
-                    border: isFollowingArtist ? '1px solid rgba(255,255,255,0.4)' : 'none',
-                    background: isFollowingArtist ? 'transparent' : 'var(--accent-gradient)',
-                    color: isFollowingArtist ? '#fff' : 'var(--accent-text)',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
+                  className={`song-author-follow-btn ${isFollowingArtist ? 'following' : ''}`}
                 >
-                  {isFollowingArtist ? 'Following' : 'Follow'}
+                  {isFollowingArtist ? <UserCheck size={13} /> : <UserPlus size={13} />}
+                  <span>{isFollowingArtist ? 'Following' : 'Follow'}</span>
                 </button>
               )}
             </div>
             <div className="song-meta-row">
-              <span>❤️ {likeCount.toLocaleString()} likes</span>
-              <span>✍️ {contributions.length} contributions</span>
-              <span>💬 {comments.length} comments</span>
-              <span>📅 {new Date(song.createdAt).toLocaleDateString()}</span>
+              <span><Heart size={13} /> {likeCount.toLocaleString()} likes</span>
+              <span><Sparkles size={13} /> {contributions.length} contributions</span>
+              <span><MessageSquare size={13} /> {comments.length} comments</span>
+              <span><Calendar size={13} /> {new Date(song.createdAt).toLocaleDateString()}</span>
             </div>
             <div className="song-hero-actions">
               <button
                 className={`song-action-btn ${liked ? 'song-liked' : ''}`}
                 onClick={handleLike}
               >
-                {liked ? '❤️ Liked' : '🤍 Like'}
+                <Heart size={15} fill={liked ? 'currentColor' : 'none'} />
+                <span>{liked ? 'Liked' : 'Like'}</span>
               </button>
               <button
                 className={`song-action-btn ${saved ? 'song-saved' : ''}`}
                 onClick={handleSave}
               >
-                {saved ? '🔖 Saved' : '📌 Save'}
+                <Bookmark size={15} fill={saved ? 'currentColor' : 'none'} />
+                <span>{saved ? 'Saved' : 'Save'}</span>
               </button>
               <button
                 className="song-action-btn"
                 onClick={handleShare}
               >
-                🔗 Share
+                <Share2 size={15} />
+                <span>Share</span>
               </button>
             </div>
           </div>
@@ -366,7 +458,7 @@ const SongPage = ({ collapsed }) => {
       </div>
 
       {/* ── MAIN CONTENT ── */}
-      <div className="song-main-content">
+      <div className="song-main-content" style={{ paddingBottom: '120px' }}>
 
         {/* LEFT: Tabs */}
         <div className="song-content-left">
@@ -379,10 +471,10 @@ const SongPage = ({ collapsed }) => {
                 onClick={() => setActiveTab(tab)}
               >
                 {tab === 'lyrics'
-                  ? '🎤 Lyrics'
+                  ? <><Music size={14} style={{ marginRight: '6px' }} /> Lyrics</>
                   : tab === 'contributions'
-                  ? `🎶 Contributions (${contributions.length})`
-                  : `💬 Comments (${comments.length})`
+                  ? <><Sparkles size={14} style={{ marginRight: '6px' }} /> Contributions ({contributions.length})</>
+                  : <><MessageSquare size={14} style={{ marginRight: '6px' }} /> Comments ({comments.length})</>
                 }
               </button>
             ))}
@@ -395,7 +487,7 @@ const SongPage = ({ collapsed }) => {
                 <pre className="song-lyrics-text">{song.lyrics}</pre>
               ) : (
                 <div className="song-empty-tab">
-                  <span>🎤</span>
+                  <span><Music size={32} /></span>
                   <p>No lyrics available for this song.</p>
                 </div>
               )}
@@ -418,14 +510,15 @@ const SongPage = ({ collapsed }) => {
                   onClick={handleContribution}
                   disabled={!contributionText.trim()}
                 >
-                  🚀 Submit Contribution
+                  <Send size={14} />
+                  <span>Submit Contribution</span>
                 </button>
               </div>
 
               <div className="contributions-list">
                 {contributions.length === 0 ? (
                   <div className="song-empty-tab">
-                    <span>📝</span>
+                    <span><Sparkles size={32} /></span>
                     <p>No contributions yet. Be the first to add a verse!</p>
                   </div>
                 ) : (
@@ -443,7 +536,10 @@ const SongPage = ({ collapsed }) => {
                         className={`contribution-card ${isTop ? 'top-contribution' : ''}`}
                       >
                         {isTop && (
-                          <div className="top-badge">🏆 Top Contribution</div>
+                          <div className="top-badge">
+                            <Award size={11} style={{ marginRight: '4px' }} />
+                            <span>Top Contribution</span>
+                          </div>
                         )}
 
                         <div className="contribution-header">
@@ -453,13 +549,13 @@ const SongPage = ({ collapsed }) => {
                               onClick={() => navigate(`/author/${item.author}`)}
                               style={{ cursor: 'pointer', textDecoration: 'underline' }}
                             >
-                              ✍️ {item.author}
+                              @{item.author}
                             </span>
                             <span className="contribution-date">
                               {new Date(item.createdAt).toLocaleDateString()}
                             </span>
                           </div>
-                          <span className="upvotes-count">↑ {item.upvotes} Upvotes</span>
+                          <span className="upvotes-count">{item.upvotes} Upvotes</span>
                         </div>
 
                         <p className="contribution-text">{item.text}</p>
@@ -468,7 +564,7 @@ const SongPage = ({ collapsed }) => {
                           className={`upvote-btn ${hasUpvoted ? 'upvoted' : ''}`}
                           onClick={() => handleUpvote(cid)}
                         >
-                          {hasUpvoted ? '👍 Upvoted' : '👍 Upvote'}
+                          <span>👍 {hasUpvoted ? 'Upvoted' : 'Upvote'}</span>
                         </button>
                       </div>
                     );
@@ -494,14 +590,15 @@ const SongPage = ({ collapsed }) => {
                   onClick={handleComment}
                   disabled={commentPosting || !commentText.trim()}
                 >
-                  {commentPosting ? 'Posting...' : '💬 Post Comment'}
+                  <MessageSquare size={14} />
+                  <span>{commentPosting ? 'Posting...' : 'Post Comment'}</span>
                 </button>
               </div>
 
               <div className="comments-list">
                 {comments.length === 0 ? (
                   <div className="song-empty-tab">
-                    <span>💬</span>
+                    <span><MessageSquare size={32} /></span>
                     <p>Be the first to comment!</p>
                   </div>
                 ) : (
@@ -535,7 +632,7 @@ const SongPage = ({ collapsed }) => {
 
         {/* RIGHT: Related Songs */}
         <aside className="song-sidebar">
-          <h3 className="song-sidebar-title">🎵 Related Songs</h3>
+          <h3 className="song-sidebar-title">Related Songs</h3>
           {relatedSongs.length === 0 ? (
             <p className="song-sidebar-empty">No related songs found.</p>
           ) : (
@@ -584,6 +681,67 @@ const SongPage = ({ collapsed }) => {
             </div>
           )}
         </aside>
+      </div>
+
+      {/* ── SPOTIFY-INSPIRED FLOATING PLAYER BAR ── */}
+      <div className="spotify-player-bar">
+        <div className="player-song-info">
+          <div className="player-cover-container">
+            {song.coverImage ? (
+              <img src={optimizeCloudinaryUrl(song.coverImage, 100)} alt={song.title} />
+            ) : (
+              <div className="player-cover-fallback"><Music size={16} /></div>
+            )}
+          </div>
+          <div className="player-meta">
+            <span className="player-song-title">{song.title}</span>
+            <span className="player-song-artist">{song.artistName || song.author}</span>
+          </div>
+        </div>
+
+        <div className="player-controls-container">
+          <div className="player-control-buttons">
+            <button className={`player-icon-btn ${isShuffle ? 'player-active-icon' : ''}`} onClick={handleShuffleToggle} title="Shuffle">
+              <Shuffle size={16} />
+            </button>
+            <button className="player-icon-btn" onClick={handlePrevSong} title="Previous">
+              <SkipBack size={18} />
+            </button>
+            <button className="player-play-btn" onClick={handlePlayPause} title={isPlaying ? 'Pause' : 'Play'}>
+              {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" style={{ marginLeft: '2px' }} />}
+            </button>
+            <button className="player-icon-btn" onClick={handleNextSong} title="Next">
+              <SkipForward size={18} />
+            </button>
+            <button className={`player-icon-btn ${isRepeat ? 'player-active-icon' : ''}`} onClick={handleRepeatToggle} title="Repeat">
+              <Repeat size={16} />
+            </button>
+          </div>
+          <div className="player-progress-bar-wrapper">
+            <span className="player-time">{formatTime(currentTime)}</span>
+            <div className="player-progress-bar-container" onClick={handleProgressClick}>
+              <div 
+                className="player-progress-bar-fill" 
+                style={{ width: `${(currentTime / duration) * 100}%` }}
+              />
+            </div>
+            <span className="player-time">{formatTime(duration)}</span>
+          </div>
+        </div>
+
+        <div className="player-volume-controls">
+          <button className="player-icon-btn" onClick={handleMuteToggle}>
+            {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+          </button>
+          <input 
+            type="range" 
+            min="0" 
+            max="100" 
+            value={isMuted ? 0 : volume} 
+            onChange={handleVolumeChange} 
+            className="player-volume-slider" 
+          />
+        </div>
       </div>
     </div>
   );

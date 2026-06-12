@@ -1,75 +1,99 @@
 /* =====================================================
-   HEADER
+   HEADER REDESIGN — Glassmorphism & SaaS Premium UI
    ===================================================== */
 
 .header-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 24px;
+  padding: 0 24px;
+  height: var(--header-height);
   background: var(--header-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-color);
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   z-index: 1000;
-  box-shadow: 0 4px 20px var(--shadow-color);
+  box-shadow: 0 4px 30px var(--shadow-color);
 }
 
 /* =====================================================
    LOGO
    ===================================================== */
 
+.logo {
+  display: flex;
+  align-items: center;
+}
+
 .logo img {
-  height: 48px;
+  height: 40px;
   width: auto;
   object-fit: cover;
-  border-radius: 12px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 10px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
 }
 
 .logo img:hover {
-  transform: scale(1.04);
-  box-shadow: 0 6px 18px rgba(201, 168, 76, 0.25);
+  transform: scale(1.05);
+  box-shadow: 0 0 20px var(--accent-glow-lg);
 }
 
 /* =====================================================
-   SEARCH BOX
+   SEARCH BOX WITH VECTOR ICON
    ===================================================== */
 
 .search-box {
+  position: relative;
   flex: 1;
-  max-width: 540px;
-  margin: 0 25px;
+  max-width: 500px;
+  margin: 0 32px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--secondary-text);
+  pointer-events: none;
+  transition: color 0.2s ease;
 }
 
 .search-box input {
   width: 100%;
-  height: 46px;
-  padding: 0 18px;
-  border-radius: 30px;
+  height: 42px;
+  padding: 0 16px 0 46px;
+  border-radius: 24px;
   border: 1px solid var(--border-color);
   background: var(--input-bg);
   color: var(--text-color);
-  font-size: 14px;
+  font-size: 13.5px;
+  font-weight: 500;
   outline: none;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .search-box input::placeholder {
   color: var(--secondary-text);
+  opacity: 0.8;
 }
 
 .search-box input:focus {
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.12);
+  box-shadow: 0 0 0 3px var(--accent-glow-md);
+  background: var(--card-color);
+}
+
+.search-box input:focus + .search-icon {
+  color: var(--accent-color);
 }
 
 /* =====================================================
-   HEADER ACTIONS
+   HEADER ACTIONS & BUTTONS
    ===================================================== */
 
 .header-actions {
@@ -78,36 +102,31 @@
   gap: 12px;
 }
 
-/* =====================================================
-   THEME TOGGLE
-   ===================================================== */
-
+/* Theme Toggle Button */
 .theme-toggle-btn {
   background: var(--input-bg);
   border: 1px solid var(--border-color);
-  font-size: 18px;
   cursor: pointer;
-  padding: 8px 14px;
+  padding: 8px 16px;
   border-radius: 20px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   color: var(--text-color);
   font-weight: 600;
   font-size: 13px;
   white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .theme-toggle-btn:hover {
   background: var(--hover-color);
   border-color: var(--accent-color);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow-color);
 }
 
-/* =====================================================
-   LOGIN / REGISTER / ACCOUNT / LOGOUT BUTTONS
-   ===================================================== */
-
+/* Login/Register/Account Button styles */
 .login-register,
 .account {
   display: flex;
@@ -116,7 +135,7 @@
 }
 
 .log-reg {
-  padding: 9px 18px;
+  padding: 8px 16px;
   background: transparent;
   border: 1.5px solid var(--accent-color);
   color: var(--accent-color);
@@ -124,16 +143,21 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .log-reg:hover {
   background: var(--accent-color);
   color: var(--accent-text);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--accent-glow-sm);
 }
 
 .register-btn {
-  padding: 9px 18px;
+  padding: 8px 16px;
   border: none;
   border-radius: 10px;
   background: var(--accent-gradient);
@@ -141,15 +165,20 @@
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .register-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px var(--shadow-color);
+  box-shadow: 0 6px 18px var(--accent-glow-md);
+  filter: brightness(1.1);
 }
 
 .account-btn {
-  padding: 9px 18px;
+  padding: 8px 16px;
   border: none;
   border-radius: 10px;
   background: linear-gradient(135deg, #3b82f6, #60a5fa);
@@ -157,33 +186,42 @@
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .account-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.3);
+  filter: brightness(1.1);
 }
 
 .logout-btn {
-  padding: 9px 18px;
+  padding: 8px 16px;
   background: transparent;
-  border: 1.5px solid #ff5a5a;
-  color: #ff5a5a;
+  border: 1.5px solid #ff4d4d;
+  color: #ff4d4d;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .logout-btn:hover {
-  background: #ff5a5a;
+  background: #ff4d4d;
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(255, 90, 90, 0.35);
+  box-shadow: 0 6px 18px rgba(255, 77, 77, 0.2);
 }
 
 /* =====================================================
-   HAMBURGER BUTTON
+   RESPONSIVE LAYOUT HAMBURGER & SEARCH
    ===================================================== */
 
 .hamburger-btn {
@@ -195,12 +233,11 @@
   cursor: pointer;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   transition: background 0.2s ease, transform 0.2s ease;
   min-height: 44px;
-  min-width: 44px;
 }
 
 .hamburger-btn span {
@@ -216,10 +253,6 @@
   transform: scale(0.95);
 }
 
-/* =====================================================
-   MOBILE SEARCH BUTTON
-   ===================================================== */
-
 .mobile-search-btn {
   display: none;
   background: transparent;
@@ -229,12 +262,11 @@
   cursor: pointer;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   transition: background 0.2s ease, transform 0.2s ease;
   min-height: 44px;
-  min-width: 44px;
 }
 
 .mobile-search-btn span {
@@ -251,13 +283,12 @@
 }
 
 /* =====================================================
-   RESPONSIVE
+   RESPONSIVE ADAPTATIONS
    ===================================================== */
 
 @media (max-width: 1024px) {
   .header-container {
-    padding: 10px 16px;
-    gap: 12px;
+    padding: 0 16px;
     height: var(--header-height);
   }
 
@@ -269,13 +300,10 @@
   .logo {
     order: 2;
     margin: 0 auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
   }
 
   .logo img {
-    height: 36px;
+    height: 34px;
   }
 
   .mobile-search-btn {
@@ -300,7 +328,7 @@
 }
 
 /* =====================================================
-   SEARCH OVERLAY MODAL
+   FULL SCREEN SEARCH OVERLAY
    ===================================================== */
 
 .search-overlay {
@@ -309,9 +337,9 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(10, 10, 10, 0.95);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  background: rgba(10, 10, 10, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   z-index: 2000;
   display: flex;
   align-items: center;
@@ -321,56 +349,62 @@
 }
 
 .light-theme .search-overlay {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .search-overlay-content {
   position: relative;
   width: 100%;
   max-width: 600px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  align-items: center;
+}
+
+.search-overlay-icon {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--secondary-text);
+  pointer-events: none;
+  z-index: 10;
 }
 
 .search-overlay-content input {
   width: 100%;
-  height: 56px;
+  height: 54px;
   background: var(--input-bg);
   border: 1px solid var(--border-color);
-  border-radius: 30px;
-  padding: 0 54px 0 24px;
-  font-size: 18px;
+  border-radius: 27px;
+  padding: 0 60px 0 54px;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--text-color);
   outline: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
 }
 
 .search-overlay-content input:focus {
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.2);
+  box-shadow: 0 0 0 4px var(--accent-glow-md);
 }
 
 .search-overlay-close {
   position: absolute;
-  right: 12px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
   background: transparent;
   border: none;
   color: var(--text-color);
-  font-size: 22px;
   cursor: pointer;
-  padding: 8px;
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   transition: background-color 0.2s;
+  z-index: 10;
 }
 
 .search-overlay-close:hover {

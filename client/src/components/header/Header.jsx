@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Search, Sun, Moon, LogIn, LogOut, UserRound, UserPlus, Menu, X } from 'lucide-react';
 import './Header.css';
 import logo from '../../assets/storyweaveLogo.jpeg';
 import { useTheme } from '../../context/ThemeContext.jsx';
@@ -53,7 +54,8 @@ const Header = ({searchTerm, setSearchTerm, sidebarOpen, setSidebarOpen}) => {
         aria-label="Toggle Menu"
         title="Toggle Menu"
       >
-        ☰ <span>Menu</span>
+        <Menu size={18} />
+        <span>Menu</span>
       </button>
 
       <div className="logo">
@@ -63,9 +65,10 @@ const Header = ({searchTerm, setSearchTerm, sidebarOpen, setSidebarOpen}) => {
       </div>
 
       <div className="search-box">
+        <Search size={18} className="search-icon" />
         <input
           type="text"
-          placeholder='🔍 Search stories, lyrics, poetry...'
+          placeholder='Search stories, lyrics, poetry...'
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
@@ -82,7 +85,8 @@ const Header = ({searchTerm, setSearchTerm, sidebarOpen, setSidebarOpen}) => {
         aria-label="Search"
         title="Search"
       >
-        🔍 <span>Search</span>
+        <Search size={18} />
+        <span>Search</span>
       </button>
 
       <div className="header-actions">
@@ -91,7 +95,8 @@ const Header = ({searchTerm, setSearchTerm, sidebarOpen, setSidebarOpen}) => {
           onClick={toggleTheme}
           title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
-          {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
+          {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+          <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
         </button>
 
         {!isLoggedIn ? (
@@ -100,13 +105,15 @@ const Header = ({searchTerm, setSearchTerm, sidebarOpen, setSidebarOpen}) => {
               className='log-reg'
               onClick={() => navigate('/login')}
             >
-              Login
+              <LogIn size={15} />
+              <span>Login</span>
             </button>
             <button
               className='register-btn'
               onClick={() => navigate('/register')}
             >
-              Register
+              <UserPlus size={15} />
+              <span>Register</span>
             </button>
           </div>
         ) : (
@@ -115,13 +122,15 @@ const Header = ({searchTerm, setSearchTerm, sidebarOpen, setSidebarOpen}) => {
               className='account-btn'
               onClick={() => navigate('/account')}
             >
-              Account
+              <UserRound size={15} />
+              <span>Account</span>
             </button>
             <button
               className='logout-btn'
               onClick={handleLogout}
             >
-              Logout
+              <LogOut size={15} />
+              <span>Logout</span>
             </button>
           </div>
         )}
@@ -134,20 +143,23 @@ const Header = ({searchTerm, setSearchTerm, sidebarOpen, setSidebarOpen}) => {
           }
         }}>
           <div className="search-overlay-content">
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder="Search stories, lyrics, poetry..."
-              value={searchTerm}
-              onChange={handleOverlaySearchChange}
-            />
-            <button
-              className="search-overlay-close"
-              onClick={() => setIsSearchOpen(false)}
-              aria-label="Close search"
-            >
-              ✕
-            </button>
+            <div style={{ position: 'relative', width: '100%' }}>
+              <Search size={22} className="search-overlay-icon" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search stories, lyrics, poetry..."
+                value={searchTerm}
+                onChange={handleOverlaySearchChange}
+              />
+              <button
+                className="search-overlay-close"
+                onClick={() => setIsSearchOpen(false)}
+                aria-label="Close search"
+              >
+                <X size={20} />
+              </button>
+            </div>
           </div>
         </div>
       )}

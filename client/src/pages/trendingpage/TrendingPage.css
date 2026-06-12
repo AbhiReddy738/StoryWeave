@@ -57,18 +57,24 @@
   cursor: pointer;
   font-size: 15px;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .tab-btn:hover {
   background: var(--hover-color);
   border-color: var(--accent-color);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow-color);
 }
 
 .active-tab {
-  background: var(--accent-color) !important;
+  background: var(--accent-gradient) !important;
   color: var(--accent-text) !important;
-  border-color: var(--accent-color) !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 12px var(--accent-glow-md);
 }
 
 /* =====================================================
@@ -97,9 +103,9 @@
 }
 
 .card-container:hover {
-  transform: translateY(-8px);
+  transform: translateY(-6px) scale(1.01);
   border-color: var(--accent-color);
-  box-shadow: 0 12px 30px var(--shadow-color);
+  box-shadow: 0 12px 24px var(--accent-glow-sm), 0 4px 12px var(--shadow-color);
 }
 
 /* =====================================================
@@ -118,6 +124,12 @@
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 20px;
+}
+
+.middle-box span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .genre, .likes, .posted-on {

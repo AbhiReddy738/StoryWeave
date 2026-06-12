@@ -8,6 +8,7 @@ import CoverPlaceholder from '../../components/CoverPlaceholder';
 import SkeletonCard from '../../components/SkeletonCard';
 import { getCache, setCache } from '../../utils/cache';
 import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
+import { Sparkles, Users, BookOpen, Music, Heart, MessageSquare, Calendar, Search, PenTool } from 'lucide-react';
 import './HomePage.css';
 
 const STORY_API = `${API_BASE_URL}/story`;
@@ -191,13 +192,15 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
               className={`feed-toggle-btn ${feedType === 'foryou' ? 'active-feed' : ''}`}
               onClick={() => setFeedType('foryou')}
             >
-              ✨ For You
+              <Sparkles size={14} />
+              <span>For You</span>
             </button>
             <button 
               className={`feed-toggle-btn ${feedType === 'following' ? 'active-feed' : ''}`}
               onClick={() => setFeedType('following')}
             >
-              👥 Following
+              <Users size={14} />
+              <span>Following</span>
             </button>
           </div>
         )}
@@ -208,13 +211,15 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
             className={`tab-btn ${activeTab === 'stories' ? 'active-tab' : ''}`}
             onClick={() => setActiveGlobalTab('stories')}
           >
-            📖 Stories
+            <BookOpen size={15} />
+            <span>Stories</span>
           </button>
           <button
             className={`tab-btn ${activeTab === 'songs' ? 'active-tab' : ''}`}
             onClick={() => setActiveGlobalTab('songs')}
           >
-            🎵 Songs
+            <Music size={15} />
+            <span>Songs</span>
           </button>
         </div>
 
@@ -230,9 +235,17 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
             )}
             {!currentLoading && filteredStories.length === 0 && (
               <div className="empty-songs">
-                {feedType === 'following' 
-                  ? "📚 No stories from authors you follow yet." 
-                  : "🔍 No Stories Found"}
+                {feedType === 'following' ? (
+                  <>
+                    <BookOpen size={32} />
+                    <span>No stories from authors you follow yet.</span>
+                  </>
+                ) : (
+                  <>
+                    <Search size={32} />
+                    <span>No Stories Found</span>
+                  </>
+                )}
               </div>
             )}
             {!currentLoading && filteredStories.map(story => (
@@ -270,10 +283,10 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
                     By {story.author || 'Unknown'}
                   </div>
                   <div className="middle-box">
-                    <span className="likes">❤️ {story.likedBy?.length ?? story.likes ?? 0}</span>
-                    <span className="comments-count">💬 {story.comments?.length || 0}</span>
+                    <span className="likes"><Heart size={13} /> {story.likedBy?.length ?? story.likes ?? 0}</span>
+                    <span className="comments-count"><MessageSquare size={13} /> {story.comments?.length || 0}</span>
                     <span className="posted-on">
-                      📅 {new Date(story.createdAt).toLocaleDateString()}
+                      <Calendar size={13} /> {new Date(story.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                   <div className="summary">
@@ -298,9 +311,17 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
             )}
             {!currentLoading && filteredSongs.length === 0 && (
               <div className="empty-songs">
-                {feedType === 'following' 
-                  ? "🎵 No songs from authors you follow yet." 
-                  : "🎵 No Songs Found"}
+                {feedType === 'following' ? (
+                  <>
+                    <Music size={32} />
+                    <span>No songs from authors you follow yet.</span>
+                  </>
+                ) : (
+                  <>
+                    <Search size={32} />
+                    <span>No Songs Found</span>
+                  </>
+                )}
               </div>
             )}
             {!currentLoading && filteredSongs.map(song => (
@@ -313,7 +334,7 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
                   {song.coverImage ? (
                     <>
                       <LazyImage src={optimizeCloudinaryUrl(song.coverImage, 400)} alt={song.title} />
-                      <div className="song-card-read-overlay">📝</div>
+                      <div className="song-card-read-overlay"><PenTool size={32} /></div>
                     </>
                   ) : (
                     <CoverPlaceholder type="song" genre={song.genre} title={song.title} />
@@ -333,9 +354,9 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
                   </div>
                   <div className="song-card-meta">
                     <span className="genre">{song.genre}</span>
-                    <span className="likes">❤️ {song.likes ?? 0}</span>
+                    <span className="likes"><Heart size={12} /> {song.likes ?? 0}</span>
                     <span className="posted-on">
-                      ✍️ {(song.contributions?.length ?? 0)} contributions
+                      <Sparkles size={12} /> {(song.contributions?.length ?? 0)} contributions
                     </span>
                   </div>
                   {song.summary && (
@@ -351,7 +372,10 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
 
       {/* ── Suggested Sidebar ── */}
       <aside className="homepage-sidebar">
-        <h3 className="sidebar-title">👥 Suggested Authors</h3>
+        <h3 className="sidebar-title">
+          <Users size={16} />
+          <span>Suggested Authors</span>
+        </h3>
         {loadingRecommended ? (
           <div style={{ color: 'var(--secondary-text)', fontSize: '14px', marginTop: '10px' }}>Loading...</div>
         ) : recommendedAuthors.length === 0 ? (

@@ -7,6 +7,7 @@ import CoverPlaceholder from '../../components/CoverPlaceholder';
 import SkeletonCard from '../../components/SkeletonCard';
 import { getCache, setCache } from '../../utils/cache';
 import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
+import { BookOpen, Music, Heart, Calendar, Sparkles } from 'lucide-react';
 import './TrendingPage.css';
 
 const TrendingPage = ({ collapsed }) => {
@@ -70,7 +71,8 @@ const TrendingPage = ({ collapsed }) => {
             }
             onClick={() => setActiveTab('stories')}
           >
-            Stories
+            <BookOpen size={14} />
+            <span>Stories</span>
           </button>
 
           <button
@@ -81,7 +83,8 @@ const TrendingPage = ({ collapsed }) => {
             }
             onClick={() => setActiveTab('lyrics')}
           >
-            Lyrics
+            <Music size={14} />
+            <span>Lyrics</span>
           </button>
         </div>
 
@@ -135,10 +138,10 @@ const TrendingPage = ({ collapsed }) => {
                   </div>
                   <div className="middle-box">
                     <span className="likes">
-                      ❤️ {story.likes}
+                      <Heart size={13} /> {story.likes}
                     </span>
                     <span className="posted-on">
-                      📅 {
+                      <Calendar size={13} /> {
                         new Date(
                           story.createdAt
                         ).toLocaleDateString()
@@ -197,10 +200,10 @@ const TrendingPage = ({ collapsed }) => {
                       {song.genre}
                     </span>
                     <span className="likes">
-                      ❤️ {song.likes}
+                      <Heart size={13} /> {song.likes}
                     </span>
                     <span className="posted-on">
-                      ✍️ {song.contributions?.length || 0} contributions
+                      <Sparkles size={13} /> {song.contributions?.length || 0} contributions
                     </span>
                   </div>
 

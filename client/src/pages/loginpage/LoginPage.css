@@ -1,17 +1,5 @@
 /* LoginPage.css */
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-body {
-  background-color: #0d0d0d;
-  min-height: 100vh;
-}
-
 .container {
   display: flex;
   align-items: center;
@@ -19,19 +7,62 @@ body {
   min-height: 100vh;
   width: 100%;
   padding: 20px;
-  background: linear-gradient(135deg, #0d0d0d 0%, #1a1400 100%);
+  background: var(--bg-color);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Glowing background ambient orbs */
+.container::before,
+.container::after {
+  content: '';
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-glow-md) 0%, rgba(99, 102, 241, 0) 70%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 1;
+  animation: floatOrb 12s infinite alternate ease-in-out;
+}
+
+.container::before {
+  top: 10%;
+  left: 15%;
+}
+
+.container::after {
+  bottom: 10%;
+  right: 15%;
+  animation-delay: -6s;
+}
+
+@keyframes floatOrb {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, -30px) scale(1.1); }
+  100% { transform: translate(-20px, 20px) scale(0.9); }
 }
 
 .login-box {
-  background: #111111;
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
   padding: 40px;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(201, 168, 76, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px var(--shadow-color);
   width: 100%;
   max-width: 420px;
-  border-top: 4px solid #c9a84c;
-  animation: fadeInUp 0.4s ease;
-  transition: padding 0.3s ease, border-radius 0.3s ease;
+  border-top: 4px solid var(--accent-color);
+  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.login-box:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-color);
+  box-shadow: 0 16px 48px var(--shadow-color), 0 0 24px var(--accent-glow-sm);
 }
 
 @keyframes fadeInUp {
@@ -48,16 +79,16 @@ body {
 .title {
   font-size: 26px;
   font-weight: 700;
-  color: #e8d5a3;
+  color: var(--text-color);
   margin-bottom: 6px;
-  transition: font-size 0.3s ease;
+  font-family: 'Poppins', sans-serif;
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
   font-size: 14px;
-  color: #666;
+  color: var(--secondary-text);
   margin-bottom: 28px;
-  transition: font-size 0.3s ease, margin-bottom 0.3s ease;
 }
 
 .email,
@@ -71,30 +102,34 @@ body {
 label {
   font-size: 13px;
   font-weight: 600;
-  color: #c9a84c;
+  color: var(--accent-color);
 }
 
 input {
   width: 100%;
   padding: 12px 16px;
-  border: 1.5px solid #2a2a2a;
+  border: 1.5px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--text-color);
   border-radius: 10px;
   font-size: 14px;
-  color: #e8d5a3;
-  background: #1a1a1a;
   outline: none;
-  transition: border 0.2s ease, box-shadow 0.2s ease,
-              background 0.2s ease, padding 0.3s ease;
+  transition: all 0.2s ease;
+}
+
+input:hover {
+  border-color: var(--accent-color);
 }
 
 input:focus {
-  border-color: #c9a84c;
-  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
-  background: #111111;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-glow-md);
+  background: var(--card-color);
 }
 
 input::placeholder {
-  color: #444;
+  color: var(--secondary-text);
+  opacity: 0.6;
 }
 
 /* Password Input */
@@ -114,6 +149,12 @@ input::placeholder {
   cursor: pointer;
   user-select: none;
   font-size: 16px;
+  color: var(--secondary-text);
+  transition: color 0.2s;
+}
+
+.eye-icon:hover {
+  color: var(--text-color);
 }
 
 /* Error Message */
@@ -142,8 +183,8 @@ input.error {
 .signin button {
   width: 100%;
   padding: 13px;
-  background: linear-gradient(135deg, #c9a84c, #e8d5a3);
-  color: #0d0d0d;
+  background: var(--accent-gradient);
+  color: var(--accent-text);
   border: none;
   border-radius: 10px;
   font-size: 15px;
@@ -151,13 +192,13 @@ input.error {
   cursor: pointer;
   margin-top: 8px;
   letter-spacing: 0.3px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease,
-              padding 0.3s ease, font-size 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .signin button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(201, 168, 76, 0.35);
+  box-shadow: 0 6px 20px var(--accent-glow-md);
+  filter: brightness(1.1);
 }
 
 .signin button:active {
@@ -166,7 +207,7 @@ input.error {
 }
 
 .signin button:disabled {
-  opacity: 0.7;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -175,11 +216,11 @@ input.error {
   text-align: center;
   margin-top: 20px;
   font-size: 13px;
-  color: #666;
+  color: var(--secondary-text);
 }
 
 .register-link a {
-  color: #c9a84c;
+  color: var(--accent-color);
   font-weight: 600;
   text-decoration: none;
 }
@@ -194,7 +235,7 @@ input.error {
   align-items: center;
   gap: 10px;
   margin: 20px 0;
-  color: #333;
+  color: var(--secondary-text);
   font-size: 12px;
 }
 
@@ -203,14 +244,14 @@ input.error {
   content: '';
   flex: 1;
   height: 1px;
-  background: #2a2a2a;
+  background: var(--border-color);
 }
 
-/* Mobile */
+/* Mobile responsive */
 @media (max-width: 480px) {
   .login-box {
     padding: 28px 20px;
-    border-radius: 12px;
+    border-radius: 16px;
   }
 
   .title {
@@ -234,15 +275,5 @@ input.error {
   .signin button {
     padding: 12px;
     font-size: 14px;
-  }
-}
-
-@media (max-width: 360px) {
-  .login-box {
-    padding: 24px 16px;
-  }
-
-  .title {
-    font-size: 20px;
   }
 }

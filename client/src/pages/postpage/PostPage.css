@@ -364,7 +364,7 @@
 }
 .text-block:focus {
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.1);
+  box-shadow: 0 0 0 3px var(--accent-glow-sm);
 }
 .text-block:empty::before {
   content: attr(data-placeholder);
@@ -626,7 +626,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: var(--accent-rgba, rgba(201, 168, 76, 0.15));
+  background: var(--accent-rgba, var(--accent-glow-md));
   color: var(--accent-color);
   padding: 4px 10px;
   border-radius: 20px;
@@ -750,7 +750,7 @@
 }
 .lyrics-textarea:focus {
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.1);
+  box-shadow: 0 0 0 3px var(--accent-glow-sm);
 }
 
 .artist-input {

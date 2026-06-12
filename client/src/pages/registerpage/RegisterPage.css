@@ -1,17 +1,5 @@
 /* RegisterPage.css */
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-body {
-  background-color: #0d0d0d;
-  min-height: 100vh;
-}
-
 .container {
   display: flex;
   align-items: center;
@@ -19,7 +7,7 @@ body {
   min-height: 100vh;
   width: 100%;
   padding: 20px;
-  background: radial-gradient(circle at 30% 20%, #1e150a 0%, #0d0d0d 60%, #050505 100%);
+  background: var(--bg-color);
   position: relative;
   overflow: hidden;
 }
@@ -29,10 +17,10 @@ body {
 .container::after {
   content: '';
   position: absolute;
-  width: 350px;
-  height: 350px;
+  width: 320px;
+  height: 320px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(201, 168, 76, 0.12) 0%, rgba(201, 168, 76, 0) 70%);
+  background: radial-gradient(circle, var(--accent-glow-md) 0%, rgba(99, 102, 241, 0) 70%);
   filter: blur(60px);
   pointer-events: none;
   z-index: 1;
@@ -48,44 +36,33 @@ body {
   bottom: 10%;
   right: 15%;
   animation-delay: -6s;
-  background: radial-gradient(circle, rgba(232, 213, 163, 0.1) 0%, rgba(232, 213, 163, 0) 70%);
 }
 
 @keyframes floatOrb {
-  0% {
-    transform: translate(0, 0) scale(1);
-  }
-  50% {
-    transform: translate(40px, -40px) scale(1.15);
-  }
-  100% {
-    transform: translate(-30px, 30px) scale(0.9);
-  }
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, -30px) scale(1.1); }
+  100% { transform: translate(-20px, 20px) scale(0.9); }
 }
 
 .sign-up-box {
-  background: rgba(17, 17, 17, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
   padding: 40px;
   border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(201, 168, 76, 0.05);
+  box-shadow: 0 10px 40px var(--shadow-color);
   width: 100%;
   max-width: 420px;
-  border: 1px solid rgba(201, 168, 76, 0.15);
-  border-top: 4px solid #c9a84c;
-  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
-              box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.4s ease;
+  border-top: 4px solid var(--accent-color);
+  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s ease;
   position: relative;
   z-index: 2;
 }
 
 .sign-up-box:hover {
-  transform: translateY(-5px);
-  border-color: rgba(201, 168, 76, 0.35);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 35px rgba(201, 168, 76, 0.15);
+  transform: translateY(-4px);
+  border-color: var(--accent-color);
+  box-shadow: 0 16px 48px var(--shadow-color), 0 0 24px var(--accent-glow-sm);
 }
 
 @keyframes fadeInUp {
@@ -102,28 +79,16 @@ body {
 .title {
   font-size: 28px;
   font-weight: 700;
-  background: linear-gradient(135deg, #f7ebd0 0%, #c9a84c 50%, #f7ebd0 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-color);
   margin-bottom: 8px;
-  letter-spacing: -0.5px;
-  transition: filter 0.3s ease;
-}
-
-.title:hover {
-  filter: brightness(1.15) drop-shadow(0 0 8px rgba(201, 168, 76, 0.3));
+  font-family: 'Poppins', sans-serif;
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
   font-size: 14px;
-  color: #888;
+  color: var(--secondary-text);
   margin-bottom: 32px;
-  transition: color 0.3s ease;
-}
-
-.sign-up-box:hover .subtitle {
-  color: #aaa;
 }
 
 .name,
@@ -138,51 +103,34 @@ body {
 label {
   font-size: 13px;
   font-weight: 600;
-  color: #c9a84c;
-  transition: color 0.3s ease, transform 0.3s ease, text-shadow 0.3s ease;
-  transform-origin: left center;
-}
-
-.name:focus-within label,
-.email:focus-within label,
-.password:focus-within label {
-  color: #e8d5a3;
-  transform: translate(2px, -1px) scale(1.02);
-  text-shadow: 0 0 8px rgba(201, 168, 76, 0.3);
+  color: var(--accent-color);
 }
 
 input {
   width: 100%;
   padding: 13px 18px;
-  border: 1.5px solid rgba(201, 168, 76, 0.15);
+  border: 1.5px solid var(--border-color);
   border-radius: 12px;
-  font-size: 14.5px;
-  color: #f7ebd0;
-  background: rgba(26, 26, 26, 0.6);
+  font-size: 14px;
+  color: var(--text-color);
+  background: var(--input-bg);
   outline: none;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease,
-              background-color 0.3s ease, transform 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 input:hover {
-  border-color: rgba(201, 168, 76, 0.45);
-  background-color: rgba(30, 30, 30, 0.7);
+  border-color: var(--accent-color);
 }
 
 input:focus {
-  border-color: #c9a84c;
-  box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.4);
-  background-color: rgba(17, 17, 17, 0.9);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 4px var(--accent-glow-md);
+  background: var(--card-color);
 }
 
 input::placeholder {
-  color: #555;
-  transition: color 0.3s ease, transform 0.3s ease;
-}
-
-input:focus::placeholder {
-  color: #333;
-  transform: translateX(4px);
+  color: var(--secondary-text);
+  opacity: 0.6;
 }
 
 /* Password Eye */
@@ -203,18 +151,12 @@ input:focus::placeholder {
   cursor: pointer;
   user-select: none;
   font-size: 18px;
-  transition: transform 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
-  opacity: 0.6;
+  color: var(--secondary-text);
+  transition: color 0.2s ease;
 }
 
 .eye-icon:hover {
-  transform: scale(1.2);
-  opacity: 1;
-  filter: drop-shadow(0 0 5px rgba(201, 168, 76, 0.5));
-}
-
-.eye-icon:active {
-  transform: scale(0.95);
+  color: var(--text-color);
 }
 
 /* Error Message */
@@ -226,18 +168,6 @@ input:focus::placeholder {
   display: flex;
   align-items: center;
   gap: 4px;
-  animation: slideDown 0.3s ease forwards;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* Shake Animation */
@@ -251,46 +181,39 @@ input:focus::placeholder {
 input.error {
   border-color: #ff5252;
   animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-  box-shadow: 0 0 10px rgba(255, 82, 82, 0.1);
 }
 
 /* Button */
 .sign-up button {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(90deg, #c9a84c, #f7ebd0, #c9a84c);
-  background-size: 200% auto;
-  color: #0d0d0d;
+  background: var(--accent-gradient);
+  color: var(--accent-text);
   border: none;
   border-radius: 12px;
-  font-size: 15.5px;
-  font-weight: 750;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
   margin-top: 12px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  transition: background-position 0.5s ease, transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1),
-              box-shadow 0.3s ease;
-  box-shadow: 0 4px 15px rgba(201, 168, 76, 0.25);
+  transition: all 0.2s ease;
 }
 
 .sign-up button:hover:not(:disabled) {
-  background-position: right center;
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(201, 168, 76, 0.45);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--accent-glow-md);
+  filter: brightness(1.1);
 }
 
 .sign-up button:active:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 10px rgba(201, 168, 76, 0.25);
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 .sign-up button:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
-  background: #333;
-  color: #777;
-  box-shadow: none;
 }
 
 /* Login Link */
@@ -298,39 +221,17 @@ input.error {
   text-align: center;
   margin-top: 24px;
   font-size: 13.5px;
-  color: #888;
-  transition: color 0.3s ease;
+  color: var(--secondary-text);
 }
 
 .login-link a {
-  color: #c9a84c;
+  color: var(--accent-color);
   font-weight: 600;
   text-decoration: none;
-  position: relative;
-  padding-bottom: 2px;
-  transition: color 0.3s ease;
-}
-
-.login-link a::after {
-  content: '';
-  position: absolute;
-  width: 100%;
-  transform: scaleX(0);
-  height: 1.5px;
-  bottom: 0;
-  left: 0;
-  background-color: #f7ebd0;
-  transform-origin: bottom right;
-  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .login-link a:hover {
-  color: #f7ebd0;
-}
-
-.login-link a:hover::after {
-  transform: scaleX(1);
-  transform-origin: bottom left;
+  text-decoration: underline;
 }
 
 /* Mobile Responsive */
@@ -351,7 +252,7 @@ input.error {
 
   input {
     padding: 11px 15px;
-    font-size: 13.5px;
+    font-size: 13px;
   }
 
   .password-input input {
@@ -360,16 +261,6 @@ input.error {
 
   .sign-up button {
     padding: 12px;
-    font-size: 14.5px;
-  }
-}
-
-@media (max-width: 360px) {
-  .sign-up-box {
-    padding: 24px 18px;
-  }
-
-  .title {
-    font-size: 21px;
+    font-size: 14px;
   }
 }

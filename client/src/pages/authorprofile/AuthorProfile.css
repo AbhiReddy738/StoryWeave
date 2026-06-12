@@ -26,7 +26,7 @@
   margin-bottom: 30px;
   border: 1px solid var(--border-color);
   box-shadow: var(--card-shadow);
-  background: linear-gradient(135deg, var(--card-color) 0%, rgba(201, 168, 76, 0.04) 100%);
+  background: linear-gradient(135deg, var(--card-color) 0%, var(--accent-glow-sm) 100%);
 }
 
 .author-hero-bg {
@@ -142,7 +142,7 @@
   cursor: pointer;
   border: none;
   transition: all 0.25s ease;
-  box-shadow: 0 4px 14px rgba(201, 168, 76, 0.2);
+  box-shadow: 0 4px 14px var(--accent-glow-md);
 }
 
 .follow-btn.follow {
@@ -227,7 +227,7 @@
 
 .profile-tab-btn.active {
   color: var(--accent-color);
-  background: rgba(201, 168, 76, 0.08);
+  background: var(--accent-glow-sm);
 }
 
 /* Stories & Songs Grid */
@@ -278,7 +278,7 @@
 }
 
 .contrib-type-badge.story {
-  background: rgba(201, 168, 76, 0.15);
+  background: var(--accent-glow-md);
   color: var(--accent-color);
 }
 

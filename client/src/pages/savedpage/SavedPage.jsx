@@ -6,6 +6,7 @@ import LazyImage from '../../components/LazyImage';
 import CoverPlaceholder from '../../components/CoverPlaceholder';
 import SkeletonCard from '../../components/SkeletonCard';
 import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
+import { Heart, MessageSquare, Calendar, BookOpen, Music } from 'lucide-react';
 import './SavedPage.css';
 
 const SavedPage = ({ collapsed }) => {
@@ -160,10 +161,10 @@ const SavedPage = ({ collapsed }) => {
                           By {story.author || 'Unknown'}
                         </div>
                         <div className="middle-box">
-                          <span className="likes">❤️ {story.likedBy?.length ?? story.likes ?? 0}</span>
-                          <span className="comments-count">💬 {story.comments?.length || 0}</span>
+                          <span className="likes"><Heart size={14} /> {story.likedBy?.length ?? story.likes ?? 0}</span>
+                          <span className="comments-count"><MessageSquare size={14} /> {story.comments?.length || 0}</span>
                           <span className="posted-on">
-                            📅 {new Date(story.createdAt).toLocaleDateString()}
+                            <Calendar size={14} /> {new Date(story.createdAt).toLocaleDateString()}
                           </span>
                         </div>
                         <div className="summary">
@@ -184,7 +185,8 @@ const SavedPage = ({ collapsed }) => {
                   ))
                 ) : (
                   <div className="empty-box">
-                    📚 No Saved Stories
+                    <BookOpen size={24} />
+                    <span>No Saved Stories</span>
                   </div>
                 )
               )}
@@ -218,7 +220,7 @@ const SavedPage = ({ collapsed }) => {
                         </span>
 
                         <span className="likes">
-                          ❤️ {song.likes}
+                          <Heart size={14} /> {song.likes}
                         </span>
                       </div>
 
@@ -245,7 +247,8 @@ const SavedPage = ({ collapsed }) => {
                   ))
                 ) : (
                   <div className="empty-box">
-                    🎵 No Saved Songs
+                    <Music size={24} />
+                    <span>No Saved Songs</span>
                   </div>
                 )
               )}
