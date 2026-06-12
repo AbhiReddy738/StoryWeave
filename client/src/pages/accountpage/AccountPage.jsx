@@ -445,7 +445,7 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
               onClick={() => navigate(`/author/${userId}`)}
               style={{ marginTop: '10px', background: 'var(--accent-gradient)', color: 'var(--accent-text)', border: 'none' }}
             >
-              👁️ View Public Profile
+              👤 View Public Profile
             </button>
           </div>
 

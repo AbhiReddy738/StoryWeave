@@ -88,6 +88,11 @@ const userSchema = new mongoose.Schema({
         default: 0
     },
 
+    profileViews: {
+        type: Number,
+        default: 0
+    },
+
     followersCount: {
         type: Number,
         default: 0
@@ -97,6 +102,8 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0
     }
+}, {
+    timestamps: true
 });
 
 const User = mongoose.model("user", userSchema);

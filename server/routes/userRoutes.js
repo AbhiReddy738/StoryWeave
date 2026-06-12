@@ -226,6 +226,7 @@ router.get("/profile/:id", async (req, res) => {
 
         if (!visitorId || visitorId !== user._id.toString()) {
             user.totalProfileViews = (user.totalProfileViews || 0) + 1;
+            user.profileViews = (user.profileViews || 0) + 1;
             await user.save();
         }
 
@@ -350,6 +351,8 @@ router.get("/profile/:id", async (req, res) => {
             followersCount: user.followersCount || user.followers?.length || 0,
             followingCount: user.followingCount || user.following?.length || 0,
             totalProfileViews: user.totalProfileViews || 0,
+            profileViews: user.profileViews || user.totalProfileViews || 0,
+            createdAt: user.createdAt || user._id.getTimestamp(),
             stats: {
                 totalStories,
                 totalSongs,
@@ -380,7 +383,14 @@ router.get("/stories/:id", async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const stories = await Story.find({ authorId: user._id, status: "published" })
+        const stories = await Story.find({
+            $or: [
+                { authorId: user._id },
+                { author: user.authorName },
+                { author: user.username }
+            ],
+            status: "published"
+        })
             .select("title summary coverImage genre likes comments slug author authorId createdAt storyType")
             .sort({ createdAt: -1 });
         res.status(200).json(stories);
@@ -390,21 +400,6 @@ router.get("/stories/:id", async (req, res) => {
 });
 
 // GET user songs (by user ID or username)
-router.get("/songs-list/:id", async (req, res) => {
-    // Wait, the API routes requested are: GET /api/user/songs/:id
-    // But userRoutes has: GET /songs/:userId
-    // Let's implement /songs/:id so that if it is a user ID or username, it returns the songs.
-    // Let's make sure it doesn't collide with the existing route if it was mounted.
-    // Wait, the existing route is GET /songs/:userId.
-    // That means router.get("/songs/:userId") is already registered in line 169.
-    // Let's check: if req.params.userId is ObjectId, the existing route fetches by User.findById, then Song.find.
-    // If the user requests /api/user/songs/:id, it will match router.get("/songs/:userId") and work correctly!
-    // But to make it fully compatible with usernames as well, we should update router.get("/songs/:userId")
-    // to search by ID or username. That is extremely clean and avoids collisions!
-    // Let's do that or add it explicitly. Let's make the `/songs/:userId` route handle both!
-});
-
-// Let's add GET /api/user/songs/:id (compatible with usernames too):
 router.get("/songs/:id", async (req, res) => {
     try {
         let user;
@@ -418,7 +413,14 @@ router.get("/songs/:id", async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const songs = await Song.find({ authorId: user._id, status: "published" })
+        const songs = await Song.find({
+            $or: [
+                { authorId: user._id },
+                { author: user.authorName },
+                { author: user.username }
+            ],
+            status: "published"
+        })
             .select("title artistName genre coverImage summary tags author authorId likes comments contributions slug status createdAt")
             .sort({ createdAt: -1 });
         res.status(200).json(songs);
