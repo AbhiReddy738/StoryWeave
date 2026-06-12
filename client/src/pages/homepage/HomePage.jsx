@@ -3,12 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config';
 import { useAuth } from '../../context/AuthContext.jsx';
-import LazyImage from '../../components/LazyImage';
-import CoverPlaceholder from '../../components/CoverPlaceholder';
 import SkeletonCard from '../../components/SkeletonCard';
 import { getCache, setCache } from '../../utils/cache';
-import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
-import { Sparkles, Users, BookOpen, Music, Heart, MessageSquare, Calendar, Search, PenTool } from 'lucide-react';
+import { Sparkles, Users, BookOpen, Music, Search } from 'lucide-react';
+import ContentCard from '../../components/ContentCard';
 import './HomePage.css';
 
 const STORY_API = `${API_BASE_URL}/story`;
@@ -29,35 +27,8 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
   const [loadingSongs,   setLoadingSongs]   = useState(true);
   const [loadingFollowing, setLoadingFollowing] = useState(false);
 
-  // Recommended sidebar state
-  const [recommendedAuthors, setRecommendedAuthors] = useState([]);
-  const [loadingRecommended, setLoadingRecommended] = useState(true);
-
   // Active tab defaults to prop (global state) or 'stories'
   const activeTab = activeGlobalTab || 'stories';
-
-  // Fetch Recommended Authors
-  useEffect(() => {
-    const fetchRecommended = async () => {
-      const cacheKey = `recommended-authors-${authUser?._id || 'anon'}`;
-      const cached = getCache(cacheKey);
-      if (cached) {
-        setRecommendedAuthors(cached);
-        setLoadingRecommended(false);
-        return;
-      }
-      try {
-        const res = await axios.get(`${API_BASE_URL}/user/recommended-authors`);
-        setRecommendedAuthors(res.data || []);
-        setCache(cacheKey, res.data || []);
-      } catch (err) {
-        console.error("Failed to fetch recommended authors", err);
-      } finally {
-        setLoadingRecommended(false);
-      }
-    };
-    fetchRecommended();
-  }, [authUser]);
 
   // Fetch Following Feed Content
   useEffect(() => {
@@ -120,49 +91,6 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
     fetchSongs();
   }, []);
 
-  // Handle follow/unfollow in suggested sidebar
-  const handleFollowRecommended = async (authorId, isCurrentlyFollowing) => {
-    if (!isLoggedIn) {
-      alert("Please log in to follow authors.");
-      navigate('/login');
-      return;
-    }
-
-    // Optimistic state update
-    setRecommendedAuthors(prev => prev.map(author => {
-      if (author._id === authorId) {
-        const isFollowed = author.followers.some(id => id.toString() === authUser._id.toString());
-        return {
-          ...author,
-          followers: isFollowed
-            ? author.followers.filter(id => id.toString() !== authUser._id.toString())
-            : [...author.followers, authUser._id]
-        };
-      }
-      return author;
-    }));
-
-    try {
-      const endpoint = isCurrentlyFollowing ? 'unfollow' : 'follow';
-      await axios.post(`${API_BASE_URL}/user/${endpoint}/${authorId}`);
-    } catch (err) {
-      // Revert on failure
-      setRecommendedAuthors(prev => prev.map(author => {
-        if (author._id === authorId) {
-          const isFollowed = author.followers.some(id => id.toString() === authUser._id.toString());
-          return {
-            ...author,
-            followers: isFollowed
-              ? author.followers.filter(id => id.toString() !== authUser._id.toString())
-              : [...author.followers, authUser._id]
-          };
-        }
-        return author;
-      }));
-      alert("Action failed. Please try again.");
-    }
-  };
-
   // Determine lists to show
   const currentStories = feedType === 'following' ? followingStories : stories;
   const currentSongs = feedType === 'following' ? followingSongs : songs;
@@ -183,7 +111,7 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
 
   return (
     <div className="page-container">
-      <main className={`main-container ${collapsed ? 'main-expanded' : ''}`} style={{ paddingRight: '12px' }}>
+      <main className={`main-container ${collapsed ? 'main-expanded' : ''}`} style={{ paddingRight: '24px' }}>
 
         {/* ── Feed Selection ── */}
         {isLoggedIn && (
@@ -249,52 +177,21 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
               </div>
             )}
             {!currentLoading && filteredStories.map(story => (
-              <div
+              <ContentCard
                 key={story._id}
-                className="card-container book-card"
-                onClick={() => navigate(`/card/${story.slug}-${story._id}`)}
-              >
-                <div className="card-cover">
-                  {story.coverImage ? (
-                    <>
-                      <LazyImage 
-                        src={optimizeCloudinaryUrl(story.coverImage, 400)} 
-                        alt={story.title} 
-                      />
-                      <div className="card-cover-overlay"></div>
-                      <span className="genre-badge" onClick={e => e.stopPropagation()}>
-                        {story.genre}
-                      </span>
-                    </>
-                  ) : (
-                    <CoverPlaceholder type="story" genre={story.genre} title={story.title} />
-                  )}
-                </div>
-                <div className="book-card-body">
-                  <div className="story-name" title={story.title}>{story.title}</div>
-                  <div 
-                    className="story-author" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(story.authorId ? `/author/${story.authorId}` : `/author/${story.author || 'Unknown'}`);
-                    }}
-                    style={{ cursor: 'pointer', transition: 'color 0.2s', fontWeight: 600 }}
-                  >
-                    By {story.author || 'Unknown'}
-                  </div>
-                  <div className="middle-box">
-                    <span className="likes"><Heart size={13} /> {story.likedBy?.length ?? story.likes ?? 0}</span>
-                    <span className="comments-count"><MessageSquare size={13} /> {story.comments?.length || 0}</span>
-                    <span className="posted-on">
-                      <Calendar size={13} /> {new Date(story.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div className="summary">
-                    <p className="summary-heading">Summary</p>
-                    <p className="summary-lines">{story.summary}</p>
-                  </div>
-                </div>
-              </div>
+                type="story"
+                title={story.title}
+                author={story.author}
+                authorId={story.authorId}
+                summary={story.summary}
+                coverImage={story.coverImage}
+                genre={story.genre}
+                likes={story.likedBy?.length ?? story.likes ?? 0}
+                comments={story.comments?.length || 0}
+                date={story.createdAt}
+                slug={story.slug}
+                id={story._id}
+              />
             ))}
           </>
         )}
@@ -325,93 +222,25 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
               </div>
             )}
             {!currentLoading && filteredSongs.map(song => (
-              <div
+              <ContentCard
                 key={song._id}
-                className="song-card"
-                onClick={() => navigate(`/song/${song._id}`)}
-              >
-                <div className="song-card-cover">
-                  {song.coverImage ? (
-                    <>
-                      <LazyImage src={optimizeCloudinaryUrl(song.coverImage, 400)} alt={song.title} />
-                      <div className="song-card-read-overlay"><PenTool size={32} /></div>
-                    </>
-                  ) : (
-                    <CoverPlaceholder type="song" genre={song.genre} title={song.title} />
-                  )}
-                </div>
-                <div className="song-card-body">
-                  <div className="song-card-title">{song.title}</div>
-                  <div 
-                    className="song-card-artist"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(song.authorId ? `/author/${song.authorId}` : `/author/${song.artistName || song.author}`);
-                    }}
-                    style={{ cursor: 'pointer', transition: 'color 0.2s', fontWeight: 600 }}
-                  >
-                    By {song.artistName || song.author}
-                  </div>
-                  <div className="song-card-meta">
-                    <span className="genre">{song.genre}</span>
-                    <span className="likes"><Heart size={12} /> {song.likes ?? 0}</span>
-                    <span className="posted-on">
-                      <Sparkles size={12} /> {(song.contributions?.length ?? 0)} contributions
-                    </span>
-                  </div>
-                  {song.summary && (
-                    <p className="song-card-summary">{song.summary}</p>
-                  )}
-                </div>
-              </div>
+                type="song"
+                title={song.title}
+                author={song.artistName || song.author}
+                authorId={song.authorId}
+                summary={song.summary}
+                coverImage={song.coverImage}
+                genre={song.genre}
+                likes={song.likes ?? 0}
+                comments={song.contributions?.length || 0}
+                date={song.createdAt}
+                id={song._id}
+              />
             ))}
           </>
         )}
 
       </main>
-
-      {/* ── Suggested Sidebar ── */}
-      <aside className="homepage-sidebar">
-        <h3 className="sidebar-title">
-          <Users size={16} />
-          <span>Suggested Authors</span>
-        </h3>
-        {loadingRecommended ? (
-          <div style={{ color: 'var(--secondary-text)', fontSize: '14px', marginTop: '10px' }}>Loading...</div>
-        ) : recommendedAuthors.length === 0 ? (
-          <div style={{ color: 'var(--secondary-text)', fontSize: '14px', fontStyle: 'italic', marginTop: '10px' }}>No recommendations found.</div>
-        ) : (
-          <div className="sidebar-authors-list">
-            {recommendedAuthors.map(author => {
-              const isFollowingAuthor = authUser && author.followers.some(id => id.toString() === authUser._id.toString());
-              return (
-                <div key={author._id} className="sidebar-author-row" onClick={() => navigate(`/author/${author._id}`)}>
-                  <div className="sidebar-author-photo">
-                    <LazyImage
-                      src={optimizeCloudinaryUrl(author.profilePhoto || author.profileImage, 150)}
-                      alt={author.username}
-                      fallback="https://via.placeholder.com/150"
-                    />
-                  </div>
-                  <div className="sidebar-author-info">
-                    <div className="sidebar-author-username">{author.username}</div>
-                    <div className="sidebar-author-bio">{author.bio || "Writer on StoryWeave"}</div>
-                  </div>
-                  <button
-                    className={`sidebar-follow-btn ${isFollowingAuthor ? 'following' : 'follow'}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleFollowRecommended(author._id, isFollowingAuthor);
-                    }}
-                  >
-                    {isFollowingAuthor ? 'Following' : 'Follow'}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </aside>
     </div>
   );
 };

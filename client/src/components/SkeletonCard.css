@@ -1,12 +1,14 @@
-.card-container.book-card.skeleton,
-.song-card.skeleton {
+.content-card.skeleton {
   cursor: default;
   pointer-events: none;
 }
 
-.card-container.book-card.skeleton:hover,
-.song-card.skeleton:hover {
+.content-card.skeleton:hover {
   transform: none !important;
   box-shadow: none !important;
   border-color: var(--border-color) !important;
+}
+
+.content-card.skeleton .card-cover {
+  box-shadow: none;
 }

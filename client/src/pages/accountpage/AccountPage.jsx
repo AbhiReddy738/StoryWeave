@@ -7,6 +7,7 @@ import LazyImage from '../../components/LazyImage';
 import CoverPlaceholder from '../../components/CoverPlaceholder';
 import SkeletonCard from '../../components/SkeletonCard';
 import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
+import ContentCard from '../../components/ContentCard';
 import './AccountPage.css';
 
 const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
@@ -530,52 +531,39 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
             posts.map((post) => {
               const isSong = activeGlobalTab === 'songs';
               return (
-                <div 
-                  key={post._id} 
-                  className={`post-card ${isSong ? 'song-thumbnail-card' : 'book-thumbnail-card'}`}
-                  onClick={() => navigate(isSong ? `/song/${post._id}` : `/card/${post.slug}-${post._id}`)}
-                >
-                  <div className="post-card-thumbnail">
-                    {post.coverImage ? (
-                      <LazyImage 
-                        src={optimizeCloudinaryUrl(post.coverImage, 200)} 
-                        alt={post.title} 
-                      />
-                    ) : (
-                      <CoverPlaceholder type={isSong ? 'song' : 'story'} genre={post.genre} title={post.title} />
-                    )}
-                  </div>
-                  <div className="post-card-details">
-                    <div className="story-name" title={post.title}>{post.title}</div>
-                    <div className="middle-box">
-                      <span className="genre">{post.genre}</span>
-                      {isSong && post.artistName && (
-                        <span className="song-card-artist" style={{ fontSize: '13px', color: 'var(--secondary-text)', marginRight: '10px' }}>
-                          🎤 {post.artistName}
-                        </span>
-                      )}
-                      {post.createdAt && (
-                        <span className="posted-on">
-                          📅 {new Date(post.createdAt).toLocaleDateString()}
-                        </span>
-                      )}
+                <ContentCard
+                  key={post._id}
+                  type={isSong ? 'song' : 'story'}
+                  title={post.title}
+                  author={isSong ? (post.artistName || profile.author || authUser.username) : (profile.author || authUser.username)}
+                  authorId={userId}
+                  summary={post.summary}
+                  coverImage={post.coverImage}
+                  genre={post.genre}
+                  likes={post.likes || 0}
+                  comments={isSong ? (post.contributions?.length || 0) : (post.comments?.length || 0)}
+                  date={post.createdAt}
+                  slug={post.slug}
+                  id={post._id}
+                  actionButton={
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                       {post.status === 'draft' && (
-                        <span className="status-badge" style={{ background: 'rgba(255, 165, 0, 0.2)', color: 'orange', padding: '2px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', marginLeft: '10px' }}>
-                          📄 Draft
+                        <span className="status-badge" style={{ background: 'rgba(255, 165, 0, 0.2)', color: 'orange', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
+                          Draft
                         </span>
                       )}
+                      <button
+                        className="delete-icon-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(post._id);
+                        }}
+                      >
+                        Delete
+                      </button>
                     </div>
-                    <button
-                      className="delete-icon-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(post._id);
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
+                  }
+                />
               );
             })
           )}
