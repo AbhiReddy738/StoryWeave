@@ -29,6 +29,13 @@ const AuthorProfile = ({ collapsed }) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   
+  // Modals for followers and following list
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [modalUsers, setModalUsers] = useState([]);
+  const [loadingModal, setLoadingModal] = useState(false);
+  const [myFollowingMap, setMyFollowingMap] = useState({});
+
   // Edit State
   const [showEditModal, setShowEditModal] = useState(false);
   const [editBio, setEditBio] = useState('');
@@ -99,6 +106,24 @@ const AuthorProfile = ({ collapsed }) => {
     fetchContentData();
   }, [profile]);
 
+  // Fetch logged in user's following list to track follow states inside modals
+  useEffect(() => {
+    if (authUser) {
+      axios.get(`${API_BASE_URL}/user/profile/${authUser._id}`)
+        .then(res => {
+          const followingIds = res.data.following || [];
+          const map = {};
+          followingIds.forEach(id => {
+            map[id.toString()] = true;
+          });
+          setMyFollowingMap(map);
+        })
+        .catch(err => console.error("Failed to fetch logged in user following list", err));
+    } else {
+      setMyFollowingMap({});
+    }
+  }, [authUser]);
+
   // ── Follow / Unfollow ──────────────────────────────────────────────────────
   const handleFollowToggle = async () => {
     if (!authUser) {
@@ -113,17 +138,85 @@ const AuthorProfile = ({ collapsed }) => {
     // Optimistic UI updates
     setIsFollowing(!originalFollowing);
     setFollowersCount(prev => originalFollowing ? prev - 1 : prev + 1);
+    setMyFollowingMap(prev => ({
+      ...prev,
+      [profile._id.toString()]: !originalFollowing
+    }));
 
     try {
       const endpoint = originalFollowing ? 'unfollow' : 'follow';
-      const res = await axios.post(`${API_BASE_URL}/user/${endpoint}/${profile._id}`);
+      await axios.post(`${API_BASE_URL}/user/${endpoint}/${profile._id}`);
       
       showToast(originalFollowing ? `Unfollowed ${profile.username}` : `Following ${profile.username}`);
     } catch (err) {
       // Revert on failure
       setIsFollowing(originalFollowing);
       setFollowersCount(originalCount);
+      setMyFollowingMap(prev => ({
+        ...prev,
+        [profile._id.toString()]: originalFollowing
+      }));
       showToast("Follow action failed. Please try again.");
+    }
+  };
+
+  const toggleModalFollow = async (targetId) => {
+    if (!authUser) {
+      alert("Please log in to follow authors.");
+      navigate('/login');
+      return;
+    }
+    const originalStatus = !!myFollowingMap[targetId];
+    // Optimistic update
+    setMyFollowingMap(prev => ({
+      ...prev,
+      [targetId]: !originalStatus
+    }));
+
+    try {
+      const endpoint = originalStatus ? 'unfollow' : 'follow';
+      await axios.post(`${API_BASE_URL}/user/${endpoint}/${targetId}`);
+      
+      // If the targetId is the profile author itself, update the main profile follow state!
+      if (profile && targetId === profile._id.toString()) {
+        setIsFollowing(!originalStatus);
+        setFollowersCount(prev => originalStatus ? prev - 1 : prev + 1);
+      }
+    } catch (err) {
+      // Revert
+      setMyFollowingMap(prev => ({
+        ...prev,
+        [targetId]: originalStatus
+      }));
+      alert("Action failed, please try again.");
+    }
+  };
+
+  const openFollowersModal = async () => {
+    setShowFollowersModal(true);
+    setLoadingModal(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/user/followers/${profile._id}`);
+      setModalUsers(res.data || []);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load followers list.");
+    } finally {
+      setLoadingModal(false);
+    }
+  };
+
+  const openFollowingModal = async () => {
+    setShowFollowingModal(true);
+    setLoadingModal(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/user/following/${profile._id}`);
+      setModalUsers(res.data || []);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load following list.");
+    } finally {
+      setLoadingModal(false);
     }
   };
 
@@ -270,12 +363,29 @@ const AuthorProfile = ({ collapsed }) => {
               </p>
               
               <div className="author-meta-stats">
-                <div className="author-stat-item">👥 <strong>{followersCount}</strong> followers</div>
-                <div className="author-stat-item">👉 <strong>{profile.followingCount || profile.following?.length || 0}</strong> following</div>
+                <div 
+                  className="author-stat-item" 
+                  onClick={openFollowersModal}
+                  style={{ cursor: 'pointer' }}
+                >
+                  👥 <strong>{followersCount}</strong> followers
+                </div>
+                <div 
+                  className="author-stat-item" 
+                  onClick={openFollowingModal}
+                  style={{ cursor: 'pointer' }}
+                >
+                  👉 <strong>{profile.followingCount || profile.following?.length || 0}</strong> following
+                </div>
                 <div className="author-stat-item">📖 <strong>{profile.stats?.totalStories || 0}</strong> stories</div>
                 <div className="author-stat-item">🎵 <strong>{profile.stats?.totalSongs || 0}</strong> songs</div>
                 <div className="author-stat-item">❤️ <strong>{profile.stats?.totalLikesReceived || 0}</strong> likes</div>
-                <div className="author-stat-item">👁️ <strong>{profile.totalProfileViews || 0}</strong> views</div>
+                <div className="author-stat-item">👁️ <strong>{profile.profileViews || profile.totalProfileViews || 0}</strong> views</div>
+                {profile.createdAt && (
+                  <div className="author-stat-item">
+                    📅 Joined <strong>{new Date(profile.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</strong>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -350,6 +460,17 @@ const AuthorProfile = ({ collapsed }) => {
                           date={story.createdAt}
                           slug={story.slug}
                           id={story._id}
+                          actionButton={
+                            <button 
+                              className="card-action-btn"
+                              onClick={() => {
+                                const targetSlug = story.slug ? `${story.slug}-${story._id}` : story._id;
+                                navigate(`/card/${targetSlug}`);
+                              }}
+                            >
+                              Read Story
+                            </button>
+                          }
                         />
                       ))}
                     </div>
@@ -379,6 +500,14 @@ const AuthorProfile = ({ collapsed }) => {
                           comments={song.contributions?.length || 0}
                           date={song.createdAt}
                           id={song._id}
+                          actionButton={
+                            <button 
+                              className="card-action-btn"
+                              onClick={() => navigate(`/song/${song._id}`)}
+                            >
+                              Open Song
+                            </button>
+                          }
                         />
                       ))}
                     </div>
@@ -463,6 +592,98 @@ const AuthorProfile = ({ collapsed }) => {
         </div>
 
       </div>
+
+      {/* ── FOLLOWERS MODAL ── */}
+      {showFollowersModal && (
+        <div className="follow-modal-overlay" onClick={() => setShowFollowersModal(false)}>
+          <div className="follow-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="follow-modal-header">
+              <h3>Followers</h3>
+              <button className="close-modal-btn" onClick={() => setShowFollowersModal(false)}>✕</button>
+            </div>
+            <div className="follow-modal-body">
+              {loadingModal ? (
+                <div className="modal-loading">Loading followers...</div>
+              ) : modalUsers.length > 0 ? (
+                <div className="modal-users-list">
+                  {modalUsers.map(u => (
+                    <div key={u._id} className="modal-user-card">
+                      <div className="modal-user-avatar" onClick={() => { setShowFollowersModal(false); navigate(`/author/${u._id}`); }}>
+                        <img src={u.profilePhoto || u.profileImage || 'https://via.placeholder.com/150'} alt={u.username} />
+                      </div>
+                      <div className="modal-user-info" onClick={() => { setShowFollowersModal(false); navigate(`/author/${u._id}`); }}>
+                        <div className="modal-user-username">{u.username}</div>
+                        <div className="modal-user-bio">{u.bio || "No bio yet."}</div>
+                      </div>
+                      <div className="modal-user-actions">
+                        {authUser && authUser._id.toString() !== u._id.toString() && (
+                          <button 
+                            className={`modal-follow-btn ${myFollowingMap[u._id.toString()] ? 'following' : 'follow'}`}
+                            onClick={() => toggleModalFollow(u._id.toString())}
+                          >
+                            {myFollowingMap[u._id.toString()] ? 'Following' : 'Follow'}
+                          </button>
+                        )}
+                        <button className="modal-visit-btn" onClick={() => { setShowFollowersModal(false); navigate(`/author/${u._id}`); }}>
+                          Visit
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="modal-empty-state">No followers yet.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FOLLOWING MODAL ── */}
+      {showFollowingModal && (
+        <div className="follow-modal-overlay" onClick={() => setShowFollowingModal(false)}>
+          <div className="follow-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="follow-modal-header">
+              <h3>Following</h3>
+              <button className="close-modal-btn" onClick={() => setShowFollowingModal(false)}>✕</button>
+            </div>
+            <div className="follow-modal-body">
+              {loadingModal ? (
+                <div className="modal-loading">Loading following...</div>
+              ) : modalUsers.length > 0 ? (
+                <div className="modal-users-list">
+                  {modalUsers.map(u => (
+                    <div key={u._id} className="modal-user-card">
+                      <div className="modal-user-avatar" onClick={() => { setShowFollowingModal(false); navigate(`/author/${u._id}`); }}>
+                        <img src={u.profilePhoto || u.profileImage || 'https://via.placeholder.com/150'} alt={u.username} />
+                      </div>
+                      <div className="modal-user-info" onClick={() => { setShowFollowingModal(false); navigate(`/author/${u._id}`); }}>
+                        <div className="modal-user-username">{u.username}</div>
+                        <div className="modal-user-bio">{u.bio || "No bio yet."}</div>
+                      </div>
+                      <div className="modal-user-actions">
+                        {authUser && authUser._id.toString() !== u._id.toString() && (
+                          <button 
+                            className={`modal-follow-btn ${myFollowingMap[u._id.toString()] ? 'following' : 'follow'}`}
+                            onClick={() => toggleModalFollow(u._id.toString())}
+                          >
+                            {myFollowingMap[u._id.toString()] ? 'Following' : 'Follow'}
+                          </button>
+                        )}
+                        <button className="modal-visit-btn" onClick={() => { setShowFollowingModal(false); navigate(`/author/${u._id}`); }}>
+                          Visit
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="modal-empty-state">Not following anyone yet.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── EDIT PROFILE MODAL ── */}
       {showEditModal && (

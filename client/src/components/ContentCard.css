@@ -172,3 +172,26 @@
 .content-card .card-action-wrapper button {
   margin: 0;
 }
+
+.card-action-btn {
+  background: var(--accent-gradient);
+  color: var(--accent-text);
+  border: none;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 10px var(--accent-glow-md);
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.card-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px var(--accent-glow-lg);
+}
+
+.card-action-btn:active {
+  transform: translateY(0);
+}
