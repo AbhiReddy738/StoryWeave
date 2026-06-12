@@ -5,46 +5,55 @@
 .dark-theme,
 .app-container.dark-theme {
   --bg-color: #0a0a0a;
-  --card-color: #161616;
-  --surface-color: #111111;
-  --text-color: #ffffff;
-  --secondary-text: #cfcfcf;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --accent-color: #c9a84c;
-  --accent-gradient: linear-gradient(135deg, #c9a84c, #f2dc95);
-  --accent-text: #111111;
-  --hover-color: #252525;
-  --input-bg: #181818;
-  --input-border: rgba(255, 255, 255, 0.1);
-  --scroll-thumb: #c9a84c;
-  --scroll-track: #111;
+  --card-color: #111827;
+  --surface-color: #1f2937;
+  --text-color: #f9fafb;
+  --secondary-text: #9ca3af;
+  --border-color: #1f2937;
+  --accent-color: #6366f1;
+  --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+  --accent-text: #ffffff;
+  --hover-color: #1f2937;
+  --input-bg: #111827;
+  --input-border: #1f2937;
+  --scroll-thumb: #6366f1;
+  --scroll-track: #0a0a0a;
   --shadow-color: rgba(0, 0, 0, 0.5);
-  --header-bg: rgba(13, 13, 13, 0.96);
+  --header-bg: rgba(10, 10, 10, 0.75);
+  --sidebar-bg: rgba(17, 24, 39, 0.75);
+  --accent-glow-sm: rgba(99, 102, 241, 0.08);
+  --accent-glow-md: rgba(99, 102, 241, 0.15);
+  --accent-glow-lg: rgba(99, 102, 241, 0.25);
+  --accent-glow-xl: rgba(99, 102, 241, 0.45);
 }
 
 .light-theme,
 .app-container.light-theme {
-  --bg-color: #f5f5f5;
+  --bg-color: #f8fafc;
   --card-color: #ffffff;
-  --surface-color: #fafafa;
-  --text-color: #111111;
-  --secondary-text: #444444;
-  --border-color: rgba(0, 0, 0, 0.08);
-  --accent-color: #b8860b;
-  --accent-gradient: linear-gradient(135deg, #b8860b, #daa520);
+  --surface-color: #f1f5f9;
+  --text-color: #111827;
+  --secondary-text: #6b7280;
+  --border-color: #e5e7eb;
+  --accent-color: #6366f1;
+  --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
   --accent-text: #ffffff;
-  --hover-color: #e8e8e8;
-  --input-bg: #f1f1f1;
-  --input-border: 1px solid rgba(0,0,0,0.15);
-  --scroll-thumb: #b8860b;
-  --scroll-track: #ddd;
-  --shadow-color: rgba(0, 0, 0, 0.12);
-  --card-border: 1px solid rgba(0,0,0,0.12);
-  --section-border: 1px solid rgba(0,0,0,0.15);
-  --card-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04);
-  --card-hover-shadow: 0 8px 24px rgba(0,0,0,0.10);
-  --sidebar-bg: #ececec;
-  --header-bg: rgba(255, 255, 255, 0.96);
+  --hover-color: #f1f5f9;
+  --input-bg: #ffffff;
+  --input-border: 1px solid #e5e7eb;
+  --scroll-thumb: #6366f1;
+  --scroll-track: #f8fafc;
+  --shadow-color: rgba(0, 0, 0, 0.05);
+  --card-border: 1px solid #e5e7eb;
+  --section-border: 1px solid #e5e7eb;
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --card-hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  --sidebar-bg: rgba(255, 255, 255, 0.75);
+  --header-bg: rgba(248, 250, 252, 0.75);
+  --accent-glow-sm: rgba(99, 102, 241, 0.08);
+  --accent-glow-md: rgba(99, 102, 241, 0.15);
+  --accent-glow-lg: rgba(99, 102, 241, 0.25);
+  --accent-glow-xl: rgba(99, 102, 241, 0.45);
 }
 
 /* =====================================================
@@ -103,8 +112,14 @@ html {
 
 html, body {
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 body {
@@ -190,7 +205,7 @@ img {
 .toggle-tab-btn.active {
   background: var(--accent-gradient);
   color: var(--accent-text);
-  box-shadow: 0 4px 14px rgba(201, 168, 76, 0.25);
+  box-shadow: 0 4px 14px var(--accent-glow-lg);
 }
 
 /* =====================================================

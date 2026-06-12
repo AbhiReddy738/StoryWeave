@@ -6,6 +6,24 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import LazyImage from '../../components/LazyImage';
 import CoverPlaceholder from '../../components/CoverPlaceholder';
 import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
+import {
+  UserCheck,
+  UserPlus,
+  Heart,
+  Clock,
+  BookOpenCheck,
+  Sparkles,
+  MessageSquare,
+  Calendar,
+  Bookmark,
+  Share2,
+  Copy,
+  BookOpen,
+  Send,
+  Award,
+  Trash2,
+  ArrowLeft
+} from 'lucide-react';
 import './CardPage.css';
 import StoryReader from '../../components/storyreader/StoryReader';
 
@@ -364,9 +382,12 @@ const CardPage = ({ collapsed }) => {
 
   if (error || !story) return (
     <div className="story-page-error">
-      <span>📖</span>
+      <span><BookOpen size={48} /></span>
       <p>{error || 'Story not found'}</p>
-      <button onClick={() => navigate('/')}>← Back to Home</button>
+      <button onClick={() => navigate('/')}>
+        <ArrowLeft size={16} />
+        <span>Back to Home</span>
+      </button>
     </div>
   );
 
@@ -407,29 +428,20 @@ const CardPage = ({ collapsed }) => {
               {(!authUser || (story.authorId && authUser._id.toString() !== story.authorId.toString())) && (
                 <button
                   onClick={handleFollowToggle}
-                  style={{
-                    padding: '4px 12px',
-                    fontSize: '12px',
-                    borderRadius: '15px',
-                    border: isFollowingAuthor ? '1px solid rgba(255,255,255,0.4)' : 'none',
-                    background: isFollowingAuthor ? 'transparent' : 'var(--accent-gradient)',
-                    color: isFollowingAuthor ? '#fff' : 'var(--accent-text)',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
+                  className={`story-author-follow-btn ${isFollowingAuthor ? 'following' : ''}`}
                 >
-                  {isFollowingAuthor ? 'Following' : 'Follow'}
+                  {isFollowingAuthor ? <UserCheck size={13} /> : <UserPlus size={13} />}
+                  <span>{isFollowingAuthor ? 'Following' : 'Follow'}</span>
                 </button>
               )}
             </div>
             <div className="story-meta-row">
-              <span>❤️ {likeCount.toLocaleString()} likes</span>
-              <span>⏱ {story.readingTime || 1} min read</span>
-              <span>📝 {getWordCount().toLocaleString()} words</span>
-              <span>✍️ {contributions.length} contributions</span>
-              <span>💬 {comments.length} comments</span>
-              <span>📅 {new Date(story.createdAt).toLocaleDateString()}</span>
+              <span><Heart size={13} /> {likeCount.toLocaleString()} likes</span>
+              <span><Clock size={13} /> {story.readingTime || 1} min read</span>
+              <span><BookOpenCheck size={13} /> {getWordCount().toLocaleString()} words</span>
+              <span><Sparkles size={13} /> {contributions.length} contributions</span>
+              <span><MessageSquare size={13} /> {comments.length} comments</span>
+              <span><Calendar size={13} /> {new Date(story.createdAt).toLocaleDateString()}</span>
             </div>
           </div>
         </div>
@@ -442,25 +454,30 @@ const CardPage = ({ collapsed }) => {
             className={`story-action-btn ${liked ? 'story-liked' : ''}`}
             onClick={handleLike}
           >
-            {liked ? '❤️ Liked' : '🤍 Like'}
+            <Heart size={15} fill={liked ? 'currentColor' : 'none'} />
+            <span>{liked ? 'Liked' : 'Like'}</span>
           </button>
           <button
             className={`story-action-btn ${saved ? 'story-saved' : ''}`}
             onClick={handleSave}
           >
-            {saved ? '🔖 Saved' : '📌 Save'}
+            <Bookmark size={15} fill={saved ? 'currentColor' : 'none'} />
+            <span>{saved ? 'Saved' : 'Save'}</span>
           </button>
           <button className="story-action-btn" onClick={handleShare}>
-            🔗 Share
+            <Share2 size={15} />
+            <span>Share</span>
           </button>
           <button className="story-action-btn" onClick={handleCopyLink}>
-            📋 Copy Link
+            <Copy size={15} />
+            <span>Copy Link</span>
           </button>
           <button
             className="story-action-btn story-view-reader"
             onClick={() => setShowFullReader(true)}
           >
-            📖 View Full Story
+            <BookOpen size={15} />
+            <span>View Full Story</span>
           </button>
         </div>
       </div>
@@ -473,7 +490,10 @@ const CardPage = ({ collapsed }) => {
           
           {/* Story Reading Area */}
           <div className="story-content-card">
-            <h3 className="story-section-title">📖 Story Content</h3>
+            <h3 className="story-section-title">
+              <BookOpen size={18} className="section-title-icon" />
+              <span>Story Content</span>
+            </h3>
             <div className="story-text-body">
               {renderContent(story.content)}
             </div>
@@ -481,7 +501,10 @@ const CardPage = ({ collapsed }) => {
 
           {/* Contributions section */}
           <div className="story-contributions-card">
-            <h3 className="story-section-title">🎶 Contributions ({contributions.length})</h3>
+            <h3 className="story-section-title">
+              <Sparkles size={18} className="section-title-icon" />
+              <span>Contributions ({contributions.length})</span>
+            </h3>
 
             <div className="contribution-input-box">
               <textarea
@@ -496,14 +519,15 @@ const CardPage = ({ collapsed }) => {
                 onClick={handleContribution}
                 disabled={!contributionText.trim()}
               >
-                🚀 Submit Contribution
+                <Send size={14} />
+                <span>Submit Contribution</span>
               </button>
             </div>
 
             <div className="contributions-list">
               {contributions.length === 0 ? (
                 <div className="song-empty-tab">
-                  <span>📝</span>
+                  <span><Sparkles size={32} /></span>
                   <p>No contributions yet. Be the first to continue the story!</p>
                 </div>
               ) : (
@@ -520,7 +544,10 @@ const CardPage = ({ collapsed }) => {
                       className={`contribution-card ${isTop ? 'top-contribution' : ''}`}
                     >
                       {isTop && (
-                        <div className="top-badge">🏆 Top Contribution</div>
+                        <div className="top-badge">
+                          <Award size={11} style={{ marginRight: '4px' }} />
+                          <span>Top Contribution</span>
+                        </div>
                       )}
 
                       <div className="contribution-header">
@@ -530,7 +557,7 @@ const CardPage = ({ collapsed }) => {
                             onClick={() => navigate(`/author/${item.author}`)}
                             style={{ cursor: 'pointer', textDecoration: 'underline' }}
                           >
-                            ✍️ {item.author}
+                            @{item.author}
                           </span>
                           {item.createdAt && (
                             <span className="contribution-date">
@@ -538,7 +565,7 @@ const CardPage = ({ collapsed }) => {
                             </span>
                           )}
                         </div>
-                        <span className="upvotes-count">↑ {item.upvotes} Upvotes</span>
+                        <span className="upvotes-count">{item.upvotes} Upvotes</span>
                       </div>
 
                       <p className="contribution-text">{item.text}</p>
@@ -547,7 +574,7 @@ const CardPage = ({ collapsed }) => {
                         className={`upvote-btn ${hasUpvoted ? 'upvoted' : ''}`}
                         onClick={() => handleUpvote(cid)}
                       >
-                        {hasUpvoted ? '👍 Upvoted' : '👍 Upvote'}
+                        <span>👍 {hasUpvoted ? 'Upvoted' : 'Upvote'}</span>
                       </button>
                     </div>
                   );
@@ -558,7 +585,10 @@ const CardPage = ({ collapsed }) => {
 
           {/* Comments section */}
           <div className="story-comments-card">
-            <h3 className="story-section-title">💬 Comments ({comments.length})</h3>
+            <h3 className="story-section-title">
+              <MessageSquare size={18} className="section-title-icon" />
+              <span>Comments ({comments.length})</span>
+            </h3>
 
             <div className="comment-input-box">
               <textarea
@@ -573,14 +603,15 @@ const CardPage = ({ collapsed }) => {
                 onClick={handleComment}
                 disabled={commentPosting || !commentText.trim()}
               >
-                {commentPosting ? 'Posting...' : '💬 Post Comment'}
+                <MessageSquare size={14} />
+                <span>{commentPosting ? 'Posting...' : 'Post Comment'}</span>
               </button>
             </div>
 
             <div className="comments-list">
               {comments.length === 0 ? (
                 <div className="song-empty-tab">
-                  <span>💬</span>
+                  <span><MessageSquare size={32} /></span>
                   <p>Be the first to comment!</p>
                 </div>
               ) : (
@@ -608,18 +639,9 @@ const CardPage = ({ collapsed }) => {
                       <button
                         className="comment-delete-btn"
                         onClick={() => handleDeleteComment(c._id)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#e63946',
-                          fontSize: '12px',
-                          cursor: 'pointer',
-                          marginLeft: 'auto',
-                          fontWeight: '600',
-                          padding: '4px 8px'
-                        }}
+                        title="Delete Comment"
                       >
-                        Delete
+                        <Trash2 size={14} />
                       </button>
                     )}
                   </div>
@@ -635,7 +657,7 @@ const CardPage = ({ collapsed }) => {
           
           {/* Story Information Card */}
           <div className="story-sidebar-card">
-            <h4 className="sidebar-card-title">ℹ️ Story Information</h4>
+            <h4 className="sidebar-card-title">Story Information</h4>
             <div className="sidebar-info-list">
               <div className="sidebar-info-item">
                 <span>Genre:</span>
@@ -653,18 +675,10 @@ const CardPage = ({ collapsed }) => {
                   {(!authUser || (story.authorId && authUser._id.toString() !== story.authorId.toString())) && (
                     <button
                       onClick={handleFollowToggle}
-                      style={{
-                        padding: '2px 8px',
-                        fontSize: '11px',
-                        borderRadius: '10px',
-                        border: isFollowingAuthor ? '1px solid var(--border-color)' : 'none',
-                        background: isFollowingAuthor ? 'transparent' : 'var(--accent-gradient)',
-                        color: isFollowingAuthor ? 'var(--text-color)' : 'var(--accent-text)',
-                        fontWeight: 700,
-                        cursor: 'pointer'
-                      }}
+                      className={`story-author-follow-btn-mini ${isFollowingAuthor ? 'following' : ''}`}
                     >
-                      {isFollowingAuthor ? 'Following' : 'Follow'}
+                      {isFollowingAuthor ? <UserCheck size={11} /> : <UserPlus size={11} />}
+                      <span>{isFollowingAuthor ? 'Following' : 'Follow'}</span>
                     </button>
                   )}
                 </div>
@@ -698,14 +712,14 @@ const CardPage = ({ collapsed }) => {
 
           {/* Story Summary Card */}
           <div className="story-sidebar-card">
-            <h4 className="sidebar-card-title">📝 Summary</h4>
+            <h4 className="sidebar-card-title">Summary</h4>
             <p className="sidebar-card-text">{story.summary || 'No summary available.'}</p>
           </div>
 
           {/* Author Note Card */}
           {story.authorNote && (
             <div className="story-sidebar-card">
-              <h4 className="sidebar-card-title">✍️ Author Note</h4>
+              <h4 className="sidebar-card-title">Author Note</h4>
               <p className="sidebar-card-text">{story.authorNote}</p>
             </div>
           )}
@@ -713,7 +727,7 @@ const CardPage = ({ collapsed }) => {
           {/* Tags Card */}
           {story.tags && story.tags.length > 0 && (
             <div className="story-sidebar-card">
-              <h4 className="sidebar-card-title">🏷️ Tags</h4>
+              <h4 className="sidebar-card-title">Tags</h4>
               <div className="sidebar-tags-list">
                 {story.tags.map(tag => (
                   <span key={tag} className="sidebar-tag">#{tag}</span>
@@ -724,7 +738,7 @@ const CardPage = ({ collapsed }) => {
 
           {/* Related Stories Card */}
           <div className="story-sidebar-card">
-            <h4 className="sidebar-card-title">📖 Related Stories</h4>
+            <h4 className="sidebar-card-title">Related Stories</h4>
             {relatedStories.length === 0 ? (
               <p className="sidebar-card-empty">No related stories found.</p>
             ) : (

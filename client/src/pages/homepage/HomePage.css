@@ -49,17 +49,24 @@
   font-weight: 600;
   cursor: pointer;
   border: 1px solid var(--border-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .tab-btn:hover {
   transform: translateY(-2px);
   background: var(--hover-color);
+  border-color: var(--accent-color);
+  box-shadow: 0 4px 12px var(--shadow-color);
 }
 
 .active-tab {
-  background: var(--accent-color) !important;
+  background: var(--accent-gradient) !important;
   color: var(--accent-text) !important;
-  border-color: var(--accent-color) !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 12px var(--accent-glow-md);
 }
 
 /* =====================================================
@@ -70,8 +77,18 @@
   grid-column: 1 / -1;
   text-align: center;
   color: var(--secondary-text);
-  font-size: 24px;
+  font-size: 20px;
   margin-top: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.empty-songs svg {
+  color: var(--accent-color);
+  opacity: 0.8;
 }
 
 /* =====================================================
@@ -102,9 +119,9 @@
 }
 
 .card-container:hover {
-  transform: translateY(-8px);
+  transform: translateY(-6px) scale(1.01);
   border-color: var(--accent-color);
-  box-shadow: 0 12px 30px var(--shadow-color);
+  box-shadow: 0 12px 24px var(--accent-glow-sm), 0 4px 12px var(--shadow-color);
 }
 
 /* =====================================================
@@ -123,6 +140,12 @@
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 20px;
+}
+
+.middle-box span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .genre,
@@ -267,9 +290,9 @@
 }
 
 .song-card:hover {
-  transform: translateY(-8px);
+  transform: translateY(-6px) scale(1.01);
   border-color: var(--accent-color);
-  box-shadow: 0 12px 36px var(--shadow-color);
+  box-shadow: 0 12px 24px var(--accent-glow-sm), 0 4px 12px var(--shadow-color);
 }
 
 .song-card-cover {
@@ -347,6 +370,12 @@
   gap: 10px;
 }
 
+.song-card-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .song-card-summary {
   color: var(--secondary-text);
   font-size: 13px;
@@ -383,6 +412,9 @@
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .feed-toggle-btn:hover {
@@ -394,7 +426,7 @@
   background: var(--accent-gradient);
   color: var(--accent-text);
   border-color: transparent;
-  box-shadow: 0 4px 12px rgba(201, 168, 76, 0.2);
+  box-shadow: 0 4px 12px var(--accent-glow-md);
 }
 
 /* =====================================================
@@ -425,6 +457,9 @@
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 8px;
   margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .sidebar-authors-list {

@@ -161,6 +161,12 @@
   margin-bottom: 20px;
 }
 
+.story-meta-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* ── ACTION BUTTONS ── */
 .story-action-bar-container {
   max-width: 1400px;
@@ -185,12 +191,16 @@
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   transition: all 0.2s;
 }
 
 .story-action-btn:hover {
   background: var(--hover-color);
   border-color: var(--accent-color);
+  box-shadow: 0 4px 12px var(--accent-glow-sm);
   transform: translateY(-2px);
 }
 
@@ -382,8 +392,8 @@
 
 .contribution-card.top-contribution {
   border: 2px solid var(--accent-color);
-  background: linear-gradient(135deg, var(--card-color) 0%, rgba(201, 168, 76, 0.08) 100%);
-  box-shadow: 0 8px 24px rgba(201, 168, 76, 0.12);
+  background: linear-gradient(135deg, var(--card-color) 0%, var(--accent-glow-sm) 100%);
+  box-shadow: 0 8px 24px var(--accent-glow-md);
 }
 
 .top-badge {
@@ -753,7 +763,95 @@
   .story-action-btn {
     width: 100%;
     margin: 0;
-    text-align: center;
+    justify-content: center;
     border-radius: 12px;
   }
+}
+
+/* Redesign Follow Buttons & Section Headers */
+.story-author-follow-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 20px;
+  border: 1px solid var(--accent-color);
+  background: var(--accent-gradient);
+  color: var(--accent-text);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.story-author-follow-btn:hover {
+  box-shadow: 0 4px 12px var(--accent-glow-md);
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+.story-author-follow-btn.following {
+  background: transparent;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.story-author-follow-btn.following:hover {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+}
+
+.story-author-follow-btn-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 12px;
+  border: 1px solid var(--accent-color);
+  background: var(--accent-gradient);
+  color: var(--accent-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.story-author-follow-btn-mini:hover {
+  transform: scale(1.03);
+  filter: brightness(1.1);
+}
+
+.story-author-follow-btn-mini.following {
+  background: transparent;
+  color: var(--secondary-text);
+  border-color: var(--border-color);
+}
+
+.story-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title-icon {
+  color: var(--accent-color);
+}
+
+.comment-delete-btn {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.comment-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  transform: scale(1.1);
 }

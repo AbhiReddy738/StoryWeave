@@ -146,14 +146,36 @@
   transform: translateY(-2px);
 }
 
+.likes, .comments-count, .posted-on {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* =====================================================
    EMPTY STATE
    ===================================================== */
 
 .empty-box {
-  font-size: 22px;
-  color: var(--accent-color);
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--secondary-text);
+  padding: 60px 20px;
+  border: 1px dashed var(--border-color);
+  border-radius: 16px;
+  background: var(--card-color);
   margin-top: 20px;
+}
+
+.empty-box svg {
+  color: var(--accent-color);
+  opacity: 0.8;
 }
 
 /* =====================================================

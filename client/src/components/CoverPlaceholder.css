@@ -25,8 +25,18 @@
 
 .placeholder-icon {
   font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-color);
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
   animation: placeholder-pulse 2s infinite ease-in-out;
+}
+
+.placeholder-icon svg {
+  width: 1em;
+  height: 1em;
+  stroke-width: 1.75;
 }
 
 .placeholder-text {

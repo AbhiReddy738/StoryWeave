@@ -7,6 +7,7 @@ import CoverPlaceholder from '../../components/CoverPlaceholder';
 import SkeletonCard from '../../components/SkeletonCard';
 import { getCache, setCache } from '../../utils/cache';
 import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
+import { BookOpen, Music, Heart, MessageSquare, Calendar, Sparkles, Bookmark } from 'lucide-react';
 import './CategoriesPage.css';
 
 const STORY_GENRES = [
@@ -141,13 +142,15 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
             className={`toggle-tab-btn ${activeGlobalTab === 'stories' ? 'active' : ''}`}
             onClick={() => setActiveGlobalTab('stories')}
           >
-            📖 Stories
+            <BookOpen size={14} />
+            <span>Stories</span>
           </button>
           <button 
             className={`toggle-tab-btn ${activeGlobalTab === 'songs' ? 'active' : ''}`}
             onClick={() => setActiveGlobalTab('songs')}
           >
-            🎵 Songs
+            <Music size={14} />
+            <span>Songs</span>
           </button>
         </div>
 
@@ -226,10 +229,10 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
                             By {item.author || 'Unknown'}
                           </div>
                           <div className="middle-box">
-                            <span className="likes">❤️ {item.likedBy?.length ?? item.likes ?? 0}</span>
-                            <span className="comments-count">💬 {item.comments?.length || 0}</span>
+                            <span className="likes"><Heart size={13} /> {item.likedBy?.length ?? item.likes ?? 0}</span>
+                            <span className="comments-count"><MessageSquare size={13} /> {item.comments?.length || 0}</span>
                             <span className="posted-on">
-                              📅 {new Date(item.createdAt).toLocaleDateString()}
+                              <Calendar size={13} /> {new Date(item.createdAt).toLocaleDateString()}
                             </span>
                           </div>
                           <div className="summary">
@@ -268,8 +271,8 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
                           </div>
                           <div className="song-meta">
                             <span className="song-genre">{item.genre}</span>
-                            <span className="song-likes">❤️ {item.likes || 0}</span>
-                            <span className="song-contributions">✍️ {item.contributions?.length || 0}</span>
+                            <span className="song-likes"><Heart size={12} /> {item.likes || 0}</span>
+                            <span className="song-contributions"><Sparkles size={12} /> {item.contributions?.length || 0}</span>
                           </div>
                         </div>
                         <div className="song-card-actions" onClick={e => e.stopPropagation()}>
@@ -277,7 +280,8 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
                             className={`song-save-btn ${isSaved ? 'saved' : ''}`}
                             onClick={(e) => handleSaveToggle(e, item._id, isSaved)}
                           >
-                            {isSaved ? '🔖 Saved' : '🔖 Save'}
+                            <Bookmark size={12} fill={isSaved ? 'currentColor' : 'none'} />
+                            <span>{isSaved ? 'Saved' : 'Save'}</span>
                           </button>
                         </div>
                       </div>
