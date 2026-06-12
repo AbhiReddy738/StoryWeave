@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config';
+import { useAuth } from '../../context/AuthContext.jsx';
 import LazyImage from '../../components/LazyImage';
+import CoverPlaceholder from '../../components/CoverPlaceholder';
+import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
 import './SongPage.css';
 
 const API = `${API_BASE_URL}/song`;
@@ -11,10 +14,15 @@ const SongPage = ({ collapsed }) => {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const { user: authUser } = useAuth();
+
   const [song, setSong] = useState(null);
   const [relatedSongs, setRelatedSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Follow State
+  const [isFollowingArtist, setIsFollowingArtist] = useState(false);
 
   // Likes & saves
   const [liked, setLiked] = useState(false);
@@ -36,6 +44,44 @@ const SongPage = ({ collapsed }) => {
 
   const getUser = () => {
     try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
+  };
+
+  // Follow status check
+  useEffect(() => {
+    if (!song || !song.authorId || !authUser) return;
+    const checkFollowStatus = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/user/follow-status/${song.authorId}`);
+        setIsFollowingArtist(res.data.isFollowing);
+      } catch (err) {
+        console.error("Failed to fetch follow status", err);
+      }
+    };
+    checkFollowStatus();
+  }, [song, authUser]);
+
+  const handleFollowToggle = async () => {
+    if (!authUser) {
+      alert("Please log in to follow authors.");
+      navigate('/login');
+      return;
+    }
+    const targetId = song.authorId;
+    if (authUser._id.toString() === targetId.toString()) {
+      alert("You cannot follow yourself.");
+      return;
+    }
+
+    const originalFollowingState = isFollowingArtist;
+    setIsFollowingArtist(!originalFollowingState);
+
+    try {
+      const endpoint = originalFollowingState ? 'unfollow' : 'follow';
+      await axios.post(`${API_BASE_URL}/user/${endpoint}/${targetId}`);
+    } catch (err) {
+      setIsFollowingArtist(originalFollowingState);
+      alert("Follow action failed. Please try again.");
+    }
   };
 
   // Fetch song
@@ -215,9 +261,16 @@ const SongPage = ({ collapsed }) => {
   };
 
   if (loading) return (
-    <div className="song-page-loading">
-      <div className="song-spinner" />
-      <p>Loading song...</p>
+    <div className={`song-page ${collapsed ? 'song-page-expanded' : ''} skeleton-details`}>
+      <div className="song-hero loading-skeleton" style={{ height: '350px', width: '100%', borderRadius: '0 0 24px 24px' }} />
+      <div className="song-main-content" style={{ display: 'flex', gap: '24px', padding: '24px' }}>
+        <div className="song-content-left" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="song-lyrics-area loading-skeleton" style={{ height: '350px', borderRadius: '16px' }} />
+        </div>
+        <div className="song-sidebar" style={{ width: '300px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="song-sidebar-card loading-skeleton" style={{ height: '220px', borderRadius: '16px' }} />
+        </div>
+      </div>
     </div>
   );
 
@@ -239,19 +292,49 @@ const SongPage = ({ collapsed }) => {
         className="song-hero"
         style={{
           backgroundImage: song.coverImage
-            ? `url(${song.coverImage})`
+            ? `url(${optimizeCloudinaryUrl(song.coverImage, 1200)})`
             : 'linear-gradient(135deg, #1a1a2e, #16213e)'
         }}
       >
         <div className="song-hero-overlay" />
         <div className="song-hero-content">
           <div className="song-cover-art">
-            <LazyImage src={song.coverImage} alt={song.title} />
+            {song.coverImage ? (
+              <LazyImage src={optimizeCloudinaryUrl(song.coverImage, 800)} alt={song.title} />
+            ) : (
+              <CoverPlaceholder type="song" genre={song.genre} title={song.title} />
+            )}
           </div>
           <div className="song-hero-info">
             <span className="song-genre-badge">{song.genre}</span>
             <h1 className="song-title">{song.title}</h1>
-            <p className="song-artist">by {song.artistName || song.author}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+              <p 
+                className="song-artist"
+                onClick={() => navigate(song.authorId ? `/author/${song.authorId}` : `/author/${song.artistName || song.author}`)}
+                style={{ cursor: 'pointer', textDecoration: 'underline', margin: 0 }}
+              >
+                by {song.artistName || song.author}
+              </p>
+              {(!authUser || (song.authorId && authUser._id.toString() !== song.authorId.toString())) && (
+                <button
+                  onClick={handleFollowToggle}
+                  style={{
+                    padding: '4px 12px',
+                    fontSize: '12px',
+                    borderRadius: '15px',
+                    border: isFollowingArtist ? '1px solid rgba(255,255,255,0.4)' : 'none',
+                    background: isFollowingArtist ? 'transparent' : 'var(--accent-gradient)',
+                    color: isFollowingArtist ? '#fff' : 'var(--accent-text)',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {isFollowingArtist ? 'Following' : 'Follow'}
+                </button>
+              )}
+            </div>
             <div className="song-meta-row">
               <span>❤️ {likeCount.toLocaleString()} likes</span>
               <span>✍️ {contributions.length} contributions</span>
@@ -365,7 +448,13 @@ const SongPage = ({ collapsed }) => {
 
                         <div className="contribution-header">
                           <div className="contribution-meta">
-                            <span className="contribution-author">✍️ {item.author}</span>
+                             <span 
+                              className="contribution-author"
+                              onClick={() => navigate(`/author/${item.author}`)}
+                              style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                            >
+                              ✍️ {item.author}
+                            </span>
                             <span className="contribution-date">
                               {new Date(item.createdAt).toLocaleDateString()}
                             </span>
@@ -422,7 +511,13 @@ const SongPage = ({ collapsed }) => {
                         {(c.username || 'A')[0].toUpperCase()}
                       </div>
                       <div className="comment-body">
-                        <span className="comment-username">{c.username}</span>
+                        <span 
+                          className="comment-username"
+                          onClick={() => navigate(`/author/${c.username}`)}
+                          style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                          {c.username}
+                        </span>
                         <p className="comment-text">{c.text}</p>
                         {c.createdAt && (
                           <span className="comment-date">
@@ -452,11 +547,24 @@ const SongPage = ({ collapsed }) => {
                   onClick={() => navigate(`/song/${rs._id}`)}
                 >
                   <div className="related-song-cover">
-                    <LazyImage src={rs.coverImage} alt={rs.title} />
+                    {rs.coverImage ? (
+                      <LazyImage src={optimizeCloudinaryUrl(rs.coverImage, 200)} alt={rs.title} />
+                    ) : (
+                      <CoverPlaceholder type="song" genre={rs.genre} title={rs.title} />
+                    )}
                   </div>
                   <div className="related-song-info">
                     <p className="related-song-title">{rs.title}</p>
-                    <p className="related-song-artist">{rs.artistName || rs.author}</p>
+                    <p 
+                      className="related-song-artist"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(rs.authorId ? `/author/${rs.authorId}` : `/author/${rs.artistName || rs.author}`);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {rs.artistName || rs.author}
+                    </p>
                     <span className="related-song-genre">{rs.genre}</span>
                   </div>
                 </div>

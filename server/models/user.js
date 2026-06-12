@@ -66,7 +66,37 @@ const userSchema = new mongoose.Schema({
             ref:"Song",
             default:[]
         }
-    ]
+    ],
+
+    profilePhoto: {
+        type: String,
+        default: ""
+    },
+
+    followers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "user"
+    }],
+
+    following: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "user"
+    }],
+
+    totalProfileViews: {
+        type: Number,
+        default: 0
+    },
+
+    followersCount: {
+        type: Number,
+        default: 0
+    },
+
+    followingCount: {
+        type: Number,
+        default: 0
+    }
 });
 
 const User = mongoose.model("user", userSchema);

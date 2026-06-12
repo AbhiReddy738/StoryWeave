@@ -4,6 +4,9 @@ import { API_BASE_URL } from '../../config';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import LazyImage from '../../components/LazyImage';
+import CoverPlaceholder from '../../components/CoverPlaceholder';
+import SkeletonCard from '../../components/SkeletonCard';
+import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
 import './AccountPage.css';
 
 const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
@@ -18,12 +21,21 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
     author: '',
     interested: '',
     bio: '',
-    profileImage: ''
+    profileImage: '',
+    followersCount: 0,
+    followingCount: 0
   });
 
   const [posts, setPosts] = useState([]);
   const [actionFeedback, setActionFeedback] = useState('');
   const [feedbackType, setFeedbackType] = useState('success');
+
+  // Modals States
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [followersList, setFollowersList] = useState([]);
+  const [followingList, setFollowingList] = useState([]);
+  const [loadingList, setLoadingList] = useState(false);
 
   const showFeedback = (msg, type = 'success') => {
     setActionFeedback(msg);
@@ -57,7 +69,9 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
           author: user.authorName || '',
           interested: user.interests || '',
           bio: user.bio || '',
-          profileImage: user.profileImage || ''
+          profileImage: user.profileImage || '',
+          followersCount: user.followersCount || 0,
+          followingCount: user.followingCount || 0
         });
 
         if (activeGlobalTab === 'songs') {
@@ -77,6 +91,104 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
 
     fetchData();
   }, [userId, activeGlobalTab]);
+
+  const fetchFollowers = async () => {
+    if (!userId) return;
+    setLoadingList(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/user/followers/${userId}`);
+      setFollowersList(res.data || []);
+    } catch (err) {
+      console.error("Failed to fetch followers", err);
+      showFeedback("Failed to load followers.", "error");
+    } finally {
+      setLoadingList(false);
+    }
+  };
+
+  const fetchFollowing = async () => {
+    if (!userId) return;
+    setLoadingList(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/user/following/${userId}`);
+      setFollowingList(res.data || []);
+    } catch (err) {
+      console.error("Failed to fetch following", err);
+      showFeedback("Failed to load following list.", "error");
+    } finally {
+      setLoadingList(false);
+    }
+  };
+
+  const handleOpenFollowers = () => {
+    setShowFollowersModal(true);
+    fetchFollowers();
+  };
+
+  const handleOpenFollowing = () => {
+    setShowFollowingModal(true);
+    fetchFollowing();
+  };
+
+  const handleModalFollowToggle = async (targetUser) => {
+    if (!authUser) return;
+    const isCurrentlyFollowing = targetUser.followers?.some(
+      (uid) => uid.toString() === authUser._id.toString()
+    );
+
+    const endpoint = isCurrentlyFollowing ? 'unfollow' : 'follow';
+    
+    // Optimistically update lists
+    const updater = (list) =>
+      list.map((u) => {
+        if (u._id.toString() !== targetUser._id.toString()) return u;
+        const newFollowers = isCurrentlyFollowing
+          ? (u.followers || []).filter((uid) => uid.toString() !== authUser._id.toString())
+          : [...(u.followers || []), authUser._id];
+        return { ...u, followers: newFollowers };
+      });
+
+    setFollowersList((prev) => updater(prev));
+    setFollowingList((prev) => updater(prev));
+    
+    // Update dashboard count
+    setProfile((prev) => ({
+      ...prev,
+      followingCount: isCurrentlyFollowing
+        ? Math.max(0, prev.followingCount - 1)
+        : prev.followingCount + 1,
+    }));
+
+    try {
+      await axios.post(`${API_BASE_URL}/user/${endpoint}/${targetUser._id}`);
+      showFeedback(
+        isCurrentlyFollowing
+          ? `Unfollowed ${targetUser.username}`
+          : `Following ${targetUser.username}`,
+        'success'
+      );
+    } catch (err) {
+      console.error(err);
+      showFeedback("Follow action failed. Please try again.", "error");
+      // Revert on error
+      const revertUpdater = (list) =>
+        list.map((u) => {
+          if (u._id.toString() !== targetUser._id.toString()) return u;
+          const newFollowers = isCurrentlyFollowing
+            ? [...(u.followers || []), authUser._id]
+            : (u.followers || []).filter((uid) => uid.toString() !== authUser._id.toString());
+          return { ...u, followers: newFollowers };
+        });
+      setFollowersList((prev) => revertUpdater(prev));
+      setFollowingList((prev) => revertUpdater(prev));
+      setProfile((prev) => ({
+        ...prev,
+        followingCount: isCurrentlyFollowing
+          ? prev.followingCount + 1
+          : Math.max(0, prev.followingCount - 1),
+      }));
+    }
+  };
 
   const handleChange = (e) => {
     setProfile({
@@ -190,6 +302,82 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
     );
   }
 
+  const renderFollowModal = (title, list, isOpen, onClose) => {
+    if (!isOpen) return null;
+    return (
+      <div className="account-modal-overlay" onClick={onClose}>
+        <div className="account-modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="account-modal-header">
+            <h3>{title}</h3>
+            <button className="account-modal-close" onClick={onClose}>✕</button>
+          </div>
+          
+          <div className="account-modal-body">
+            {loadingList ? (
+              <div className="account-modal-loading">
+                <div className="story-spinner" />
+                <p>Loading list...</p>
+              </div>
+            ) : list.length === 0 ? (
+              <div className="account-modal-empty">
+                <span>👥</span>
+                <p>No users found.</p>
+              </div>
+            ) : (
+              <div className="account-modal-list">
+                {list.map((u) => {
+                  const isFollowingUser = u.followers?.some(
+                    (uid) => uid.toString() === authUser._id.toString()
+                  ) || false;
+                  
+                  return (
+                    <div key={u._id} className="account-modal-item">
+                      <div 
+                        className="account-modal-user-photo" 
+                        onClick={() => { onClose(); navigate(`/author/${u._id}`); }}
+                      >
+                        <LazyImage
+                          src={u.profilePhoto || u.profileImage}
+                          alt={u.username}
+                          fallback="https://via.placeholder.com/150"
+                        />
+                      </div>
+                      <div className="account-modal-user-info">
+                        <div 
+                          className="account-modal-username" 
+                          onClick={() => { onClose(); navigate(`/author/${u._id}`); }}
+                        >
+                          {u.username}
+                        </div>
+                        <p className="account-modal-user-bio">{u.bio || "No bio available"}</p>
+                      </div>
+                      <div className="account-modal-user-actions">
+                        <button 
+                          className="account-modal-visit-btn"
+                          onClick={() => { onClose(); navigate(`/author/${u._id}`); }}
+                        >
+                          Visit
+                        </button>
+                        {u._id.toString() !== authUser._id.toString() && (
+                          <button 
+                            className={`account-modal-follow-btn ${isFollowingUser ? 'following' : 'follow'}`}
+                            onClick={() => handleModalFollowToggle(u)}
+                          >
+                            {isFollowingUser ? 'Following' : 'Follow'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="account-page">
       <div className={`account-container ${collapsed ? 'account-expanded' : ''}`}>
@@ -250,6 +438,14 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
             >
               {editing ? 'Save Profile' : 'Edit Profile'}
             </button>
+
+            <button
+              className="edit-btn"
+              onClick={() => navigate(`/author/${userId}`)}
+              style={{ marginTop: '10px', background: 'var(--accent-gradient)', color: 'var(--accent-text)', border: 'none' }}
+            >
+              👁️ View Public Profile
+            </button>
           </div>
 
           <div className="profile-right">
@@ -288,6 +484,17 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
               onChange={handleChange}
               disabled={!editing}
             />
+
+            <div className="account-follow-stats">
+              <div className="account-stat-box" onClick={handleOpenFollowers}>
+                <span className="stat-count">{profile.followersCount || 0}</span>
+                <span className="stat-label">Followers</span>
+              </div>
+              <div className="account-stat-box" onClick={handleOpenFollowing}>
+                <span className="stat-count">{profile.followingCount || 0}</span>
+                <span className="stat-label">Following</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -309,7 +516,13 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
         <h2 className="posts-title">Your Posts</h2>
 
         <div className="posts-grid">
-          {posts.length === 0 ? (
+          {loading && posts.length === 0 ? (
+            <>
+              <SkeletonCard type={activeGlobalTab === 'songs' ? 'song' : 'story'} />
+              <SkeletonCard type={activeGlobalTab === 'songs' ? 'song' : 'story'} />
+              <SkeletonCard type={activeGlobalTab === 'songs' ? 'song' : 'story'} />
+            </>
+          ) : posts.length === 0 ? (
             <div className="no-posts" style={{ gridColumn: '1/-1', textAlign: 'center', color: 'var(--secondary-text)', marginTop: '20px', fontSize: '16px' }}>
               You haven't posted any {activeGlobalTab === 'stories' ? 'stories' : 'songs'} yet.
             </div>
@@ -323,10 +536,14 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
                   onClick={() => navigate(isSong ? `/song/${post._id}` : `/card/${post.slug}-${post._id}`)}
                 >
                   <div className="post-card-thumbnail">
-                    <LazyImage 
-                      src={post.coverImage} 
-                      alt={post.title} 
-                    />
+                    {post.coverImage ? (
+                      <LazyImage 
+                        src={optimizeCloudinaryUrl(post.coverImage, 200)} 
+                        alt={post.title} 
+                      />
+                    ) : (
+                      <CoverPlaceholder type={isSong ? 'song' : 'story'} genre={post.genre} title={post.title} />
+                    )}
                   </div>
                   <div className="post-card-details">
                     <div className="story-name" title={post.title}>{post.title}</div>
@@ -363,6 +580,9 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
             })
           )}
         </div>
+
+        {renderFollowModal("Followers", followersList, showFollowersModal, () => setShowFollowersModal(false))}
+        {renderFollowModal("Following", followingList, showFollowingModal, () => setShowFollowingModal(false))}
       </div>
     </div>
   );

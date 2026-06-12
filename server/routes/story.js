@@ -203,7 +203,9 @@ router.post("/upload-image", authMiddleware, uploadInlineMiddleware, async (req,
 // GET /story/all — only published stories (for homepage / trending)
 router.get("/all", async (req, res) => {
     try {
-        const stories = await Story.find({ status: { $ne: "draft" } }).sort({ createdAt: -1 });
+        const stories = await Story.find({ status: { $ne: "draft" } })
+            .select("title summary coverImage genre likes comments slug author authorId createdAt storyType")
+            .sort({ createdAt: -1 });
         res.status(200).json(stories);
     } catch (err) {
         res.status(500).json(err);
@@ -213,7 +215,8 @@ router.get("/all", async (req, res) => {
 // GET /story/trending — retrieve trending stories sorted by likes, comments, and recent activity
 router.get("/trending", async (req, res) => {
     try {
-        const stories = await Story.find({ status: { $ne: "draft" } });
+        const stories = await Story.find({ status: { $ne: "draft" } })
+            .select("title summary coverImage genre likes comments slug author authorId createdAt storyType updatedAt");
         const sorted = stories.sort((a, b) => {
             const scoreA = (a.likes || 0) * 3 + (a.comments?.length || 0) * 2 + new Date(a.updatedAt || a.createdAt).getTime() / (1000 * 60 * 60 * 24);
             const scoreB = (b.likes || 0) * 3 + (b.comments?.length || 0) * 2 + new Date(b.updatedAt || b.createdAt).getTime() / (1000 * 60 * 60 * 24);

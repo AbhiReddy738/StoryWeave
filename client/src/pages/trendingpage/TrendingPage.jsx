@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config';
 import LazyImage from '../../components/LazyImage';
+import CoverPlaceholder from '../../components/CoverPlaceholder';
+import SkeletonCard from '../../components/SkeletonCard';
+import { getCache, setCache } from '../../utils/cache';
+import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
 import './TrendingPage.css';
 
 const TrendingPage = ({ collapsed }) => {
@@ -12,31 +16,38 @@ const TrendingPage = ({ collapsed }) => {
   const [stories, setStories] = useState([]);
   const [songs, setSongs] = useState([]);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const fetchStories = async () => {
+    const fetchTrendingData = async () => {
+      setLoading(true);
+      const cachedStories = getCache('trending-stories');
+      const cachedSongs = getCache('trending-songs');
+      
+      if (cachedStories && cachedSongs) {
+        setStories(cachedStories);
+        setSongs(cachedSongs);
+        setLoading(false);
+        return;
+      }
+
       try {
-        const response = await axios.get(
-          `${API_BASE_URL}/story/trending`
-        );
-        setStories(response.data);
+        const [storiesRes, songsRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/story/trending`),
+          axios.get(`${API_BASE_URL}/song/trending`)
+        ]);
+        setStories(storiesRes.data);
+        setSongs(songsRes.data);
+        setCache('trending-stories', storiesRes.data);
+        setCache('trending-songs', songsRes.data);
       } catch (err) {
-        console.log(err);
+        console.error("Failed to fetch trending data", err);
+      } finally {
+        setLoading(false);
       }
     };
 
-    const fetchSongs = async () => {
-      try {
-        const response = await axios.get(
-          `${API_BASE_URL}/song/trending`
-        );
-        setSongs(response.data);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-
-    fetchStories();
-    fetchSongs();
+    fetchTrendingData();
   }, []);
 
   return (
@@ -76,7 +87,13 @@ const TrendingPage = ({ collapsed }) => {
 
         {activeTab === 'stories' && (
           <div className="cards-grid">
-            {stories.map((story) => (
+            {loading ? (
+              <>
+                <SkeletonCard type="story" />
+                <SkeletonCard type="story" />
+                <SkeletonCard type="story" />
+              </>
+            ) : stories.map((story) => (
               <div
                 key={story._id}
                 className="card-container book-card"
@@ -87,18 +104,34 @@ const TrendingPage = ({ collapsed }) => {
                 }
               >
                 <div className="card-cover">
-                  <LazyImage 
-                    src={story.coverImage} 
-                    alt={story.title} 
-                  />
-                  <div className="card-cover-overlay"></div>
-                  <span className="genre-badge" onClick={e => e.stopPropagation()}>
-                    {story.genre}
-                  </span>
+                  {story.coverImage ? (
+                    <>
+                      <LazyImage 
+                        src={optimizeCloudinaryUrl(story.coverImage, 400)} 
+                        alt={story.title} 
+                      />
+                      <div className="card-cover-overlay"></div>
+                      <span className="genre-badge" onClick={e => e.stopPropagation()}>
+                        {story.genre}
+                      </span>
+                    </>
+                  ) : (
+                    <CoverPlaceholder type="story" genre={story.genre} title={story.title} />
+                  )}
                 </div>
                 <div className="book-card-body">
                   <div className="story-name" title={story.title}>
                     {story.title}
+                  </div>
+                  <div 
+                    className="story-author"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(story.authorId ? `/author/${story.authorId}` : `/author/${story.author || 'Unknown'}`);
+                    }}
+                    style={{ cursor: 'pointer', fontSize: '13px', color: 'var(--secondary-text)', marginBottom: '8px', textDecoration: 'underline' }}
+                  >
+                    By {story.author || 'Unknown'}
                   </div>
                   <div className="middle-box">
                     <span className="likes">
@@ -127,7 +160,13 @@ const TrendingPage = ({ collapsed }) => {
         )}
 
         {activeTab === 'lyrics' && (
-          songs.length > 0 ? (
+          loading ? (
+            <div className="cards-grid">
+              <SkeletonCard type="song" />
+              <SkeletonCard type="song" />
+              <SkeletonCard type="song" />
+            </div>
+          ) : songs.length > 0 ? (
             <div className="cards-grid">
               {songs.map((song) => (
                 <div
@@ -141,6 +180,16 @@ const TrendingPage = ({ collapsed }) => {
                 >
                   <div className="story-name">
                     {song.title}
+                  </div>
+                  <div 
+                    className="song-artist"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(song.authorId ? `/author/${song.authorId}` : `/author/${song.artistName || song.author || 'Unknown'}`);
+                    }}
+                    style={{ cursor: 'pointer', fontSize: '13px', color: 'var(--secondary-text)', marginBottom: '8px', textDecoration: 'underline' }}
+                  >
+                    By {song.artistName || song.author || 'Unknown'}
                   </div>
 
                   <div className="middle-box">

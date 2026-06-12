@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config';
+import { useAuth } from '../../context/AuthContext.jsx';
 import LazyImage from '../../components/LazyImage';
+import CoverPlaceholder from '../../components/CoverPlaceholder';
+import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
 import './CardPage.css';
 import StoryReader from '../../components/storyreader/StoryReader';
 
@@ -12,12 +15,16 @@ const CardPage = ({ collapsed }) => {
   const { slug } = useParams();
   const storyId = slug ? slug.split('-').pop() : null;
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
 
   // ── States ──────────────────────────────────────────────────────────────────
   const [story, setStory] = useState(null);
   const [relatedStories, setRelatedStories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Follow State
+  const [isFollowingAuthor, setIsFollowingAuthor] = useState(false);
 
   // Likes & saves
   const [liked, setLiked] = useState(false);
@@ -42,6 +49,44 @@ const CardPage = ({ collapsed }) => {
       return JSON.parse(localStorage.getItem('user')) || null;
     } catch {
       return null;
+    }
+  };
+
+  // Follow status check
+  useEffect(() => {
+    if (!story || !story.authorId || !authUser) return;
+    const checkFollowStatus = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/user/follow-status/${story.authorId}`);
+        setIsFollowingAuthor(res.data.isFollowing);
+      } catch (err) {
+        console.error("Failed to fetch follow status", err);
+      }
+    };
+    checkFollowStatus();
+  }, [story, authUser]);
+
+  const handleFollowToggle = async () => {
+    if (!authUser) {
+      alert("Please log in to follow authors.");
+      navigate('/login');
+      return;
+    }
+    const targetId = story.authorId;
+    if (authUser._id.toString() === targetId.toString()) {
+      alert("You cannot follow yourself.");
+      return;
+    }
+
+    const originalFollowingState = isFollowingAuthor;
+    setIsFollowingAuthor(!originalFollowingState);
+
+    try {
+      const endpoint = originalFollowingState ? 'unfollow' : 'follow';
+      await axios.post(`${API_BASE_URL}/user/${endpoint}/${targetId}`);
+    } catch (err) {
+      setIsFollowingAuthor(originalFollowingState);
+      alert("Follow action failed. Please try again.");
     }
   };
 
@@ -302,9 +347,18 @@ const CardPage = ({ collapsed }) => {
   const currentUser = getUser();
 
   if (loading) return (
-    <div className="story-page-loading">
-      <div className="story-spinner" />
-      <p>Loading story...</p>
+    <div className={`card-page ${collapsed ? 'card-page-expanded' : ''} skeleton-details`}>
+      <div className="story-hero loading-skeleton" style={{ height: '350px', width: '100%', borderRadius: '0 0 24px 24px' }} />
+      <div className="story-main-content" style={{ display: 'flex', gap: '24px', padding: '24px' }}>
+        <div className="story-content-left" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="story-content-card loading-skeleton" style={{ height: '300px', borderRadius: '16px' }} />
+          <div className="story-comments-card loading-skeleton" style={{ height: '200px', borderRadius: '16px' }} />
+        </div>
+        <div className="story-sidebar" style={{ width: '300px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="story-sidebar-card loading-skeleton" style={{ height: '220px', borderRadius: '16px' }} />
+          <div className="story-sidebar-card loading-skeleton" style={{ height: '140px', borderRadius: '16px' }} />
+        </div>
+      </div>
     </div>
   );
 
@@ -326,19 +380,49 @@ const CardPage = ({ collapsed }) => {
         className="story-hero"
         style={{
           backgroundImage: story.coverImage
-            ? `url(${story.coverImage})`
+            ? `url(${optimizeCloudinaryUrl(story.coverImage, 1200)})`
             : 'linear-gradient(135deg, #1a1a2e, #16213e)'
         }}
       >
         <div className="story-hero-overlay" />
         <div className="story-hero-content">
           <div className="story-cover-art">
-            <LazyImage src={story.coverImage} alt={story.title} />
+            {story.coverImage ? (
+              <LazyImage src={optimizeCloudinaryUrl(story.coverImage, 800)} alt={story.title} />
+            ) : (
+              <CoverPlaceholder type="story" genre={story.genre} title={story.title} />
+            )}
           </div>
           <div className="story-hero-info">
             <span className="story-genre-badge">{story.genre}</span>
             <h1 className="story-title-text">{story.title}</h1>
-            <p className="story-author-text">by {story.author}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+              <p 
+                className="story-author-text"
+                onClick={() => navigate(story.authorId ? `/author/${story.authorId}` : `/author/${story.author}`)}
+                style={{ cursor: 'pointer', textDecoration: 'underline', margin: 0 }}
+              >
+                by {story.author}
+              </p>
+              {(!authUser || (story.authorId && authUser._id.toString() !== story.authorId.toString())) && (
+                <button
+                  onClick={handleFollowToggle}
+                  style={{
+                    padding: '4px 12px',
+                    fontSize: '12px',
+                    borderRadius: '15px',
+                    border: isFollowingAuthor ? '1px solid rgba(255,255,255,0.4)' : 'none',
+                    background: isFollowingAuthor ? 'transparent' : 'var(--accent-gradient)',
+                    color: isFollowingAuthor ? '#fff' : 'var(--accent-text)',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {isFollowingAuthor ? 'Following' : 'Follow'}
+                </button>
+              )}
+            </div>
             <div className="story-meta-row">
               <span>❤️ {likeCount.toLocaleString()} likes</span>
               <span>⏱ {story.readingTime || 1} min read</span>
@@ -441,7 +525,13 @@ const CardPage = ({ collapsed }) => {
 
                       <div className="contribution-header">
                         <div className="contribution-meta">
-                          <span className="contribution-author">✍️ {item.author}</span>
+                          <span 
+                            className="contribution-author"
+                            onClick={() => navigate(`/author/${item.author}`)}
+                            style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                          >
+                            ✍️ {item.author}
+                          </span>
                           {item.createdAt && (
                             <span className="contribution-date">
                               {new Date(item.createdAt).toLocaleDateString()}
@@ -500,7 +590,13 @@ const CardPage = ({ collapsed }) => {
                       {(c.username || 'A')[0].toUpperCase()}
                     </div>
                     <div className="comment-body">
-                      <span className="comment-username">{c.username}</span>
+                      <span 
+                        className="comment-username"
+                        onClick={() => navigate(`/author/${c.username}`)}
+                        style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                      >
+                        {c.username}
+                      </span>
                       <p className="comment-text">{c.text}</p>
                       {c.createdAt && (
                         <span className="comment-date">
@@ -545,9 +641,33 @@ const CardPage = ({ collapsed }) => {
                 <span>Genre:</span>
                 <strong>{story.genre}</strong>
               </div>
-              <div className="sidebar-info-item">
+              <div className="sidebar-info-item" style={{ alignItems: 'center' }}>
                 <span>Author:</span>
-                <strong>{story.author}</strong>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <strong 
+                    onClick={() => navigate(story.authorId ? `/author/${story.authorId}` : `/author/${story.author}`)}
+                    style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    {story.author}
+                  </strong>
+                  {(!authUser || (story.authorId && authUser._id.toString() !== story.authorId.toString())) && (
+                    <button
+                      onClick={handleFollowToggle}
+                      style={{
+                        padding: '2px 8px',
+                        fontSize: '11px',
+                        borderRadius: '10px',
+                        border: isFollowingAuthor ? '1px solid var(--border-color)' : 'none',
+                        background: isFollowingAuthor ? 'transparent' : 'var(--accent-gradient)',
+                        color: isFollowingAuthor ? 'var(--text-color)' : 'var(--accent-text)',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {isFollowingAuthor ? 'Following' : 'Follow'}
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="sidebar-info-item">
                 <span>Published:</span>
@@ -616,11 +736,24 @@ const CardPage = ({ collapsed }) => {
                     onClick={() => navigate(`/card/${rs.slug}-${rs._id}`)}
                   >
                     <div className="related-story-cover">
-                      <LazyImage src={rs.coverImage} alt={rs.title} />
+                      {rs.coverImage ? (
+                        <LazyImage src={optimizeCloudinaryUrl(rs.coverImage, 200)} alt={rs.title} />
+                      ) : (
+                        <CoverPlaceholder type="story" genre={rs.genre} title={rs.title} />
+                      )}
                     </div>
                     <div className="related-story-info">
                       <p className="related-story-title">{rs.title}</p>
-                      <p className="related-story-author">{rs.author}</p>
+                      <p 
+                        className="related-story-author"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(rs.authorId ? `/author/${rs.authorId}` : `/author/${rs.author}`);
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        {rs.author}
+                      </p>
                       <span className="related-song-genre">{rs.genre}</span>
                     </div>
                   </div>
