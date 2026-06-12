@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import logoPlaceholder from '../assets/storyweaveLogo.jpeg';
+import logoPlaceholder from '../assets/storyweaveLogo.png';
 
 const LazyImage = ({ src, alt, className, fallback = logoPlaceholder, style = {}, ...props }) => {
   const [isLoading, setIsLoading] = useState(true);

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Sun, Moon, LogIn, LogOut, UserRound, UserPlus, Menu, X } from 'lucide-react';
 import './Header.css';
-import logo from '../../assets/storyweaveLogo.jpeg';
+import logo from '../../assets/storyweaveLogo.png';
 import { useTheme } from '../../context/ThemeContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 
