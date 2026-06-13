@@ -72,6 +72,11 @@ const storySchema = new mongoose.Schema(
         default: 0
     },
 
+    views: {
+        type: Number,
+        default: 0
+    },
+
     likedBy: {
         type: [mongoose.Schema.Types.ObjectId],
         ref: 'user',
@@ -95,6 +100,7 @@ const storySchema = new mongoose.Schema(
     contributions: [
         {
             author: { type: String },
+            authorId: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
             text: { type: String },
             upvotes: { type: Number, default: 0 },
             upvotedBy: {
@@ -102,7 +108,46 @@ const storySchema = new mongoose.Schema(
                 ref: 'user',
                 default: []
             },
+            accepted: { type: Boolean, default: false },
+            acceptedAt: { type: Date },
+            acceptedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
+            status: {
+                type: String,
+                enum: ['pending', 'accepted', 'rejected'],
+                default: 'pending'
+            },
             createdAt: { type: Date, default: Date.now }
+        }
+    ],
+
+    contributors: [
+        {
+            contributorId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "user",
+                required: true
+            },
+            contributorName: {
+                type: String,
+                required: true
+            },
+            profilePhoto: {
+                type: String,
+                default: ""
+            },
+            contributionId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Contribution",
+                required: true
+            },
+            contributedText: {
+                type: String,
+                required: true
+            },
+            mergedAt: {
+                type: Date,
+                default: Date.now
+            }
         }
     ],
 
@@ -119,6 +164,19 @@ storySchema.index({ authorId: 1 });
 storySchema.index({ genre: 1 });
 storySchema.index({ createdAt: -1 });
 storySchema.index({ likes: -1 });
+
+storySchema.pre("save", function () {
+    if (!this.slug) {
+        this.slug = this.title
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, "")
+            .trim()
+            .replaceAll(" ", "-");
+        if (!this.slug) {
+            this.slug = "story-" + Date.now();
+        }
+    }
+});
 
 const Story = mongoose.model("Story", storySchema);
 

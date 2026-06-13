@@ -772,4 +772,39 @@ router.put("/upload-photo", authMiddleware, (req, res, next) => {
     }
 });
 
+// GET user's story contributions history
+router.get("/my-contributions/:userId", async (req, res) => {
+    try {
+        const { userId } = req.params;
+        // Find all stories where contributions contain this contributor's ID
+        const stories = await Story.find({ "contributions.authorId": userId });
+        
+        const myContribs = [];
+        stories.forEach(story => {
+            story.contributions.forEach(c => {
+                if (c.authorId && c.authorId.toString() === userId.toString()) {
+                    myContribs.push({
+                        _id: c._id,
+                        storyId: story._id,
+                        storyTitle: story.title,
+                        storySlug: story.slug,
+                        text: c.text,
+                        upvotes: c.upvotes || 0,
+                        accepted: c.accepted || false,
+                        status: c.accepted ? "Accepted" : (c.status === "rejected" ? "Rejected" : "Pending"),
+                        createdAt: c.createdAt
+                    });
+                }
+            });
+        });
+        
+        // Sort by newest first
+        myContribs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        res.status(200).json(myContribs);
+    } catch (err) {
+        console.error("Error in GET /my-contributions:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
 export default router;
