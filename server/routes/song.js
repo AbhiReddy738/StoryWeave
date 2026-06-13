@@ -169,6 +169,10 @@ router.get("/:id", async (req, res) => {
         const song = await Song.findById(req.params.id);
         if (!song) return res.status(404).json({ message: "Song not found" });
 
+        // Increment views count
+        song.views = (song.views || 0) + 1;
+        await song.save();
+
         // Sort contributions by upvotes desc
         if (song.contributions && song.contributions.length > 0) {
             song.contributions.sort((a, b) => b.upvotes - a.upvotes);

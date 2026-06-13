@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, MessageSquare, Calendar, Sparkles } from 'lucide-react';
+import { Heart, MessageSquare, Calendar, Sparkles, Eye } from 'lucide-react';
 import CoverPlaceholder from './CoverPlaceholder';
 import LazyImage from './LazyImage';
 import { optimizeCloudinaryUrl } from '../utils/imageOptimizer';
@@ -16,6 +16,7 @@ const ContentCard = ({
   genre,
   likes,
   comments,
+  views,
   date,
   slug,
   id,
@@ -30,7 +31,7 @@ const ContentCard = ({
       return;
     }
     if (type === 'story') {
-      const targetSlug = slug ? `${slug}-${id}` : id;
+      const targetSlug = slug || id;
       navigate(`/card/${targetSlug}`);
     } else {
       navigate(`/song/${id}`);
@@ -84,6 +85,11 @@ const ContentCard = ({
           <span className="card-metriclikes">
             <Heart size={14} /> {likesCount}
           </span>
+          {views !== undefined && (
+            <span className="card-metricviews" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <Eye size={14} /> {views}
+            </span>
+          )}
           {type === 'story' && comments !== undefined && (
             <span className="card-metriccomments">
               <MessageSquare size={14} /> {commentsCount}

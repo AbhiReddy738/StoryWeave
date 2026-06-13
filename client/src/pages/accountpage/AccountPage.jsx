@@ -16,6 +16,8 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [userId, setUserId] = useState(null);
+  const [localTab, setLocalTab] = useState(activeGlobalTab || 'stories');
+  const [contributions, setContributions] = useState([]);
   
   const [profile, setProfile] = useState({
     name: '',
@@ -75,12 +77,15 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
           followingCount: user.followingCount || 0
         });
 
-        if (activeGlobalTab === 'songs') {
+        if (localTab === 'songs') {
           const postsRes = await axios.get(`${API_BASE_URL}/user/songs/${userId}`);
           setPosts(postsRes.data);
-        } else {
+        } else if (localTab === 'stories') {
           const postsRes = await axios.get(`${API_BASE_URL}/user/posts/${userId}`);
           setPosts(postsRes.data);
+        } else if (localTab === 'contributions') {
+          const contribsRes = await axios.get(`${API_BASE_URL}/user/my-contributions/${userId}`);
+          setContributions(contribsRes.data || []);
         }
       } catch (err) {
         console.error(err);
@@ -91,7 +96,7 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
     };
 
     fetchData();
-  }, [userId, activeGlobalTab]);
+  }, [userId, localTab]);
 
   const fetchFollowers = async () => {
     if (!userId) return;
@@ -501,71 +506,147 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
 
         <div className="home-tabs" style={{ marginBottom: '24px' }}>
           <button
-            className={`tab-btn ${activeGlobalTab === 'stories' ? 'active-tab' : ''}`}
-            onClick={() => setActiveGlobalTab('stories')}
+            className={`tab-btn ${localTab === 'stories' ? 'active-tab' : ''}`}
+            onClick={() => { setLocalTab('stories'); setActiveGlobalTab('stories'); }}
           >
             📖 Stories
           </button>
           <button
-            className={`tab-btn ${activeGlobalTab === 'songs' ? 'active-tab' : ''}`}
-            onClick={() => setActiveGlobalTab('songs')}
+            className={`tab-btn ${localTab === 'songs' ? 'active-tab' : ''}`}
+            onClick={() => { setLocalTab('songs'); setActiveGlobalTab('songs'); }}
           >
             🎵 Songs
           </button>
+          <button
+            className={`tab-btn ${localTab === 'contributions' ? 'active-tab' : ''}`}
+            onClick={() => setLocalTab('contributions')}
+          >
+            ✍️ Contributions
+          </button>
         </div>
 
-        <h2 className="posts-title">Your Posts</h2>
+        <h2 className="posts-title">
+          {localTab === 'contributions' ? 'Your Contributions' : 'Your Posts'}
+        </h2>
 
-        <div className="posts-grid">
-          {loading && posts.length === 0 ? (
-            <>
-              <SkeletonCard type={activeGlobalTab === 'songs' ? 'song' : 'story'} />
-              <SkeletonCard type={activeGlobalTab === 'songs' ? 'song' : 'story'} />
-              <SkeletonCard type={activeGlobalTab === 'songs' ? 'song' : 'story'} />
-            </>
-          ) : posts.length === 0 ? (
-            <div className="no-posts" style={{ gridColumn: '1/-1', textAlign: 'center', color: 'var(--secondary-text)', marginTop: '20px', fontSize: '16px' }}>
-              You haven't posted any {activeGlobalTab === 'stories' ? 'stories' : 'songs'} yet.
-            </div>
-          ) : (
-            posts.map((post) => {
-              const isSong = activeGlobalTab === 'songs';
-              return (
-                <ContentCard
-                  key={post._id}
-                  type={isSong ? 'song' : 'story'}
-                  title={post.title}
-                  author={isSong ? (post.artistName || profile.author || authUser.username) : (profile.author || authUser.username)}
-                  authorId={userId}
-                  summary={post.summary}
-                  coverImage={post.coverImage}
-                  genre={post.genre}
-                  likes={post.likes || 0}
-                  comments={isSong ? (post.contributions?.length || 0) : (post.comments?.length || 0)}
-                  date={post.createdAt}
-                  slug={post.slug}
-                  id={post._id}
-                  actionButton={
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      {post.status === 'draft' && (
-                        <span className="status-badge" style={{ background: 'rgba(255, 165, 0, 0.2)', color: 'orange', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
-                          Draft
-                        </span>
-                      )}
-                      <button
-                        className="delete-icon-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(post._id);
+        <div className={localTab === 'contributions' ? "contributions-history-grid" : "posts-grid"} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+          {localTab === 'contributions' ? (
+            loading && contributions.length === 0 ? (
+              <>
+                <div style={{ color: 'var(--secondary-text)' }}>Loading contributions...</div>
+              </>
+            ) : contributions.length === 0 ? (
+              <div className="no-posts" style={{ gridColumn: '1/-1', textAlign: 'center', color: 'var(--secondary-text)', marginTop: '20px', fontSize: '16px' }}>
+                You haven't contributed to any stories yet.
+              </div>
+            ) : (
+              contributions.map((c) => {
+                let statusColor = '#fbbf24';
+                let statusBg = 'rgba(251, 191, 36, 0.15)';
+                if (c.status === 'Accepted') {
+                  statusColor = '#4ade80';
+                  statusBg = 'rgba(74, 222, 128, 0.15)';
+                } else if (c.status === 'Rejected') {
+                  statusColor = '#ef4444';
+                  statusBg = 'rgba(239, 68, 68, 0.15)';
+                }
+
+                return (
+                  <div
+                    key={c._id}
+                    className="contrib-history-card"
+                    style={{
+                      background: 'var(--card-color)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '16px',
+                      padding: '20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => navigate(`/card/${c.storySlug}`)}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--accent-color)', textDecoration: 'underline' }}>
+                        📖 {c.storyTitle}
+                      </span>
+                      <span
+                        className="status-badge"
+                        style={{
+                          background: statusBg,
+                          color: statusColor,
+                          fontSize: '11px',
+                          padding: '4px 10px',
+                          borderRadius: '12px',
+                          fontWeight: 'bold'
                         }}
                       >
-                        Delete
-                      </button>
+                        {c.status}
+                      </span>
                     </div>
-                  }
-                />
-              );
-            })
+                    <p style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--text-color)', margin: 0, fontStyle: 'italic' }}>
+                      "{c.text.length > 200 ? c.text.slice(0, 200) + '...' : c.text}"
+                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: 'var(--secondary-text)', marginTop: '8px' }}>
+                      <span>👍 {c.upvotes} {c.upvotes === 1 ? 'upvote' : 'upvotes'}</span>
+                      <span>📅 {new Date(c.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                );
+              })
+            )
+          ) : (
+            loading && posts.length === 0 ? (
+              <>
+                <SkeletonCard type={localTab === 'songs' ? 'song' : 'story'} />
+                <SkeletonCard type={localTab === 'songs' ? 'song' : 'story'} />
+                <SkeletonCard type={localTab === 'songs' ? 'song' : 'story'} />
+              </>
+            ) : posts.length === 0 ? (
+              <div className="no-posts" style={{ gridColumn: '1/-1', textAlign: 'center', color: 'var(--secondary-text)', marginTop: '20px', fontSize: '16px' }}>
+                You haven't posted any {localTab === 'stories' ? 'stories' : 'songs'} yet.
+              </div>
+            ) : (
+              posts.map((post) => {
+                const isSong = localTab === 'songs';
+                return (
+                  <ContentCard
+                    key={post._id}
+                    type={isSong ? 'song' : 'story'}
+                    title={post.title}
+                    author={isSong ? (post.artistName || profile.author || authUser.username) : (profile.author || authUser.username)}
+                    authorId={userId}
+                    summary={post.summary}
+                    coverImage={post.coverImage}
+                    genre={post.genre}
+                    likes={post.likes || 0}
+                    comments={isSong ? (post.contributions?.length || 0) : (post.comments?.length || 0)}
+                    date={post.createdAt}
+                    slug={post.slug}
+                    id={post._id}
+                    actionButton={
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {post.status === 'draft' && (
+                          <span className="status-badge" style={{ background: 'rgba(255, 165, 0, 0.2)', color: 'orange', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
+                            Draft
+                          </span>
+                        )}
+                        <button
+                          className="delete-icon-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(post._id);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    }
+                  />
+                );
+              })
+            )
           )}
         </div>
 

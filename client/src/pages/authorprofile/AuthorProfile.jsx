@@ -4,7 +4,6 @@ import axios from 'axios';
 import { API_BASE_URL } from '../../config';
 import { useAuth } from '../../context/AuthContext.jsx';
 import LazyImage from '../../components/LazyImage';
-import CoverPlaceholder from '../../components/CoverPlaceholder';
 import SkeletonCard from '../../components/SkeletonCard';
 import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
 import ContentCard from '../../components/ContentCard';
@@ -28,6 +27,15 @@ const AuthorProfile = ({ collapsed }) => {
   // Follow State
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
+
+  // Pagination states
+  const [storiesPage, setStoriesPage] = useState(1);
+  const [hasMoreStories, setHasMoreStories] = useState(true);
+  const [loadingMoreStories, setLoadingMoreStories] = useState(false);
+
+  const [songsPage, setSongsPage] = useState(1);
+  const [hasMoreSongs, setHasMoreSongs] = useState(true);
+  const [loadingMoreSongs, setLoadingMoreSongs] = useState(false);
   
   // Modals for followers and following list
   const [showFollowersModal, setShowFollowersModal] = useState(false);
@@ -60,14 +68,16 @@ const AuthorProfile = ({ collapsed }) => {
     const fetchProfileData = async () => {
       setLoadingProfile(true);
       try {
-        const res = await axios.get(`${API_BASE_URL}/user/profile/${id}`);
+        const res = await axios.get(`${API_BASE_URL}/authors/${id}`);
         const data = res.data;
         setProfile(data);
-        setFollowersCount(data.followersCount || data.followers?.length || 0);
+        setFollowersCount(data.followersCount || 0);
         setEditBio(data.bio || '');
 
-        if (authUser && data.followers) {
-          setIsFollowing(data.followers.some(uid => uid.toString() === authUser._id.toString()));
+        if (authUser) {
+          // Fetch follow status
+          const statusRes = await axios.get(`${API_BASE_URL}/user/follow-status/${id}`);
+          setIsFollowing(statusRes.data.isFollowing);
         } else {
           setIsFollowing(false);
         }
@@ -89,12 +99,19 @@ const AuthorProfile = ({ collapsed }) => {
       setLoadingContent(true);
       try {
         const [storiesRes, songsRes, contribsRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/user/stories/${profile._id}`),
-          axios.get(`${API_BASE_URL}/user/songs/${profile._id}`),
+          axios.get(`${API_BASE_URL}/authors/${profile._id}/stories?page=1&limit=6`),
+          axios.get(`${API_BASE_URL}/authors/${profile._id}/songs?page=1&limit=6`),
           axios.get(`${API_BASE_URL}/user/contributions/${profile._id}`)
         ]);
-        setStories(storiesRes.data || []);
-        setSongs(songsRes.data || []);
+
+        setStories(storiesRes.data.stories || []);
+        setStoriesPage(1);
+        setHasMoreStories(storiesRes.data.page < storiesRes.data.pages);
+
+        setSongs(songsRes.data.songs || []);
+        setSongsPage(1);
+        setHasMoreSongs(songsRes.data.page < songsRes.data.pages);
+
         setContributions(contribsRes.data || []);
       } catch (err) {
         console.error("Failed to load author content", err);
@@ -124,6 +141,39 @@ const AuthorProfile = ({ collapsed }) => {
     }
   }, [authUser]);
 
+  // ── Load More Functions ────────────────────────────────────────────────────
+  const loadMoreStories = async () => {
+    if (loadingMoreStories || !hasMoreStories || !profile) return;
+    setLoadingMoreStories(true);
+    try {
+      const nextPage = storiesPage + 1;
+      const res = await axios.get(`${API_BASE_URL}/authors/${profile._id}/stories?page=${nextPage}&limit=6`);
+      setStories(prev => [...prev, ...(res.data.stories || [])]);
+      setStoriesPage(nextPage);
+      setHasMoreStories(res.data.page < res.data.pages);
+    } catch (err) {
+      console.error("Failed to load more stories", err);
+    } finally {
+      setLoadingMoreStories(false);
+    }
+  };
+
+  const loadMoreSongs = async () => {
+    if (loadingMoreSongs || !hasMoreSongs || !profile) return;
+    setLoadingMoreSongs(true);
+    try {
+      const nextPage = songsPage + 1;
+      const res = await axios.get(`${API_BASE_URL}/authors/${profile._id}/songs?page=${nextPage}&limit=6`);
+      setSongs(prev => [...prev, ...(res.data.songs || [])]);
+      setSongsPage(nextPage);
+      setHasMoreSongs(res.data.page < res.data.pages);
+    } catch (err) {
+      console.error("Failed to load more songs", err);
+    } finally {
+      setLoadingMoreSongs(false);
+    }
+  };
+
   // ── Follow / Unfollow ──────────────────────────────────────────────────────
   const handleFollowToggle = async () => {
     if (!authUser) {
@@ -137,15 +187,18 @@ const AuthorProfile = ({ collapsed }) => {
 
     // Optimistic UI updates
     setIsFollowing(!originalFollowing);
-    setFollowersCount(prev => originalFollowing ? prev - 1 : prev + 1);
+    setFollowersCount(prev => originalFollowing ? Math.max(0, prev - 1) : prev + 1);
     setMyFollowingMap(prev => ({
       ...prev,
       [profile._id.toString()]: !originalFollowing
     }));
 
     try {
-      const endpoint = originalFollowing ? 'unfollow' : 'follow';
-      await axios.post(`${API_BASE_URL}/user/${endpoint}/${profile._id}`);
+      if (originalFollowing) {
+        await axios.delete(`${API_BASE_URL}/authors/${profile._id}/follow`);
+      } else {
+        await axios.post(`${API_BASE_URL}/authors/${profile._id}/follow`);
+      }
       
       showToast(originalFollowing ? `Unfollowed ${profile.username}` : `Following ${profile.username}`);
     } catch (err) {
@@ -174,13 +227,16 @@ const AuthorProfile = ({ collapsed }) => {
     }));
 
     try {
-      const endpoint = originalStatus ? 'unfollow' : 'follow';
-      await axios.post(`${API_BASE_URL}/user/${endpoint}/${targetId}`);
+      if (originalStatus) {
+        await axios.delete(`${API_BASE_URL}/authors/${targetId}/follow`);
+      } else {
+        await axios.post(`${API_BASE_URL}/authors/${targetId}/follow`);
+      }
       
       // If the targetId is the profile author itself, update the main profile follow state!
       if (profile && targetId === profile._id.toString()) {
         setIsFollowing(!originalStatus);
-        setFollowersCount(prev => originalStatus ? prev - 1 : prev + 1);
+        setFollowersCount(prev => originalStatus ? Math.max(0, prev - 1) : prev + 1);
       }
     } catch (err) {
       // Revert
@@ -263,7 +319,7 @@ const AuthorProfile = ({ collapsed }) => {
 
     setUpdatingProfile(true);
     try {
-      const res = await axios.put(`${API_BASE_URL}/user/update-profile`, { profilePhoto: "" });
+      await axios.put(`${API_BASE_URL}/user/update-profile`, { profilePhoto: "" });
       setProfile(prev => ({ ...prev, profilePhoto: "" }));
 
       if (authUser) {
@@ -288,7 +344,7 @@ const AuthorProfile = ({ collapsed }) => {
 
     setUpdatingProfile(true);
     try {
-      const res = await axios.put(`${API_BASE_URL}/user/update-profile`, { bio: editBio });
+      await axios.put(`${API_BASE_URL}/user/update-profile`, { bio: editBio });
       setProfile(prev => ({ ...prev, bio: editBio }));
       
       if (authUser) {
@@ -358,6 +414,7 @@ const AuthorProfile = ({ collapsed }) => {
 
             <div className="author-details">
               <h1 className="author-username">{profile.username}</h1>
+              {profile.email && <div style={{ fontSize: '14px', color: 'var(--accent-color)', opacity: 0.85 }}>{profile.email}</div>}
               <p className="author-bio-display">
                 {profile.bio ? profile.bio : <span className="author-bio-empty">No bio provided yet.</span>}
               </p>
@@ -375,12 +432,13 @@ const AuthorProfile = ({ collapsed }) => {
                   onClick={openFollowingModal}
                   style={{ cursor: 'pointer' }}
                 >
-                  👉 <strong>{profile.followingCount || profile.following?.length || 0}</strong> following
+                  👉 <strong>{profile.followingCount || 0}</strong> following
                 </div>
                 <div className="author-stat-item">📖 <strong>{profile.stats?.totalStories || 0}</strong> stories</div>
                 <div className="author-stat-item">🎵 <strong>{profile.stats?.totalSongs || 0}</strong> songs</div>
+                <div className="author-stat-item">📝 <strong>{profile.stats?.totalPosts || 0}</strong> posts</div>
                 <div className="author-stat-item">❤️ <strong>{profile.stats?.totalLikesReceived || 0}</strong> likes</div>
-                <div className="author-stat-item">👁️ <strong>{profile.profileViews || profile.totalProfileViews || 0}</strong> views</div>
+                <div className="author-stat-item">👁️ <strong>{profile.stats?.totalViews || 0}</strong> views</div>
                 {profile.createdAt && (
                   <div className="author-stat-item">
                     📅 Joined <strong>{new Date(profile.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</strong>
@@ -416,13 +474,13 @@ const AuthorProfile = ({ collapsed }) => {
                 className={`profile-tab-btn ${activeTab === 'stories' ? 'active' : ''}`}
                 onClick={() => setActiveTab('stories')}
               >
-                📖 Stories ({stories.length})
+                📖 Stories ({profile.stats?.totalStories || 0})
               </button>
               <button 
                 className={`profile-tab-btn ${activeTab === 'songs' ? 'active' : ''}`}
                 onClick={() => setActiveTab('songs')}
               >
-                🎵 Songs ({songs.length})
+                🎵 Songs ({profile.stats?.totalSongs || 0})
               </button>
               <button 
                 className={`profile-tab-btn ${activeTab === 'contributions' ? 'active' : ''}`}
@@ -444,35 +502,50 @@ const AuthorProfile = ({ collapsed }) => {
                 {/* Stories Tab */}
                 {activeTab === 'stories' && (
                   stories.length > 0 ? (
-                    <div className="profile-cards-grid">
-                      {stories.map(story => (
-                        <ContentCard
-                          key={story._id}
-                          type="story"
-                          title={story.title}
-                          author={profile.username}
-                          authorId={profile._id}
-                          summary={story.summary}
-                          coverImage={story.coverImage}
-                          genre={story.genre}
-                          likes={story.likes}
-                          comments={story.comments?.length || 0}
-                          date={story.createdAt}
-                          slug={story.slug}
-                          id={story._id}
-                          actionButton={
-                            <button 
-                              className="card-action-btn"
-                              onClick={() => {
-                                const targetSlug = story.slug ? `${story.slug}-${story._id}` : story._id;
-                                navigate(`/card/${targetSlug}`);
-                              }}
-                            >
-                              Read Story
-                            </button>
-                          }
-                        />
-                      ))}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                      <div className="profile-cards-grid">
+                        {stories.map(story => (
+                          <ContentCard
+                            key={story._id}
+                            type="story"
+                            title={story.title}
+                            author={profile.username}
+                            authorId={profile._id}
+                            summary={story.summary}
+                            coverImage={story.coverImage}
+                            genre={story.genre}
+                            likes={story.likes}
+                            comments={story.comments?.length || 0}
+                            views={story.views}
+                            date={story.createdAt}
+                            slug={story.slug}
+                            id={story._id}
+                            actionButton={
+                              <button 
+                                className="card-action-btn"
+                                onClick={() => {
+                                  const targetSlug = story.slug || story._id;
+                                  navigate(`/card/${targetSlug}`);
+                                }}
+                              >
+                                Read Story
+                              </button>
+                            }
+                          />
+                        ))}
+                      </div>
+                      {hasMoreStories && (
+                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                          <button 
+                            className="modal-btn cancel"
+                            onClick={loadMoreStories}
+                            disabled={loadingMoreStories}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                          >
+                            {loadingMoreStories ? 'Loading...' : 'Load More Stories'}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="empty-profile-tab">
@@ -485,31 +558,46 @@ const AuthorProfile = ({ collapsed }) => {
                 {/* Songs Tab */}
                 {activeTab === 'songs' && (
                   songs.length > 0 ? (
-                    <div className="profile-cards-grid">
-                      {songs.map(song => (
-                        <ContentCard
-                          key={song._id}
-                          type="song"
-                          title={song.title}
-                          author={song.artistName || profile.username}
-                          authorId={profile._id}
-                          summary={song.summary}
-                          coverImage={song.coverImage}
-                          genre={song.genre}
-                          likes={song.likes}
-                          comments={song.contributions?.length || 0}
-                          date={song.createdAt}
-                          id={song._id}
-                          actionButton={
-                            <button 
-                              className="card-action-btn"
-                              onClick={() => navigate(`/song/${song._id}`)}
-                            >
-                              Open Song
-                            </button>
-                          }
-                        />
-                      ))}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                      <div className="profile-cards-grid">
+                        {songs.map(song => (
+                          <ContentCard
+                            key={song._id}
+                            type="song"
+                            title={song.title}
+                            author={song.artistName || profile.username}
+                            authorId={profile._id}
+                            summary={song.summary}
+                            coverImage={song.coverImage}
+                            genre={song.genre}
+                            likes={song.likes}
+                            comments={song.contributions?.length || 0}
+                            views={song.views}
+                            date={song.createdAt}
+                            id={song._id}
+                            actionButton={
+                              <button 
+                                className="card-action-btn"
+                                onClick={() => navigate(`/song/${song._id}`)}
+                              >
+                                Open Song
+                              </button>
+                            }
+                          />
+                        ))}
+                      </div>
+                      {hasMoreSongs && (
+                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                          <button 
+                            className="modal-btn cancel"
+                            onClick={loadMoreSongs}
+                            disabled={loadingMoreSongs}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                          >
+                            {loadingMoreSongs ? 'Loading...' : 'Load More Songs'}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="empty-profile-tab">
@@ -527,7 +615,7 @@ const AuthorProfile = ({ collapsed }) => {
                         <div 
                           key={contrib._id}
                           className="contrib-card"
-                          onClick={() => navigate(contrib.type === 'story' ? `/card/${contrib.parentSlug}-${contrib.parentId}` : `/song/${contrib.parentId}`)}
+                          onClick={() => navigate(contrib.type === 'story' ? `/card/${contrib.parentSlug || contrib.parentId}` : `/song/${contrib.parentId}`)}
                         >
                           <div className="contrib-header">
                             <span className={`contrib-type-badge ${contrib.type}`}>
