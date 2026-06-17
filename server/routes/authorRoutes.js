@@ -10,18 +10,16 @@ import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Helper to validate object ID
-const validateId = (id) => mongoose.Types.ObjectId.isValid(id);
-
 // GET /api/authors/:id - Get author details and live statistics
 router.get("/:id", async (req, res) => {
     try {
-        const authorId = req.params.id;
-        if (!validateId(authorId)) {
-            return res.status(400).json({ success: false, message: "Invalid author ID format" });
+        let user;
+        if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+            user = await User.findById(req.params.id);
+        } else {
+            user = await User.findOne({ username: req.params.id });
         }
 
-        const user = await User.findById(authorId);
         if (!user) {
             return res.status(404).json({ success: false, message: "Author not found" });
         }
@@ -116,9 +114,13 @@ router.get("/:id", async (req, res) => {
 // GET /api/authors/:id/stories - Get published stories for author with pagination
 router.get("/:id/stories", async (req, res) => {
     try {
-        const authorId = req.params.id;
-        if (!validateId(authorId)) {
-            return res.status(400).json({ success: false, message: "Invalid author ID format" });
+        let authorId = req.params.id;
+        if (!mongoose.Types.ObjectId.isValid(authorId)) {
+            const user = await User.findOne({ username: authorId });
+            if (!user) {
+                return res.status(404).json({ success: false, message: "Author not found" });
+            }
+            authorId = user._id;
         }
 
         const page = parseInt(req.query.page) || 1;
@@ -149,9 +151,13 @@ router.get("/:id/stories", async (req, res) => {
 // GET /api/authors/:id/songs - Get published songs for author with pagination
 router.get("/:id/songs", async (req, res) => {
     try {
-        const authorId = req.params.id;
-        if (!validateId(authorId)) {
-            return res.status(400).json({ success: false, message: "Invalid author ID format" });
+        let authorId = req.params.id;
+        if (!mongoose.Types.ObjectId.isValid(authorId)) {
+            const user = await User.findOne({ username: authorId });
+            if (!user) {
+                return res.status(404).json({ success: false, message: "Author not found" });
+            }
+            authorId = user._id;
         }
 
         const page = parseInt(req.query.page) || 1;
@@ -183,10 +189,14 @@ router.get("/:id/songs", async (req, res) => {
 router.post("/:id/follow", authMiddleware, async (req, res) => {
     try {
         const followerId = req.user.id;
-        const followingId = req.params.id;
+        let followingId = req.params.id;
 
-        if (!validateId(followingId)) {
-            return res.status(400).json({ success: false, message: "Invalid author ID format" });
+        if (!mongoose.Types.ObjectId.isValid(followingId)) {
+            const user = await User.findOne({ username: followingId });
+            if (!user) {
+                return res.status(404).json({ success: false, message: "Author not found" });
+            }
+            followingId = user._id.toString();
         }
 
         if (followerId === followingId) {
@@ -211,15 +221,19 @@ router.post("/:id/follow", authMiddleware, async (req, res) => {
         const followDoc = new Follow({ followerId, followingId });
         await followDoc.save();
 
-        // Update target/follower arrays and counts for backward compatibility
-        await User.findByIdAndUpdate(followingId, {
-            $addToSet: { followers: followerId },
-            $inc: { followersCount: 1 }
-        });
-        await User.findByIdAndUpdate(followerId, {
-            $addToSet: { following: followingId },
-            $inc: { followingCount: 1 }
-        });
+        if (followerUser.following.includes(followingId)) {
+            return res.status(400).json({ success: false, message: "You are already following this author" });
+        }
+
+        // Add to target's followers list
+        targetUser.followers.push(followerId);
+        targetUser.followersCount = targetUser.followers.length;
+        await targetUser.save();
+
+        // Add to follower's following list
+        followerUser.following.push(followingId);
+        followerUser.followingCount = followerUser.following.length;
+        await followerUser.save();
 
         // Save follow notification
         const notification = new Notification({
@@ -242,10 +256,21 @@ router.post("/:id/follow", authMiddleware, async (req, res) => {
 router.delete("/:id/follow", authMiddleware, async (req, res) => {
     try {
         const followerId = req.user.id;
-        const followingId = req.params.id;
+        let followingId = req.params.id;
 
-        if (!validateId(followingId)) {
-            return res.status(400).json({ success: false, message: "Invalid author ID format" });
+        if (!mongoose.Types.ObjectId.isValid(followingId)) {
+            const user = await User.findOne({ username: followingId });
+            if (!user) {
+                return res.status(404).json({ success: false, message: "Author not found" });
+            }
+            followingId = user._id.toString();
+        }
+
+        const targetUser = await User.findById(followingId);
+        const followerUser = await User.findById(followerId);
+
+        if (!targetUser || !followerUser) {
+            return res.status(404).json({ success: false, message: "User not found" });
         }
 
         // Delete Follow document
@@ -254,15 +279,17 @@ router.delete("/:id/follow", authMiddleware, async (req, res) => {
             return res.status(400).json({ success: false, message: "You are not following this author" });
         }
 
-        // Update target/follower arrays and counts for compatibility
-        await User.findByIdAndUpdate(followingId, {
-            $pull: { followers: followerId },
-            $inc: { followersCount: -1 }
-        });
-        await User.findByIdAndUpdate(followerId, {
-            $pull: { following: followingId },
-            $inc: { followingCount: -1 }
-        });
+        if (!followerUser.following.includes(followingId)) {
+            return res.status(400).json({ success: false, message: "You do not follow this author" });
+        }
+
+        targetUser.followers = targetUser.followers.filter(id => id.toString() !== followerId);
+        targetUser.followersCount = targetUser.followers.length;
+        await targetUser.save();
+
+        followerUser.following = followerUser.following.filter(id => id.toString() !== followingId);
+        followerUser.followingCount = followerUser.following.length;
+        await followerUser.save();
 
         res.status(200).json({ success: true, message: "Unfollowed author successfully" });
 

@@ -110,6 +110,13 @@ html {
   scroll-behavior: smooth;
 }
 
+html,
+body,
+#root {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 html, body {
   height: 100%;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -125,11 +132,20 @@ h1, h2, h3, h4, h5, h6 {
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
-  overflow-x: hidden;
 }
 
 #root {
   height: 100%;
+}
+
+/* Global constraints */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.content-card {
+  max-width: 100%;
 }
 
 /* =====================================================
@@ -140,6 +156,7 @@ body {
   min-height: 100vh;
   background-color: var(--bg-color);
   color: var(--text-color);
+  overflow-x: hidden;
 }
 
 /* =====================================================
@@ -265,3 +282,55 @@ img {
     padding-top: calc(var(--header-height) + 16px) !important;
   }
 }
+
+/* =====================================================
+   STANDARDIZED RESPONSIVE CONTENT GRID
+   ===================================================== */
+
+.content-grid {
+  display: grid;
+  gap: 20px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  grid-auto-rows: max-content;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  transition: all 0.3s ease;
+}
+
+/* Tablet (768px – 1199px) */
+@media (min-width: 768px) {
+  .content-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .app-container.sidebar-collapsed .content-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Laptop (1200px – 1399px) */
+@media (min-width: 1200px) {
+  .content-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  
+  /* Sidebar Closed (when .sidebar-collapsed is active) */
+  .app-container.sidebar-collapsed .content-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Large Desktop (1400px+) */
+@media (min-width: 1400px) {
+  /* Sidebar Open (Default) */
+  .content-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  
+  /* Sidebar Closed (when .sidebar-collapsed is active) */
+  .app-container.sidebar-collapsed .content-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+

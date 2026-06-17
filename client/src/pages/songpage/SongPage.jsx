@@ -6,110 +6,33 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import LazyImage from '../../components/LazyImage';
 import CoverPlaceholder from '../../components/CoverPlaceholder';
 import { optimizeCloudinaryUrl } from '../../utils/imageOptimizer';
-import { 
-  Play, 
-  Pause, 
-  SkipBack, 
-  SkipForward, 
-  Shuffle, 
-  Repeat, 
-  Volume2, 
-  VolumeX, 
-  Heart, 
-  Bookmark, 
-  Share2, 
-  MessageSquare, 
-  Sparkles, 
-  Calendar, 
-  ArrowLeft, 
-  Clock, 
-  UserPlus, 
-  UserCheck, 
+import {
+  Heart,
+  Bookmark,
+  Share2,
+  MessageSquare,
+  Sparkles,
+  Calendar,
+  ArrowLeft,
   Music,
-  Send
+  Send,
+  Award,
+  Trash2,
+  Users,
+  Edit3,
+  X,
+  Eye,
+  UserPlus,
+  UserCheck
 } from 'lucide-react';
 import './SongPage.css';
 
 const API = `${API_BASE_URL}/song`;
 
 const SongPage = ({ collapsed }) => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
-
-  // Simulated Player States
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(214); // 3:34 mock duration
-  const [volume, setVolume] = useState(70);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isShuffle, setIsShuffle] = useState(false);
-  const [isRepeat, setIsRepeat] = useState(false);
-
-  useEffect(() => {
-    let interval = null;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setCurrentTime((prevTime) => {
-          if (prevTime >= duration) {
-            if (isRepeat) {
-              return 0;
-            } else {
-              setIsPlaying(false);
-              return 0;
-            }
-          }
-          return prevTime + 1;
-        });
-      }, 1000);
-    } else {
-      clearInterval(interval);
-    }
-    return () => clearInterval(interval);
-  }, [isPlaying, duration, isRepeat]);
-
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  const handleVolumeChange = (e) => {
-    setVolume(Number(e.target.value));
-    if (isMuted) setIsMuted(false);
-  };
-
-  const handleMuteToggle = () => {
-    setIsMuted(!isMuted);
-  };
-
-  const handleShuffleToggle = () => {
-    setIsShuffle(!isShuffle);
-  };
-
-  const handleRepeatToggle = () => {
-    setIsRepeat(!isRepeat);
-  };
-
-  const handlePrevSong = () => {
-    setCurrentTime(0);
-  };
-
-  const handleNextSong = () => {
-    setCurrentTime(0);
-  };
-
-  const handleProgressClick = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const width = rect.width;
-    const clickPercent = clickX / width;
-    setCurrentTime(Math.floor(clickPercent * duration));
-  };
-
-  const formatTime = (time) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = time % 60;
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-  };
 
   const [song, setSong] = useState(null);
   const [relatedSongs, setRelatedSongs] = useState([]);
@@ -130,9 +53,31 @@ const SongPage = ({ collapsed }) => {
   const [commentText, setCommentText] = useState('');
   const [commentPosting, setCommentPosting] = useState(false);
 
-  // Contributions
+  // Contributions System States
   const [contributions, setContributions] = useState([]);
   const [contributionText, setContributionText] = useState('');
+  const [contribPosting, setContribPosting] = useState(false);
+
+  // Modals Detail States
+  const [selectedContribution, setSelectedContribution] = useState(null);
+  const [selectedContributor, setSelectedContributor] = useState(null);
+
+  // Accept Modal States
+  const [showAcceptModal, setShowAcceptModal] = useState(false);
+  const [acceptingContrib, setAcceptingContrib] = useState(null);
+  const [appendChecked, setAppendChecked] = useState(true);
+  const [acceptingLoading, setAcceptingLoading] = useState(false);
+
+  // Song Editing States
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editArtistName, setEditArtistName] = useState('');
+  const [editGenre, setEditGenre] = useState('');
+  const [editSummary, setEditSummary] = useState('');
+  const [editLyrics, setEditLyrics] = useState('');
+  const [editTags, setEditTags] = useState('');
+  const [editCoverImage, setEditCoverImage] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
 
   // Active tab
   const [activeTab, setActiveTab] = useState('lyrics');
@@ -141,9 +86,11 @@ const SongPage = ({ collapsed }) => {
     try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
   };
 
+  const currentUser = authUser || getUser();
+
   // Follow status check
   useEffect(() => {
-    if (!song || !song.authorId || !authUser) return;
+    if (!song?.authorId || !authUser) return;
     const checkFollowStatus = async () => {
       try {
         const res = await axios.get(`${API_BASE_URL}/user/follow-status/${song.authorId}`);
@@ -153,7 +100,7 @@ const SongPage = ({ collapsed }) => {
       }
     };
     checkFollowStatus();
-  }, [song, authUser]);
+  }, [song?.authorId, authUser]);
 
   const handleFollowToggle = async () => {
     if (!authUser) {
@@ -179,50 +126,73 @@ const SongPage = ({ collapsed }) => {
     }
   };
 
+  const showFeedback = (msg) => {
+    setSaveFeedback(msg);
+    setTimeout(() => setSaveFeedback(''), 2500);
+  };
+
   // Fetch song
   useEffect(() => {
+    if (!slug) return;
     const fetchSong = async () => {
       setLoading(true);
+      setError('');
       try {
-        const res = await axios.get(`${API}/${id}`);
-        setSong(res.data);
-        setLikeCount(res.data.likes || 0);
-        setComments(res.data.comments || []);
+        const res = await axios.get(`${API}/${slug}`);
+        const data = res.data;
+        setSong(data);
+        setLikeCount(data.likes || 0);
+        setComments(data.comments || []);
         
-        // Sort contributions by upvotes desc on load
-        const sorted = [...(res.data.contributions || [])].sort(
-          (a, b) => b.upvotes - a.upvotes
-        );
-        setContributions(sorted);
+        const actualSongId = data._id;
+
+        // Load new Contribution System contributions (independent query)
+        try {
+          const contribsRes = await axios.get(`${API}/${actualSongId}/contributions`);
+          setContributions(contribsRes.data || []);
+        } catch (contribErr) {
+          console.warn("[DEBUG - CLIENT] Failed to load contributions:", contribErr.message);
+        }
 
         // Check if user already liked/saved
-        const user = getUser();
-        if (user) {
-          const likedBy = res.data.likedBy || [];
-          setLiked(likedBy.some(uid => uid.toString() === user._id));
-          const isSavedRes = await axios.get(`${API}/is-saved/${id}/${user._id}`);
-          setSaved(isSavedRes.data.isSaved);
+        if (currentUser) {
+          const uid = currentUser._id;
+          setLiked((data.likedBy || []).some(id => id.toString() === uid));
+          try {
+            const saveRes = await axios.get(`${API}/is-saved/${actualSongId}/${uid}`);
+            setSaved(saveRes.data.isSaved);
+          } catch (saveErr) {
+            console.warn("[DEBUG - CLIENT] Failed to check saved state:", saveErr.message);
+          }
         }
 
         // Related songs
-        const allRes = await axios.get(`${API}/all`);
-        const related = allRes.data
-          .filter(s => s._id !== res.data._id && s.genre === res.data.genre)
-          .slice(0, 5);
-        setRelatedSongs(related);
+        try {
+          const allRes = await axios.get(`${API}/all`);
+          const currentTags = data.tags || [];
+          const related = allRes.data
+            .filter(s => s._id !== data._id && (
+              s.genre?.toLowerCase() === data.genre?.toLowerCase() ||
+              (s.tags || []).some(t => currentTags.includes(t))
+            ))
+            .slice(0, 5);
+          setRelatedSongs(related);
+        } catch (relatedErr) {
+          console.warn("[DEBUG - CLIENT] Failed to load related songs:", relatedErr.message);
+        }
       } catch (err) {
+        console.error("[DEBUG - CLIENT] Failed to load song details:", err);
         setError('Song not found.');
       } finally {
         setLoading(false);
       }
     };
     fetchSong();
-  }, [id]);
+  }, [slug]);
 
   // Like toggle
   const handleLike = async () => {
-    const user = getUser();
-    if (!user) return alert('Please log in to like songs.');
+    if (!currentUser) return alert('Please log in to like songs.');
     
     // Optimistic update
     const newLiked = !liked;
@@ -230,7 +200,7 @@ const SongPage = ({ collapsed }) => {
     setLikeCount(prev => newLiked ? prev + 1 : prev - 1);
 
     try {
-      const res = await axios.put(`${API}/like/${id}`, { userId: user._id });
+      const res = await axios.put(`${API}/like/${song._id}`, { userId: currentUser._id });
       setLiked(res.data.liked);
       setLikeCount(res.data.likes);
     } catch {
@@ -242,17 +212,15 @@ const SongPage = ({ collapsed }) => {
 
   // Save toggle
   const handleSave = async () => {
-    const user = getUser();
-    if (!user) return alert('Please log in to save songs.');
+    if (!currentUser) return alert('Please log in to save songs.');
 
     const newSaved = !saved;
     setSaved(newSaved);
 
     try {
       const endpoint = newSaved ? 'save' : 'unsave';
-      await axios.post(`${API}/${endpoint}/${id}`, { userId: user._id });
-      setSaveFeedback(newSaved ? '🎵 Song Saved!' : '🗑 Song Removed');
-      setTimeout(() => setSaveFeedback(''), 2500);
+      await axios.post(`${API}/${endpoint}/${song._id}`, { userId: currentUser._id });
+      showFeedback(newSaved ? '🎵 Lyrics Saved!' : '🗑 Lyrics Removed');
     } catch {
       setSaved(!newSaved);
     }
@@ -260,19 +228,29 @@ const SongPage = ({ collapsed }) => {
 
   // Post comment
   const handleComment = async () => {
-    const user = getUser();
-    if (!user) return alert('Please log in to comment.');
+    if (!currentUser) return alert('Please log in to comment.');
     if (!commentText.trim()) return;
     setCommentPosting(true);
     try {
-      const res = await axios.post(`${API}/comment/${id}`, {
-        username: user.username,
+      const res = await axios.post(`${API}/comment/${song._id}`, {
+        username: currentUser.username,
         text: commentText.trim()
       });
-      setComments(res.data.comments);
+      setComments(res.data.comments || []);
       setCommentText('');
     } catch { /* silent */ }
     setCommentPosting(false);
+  };
+
+  // Delete Comment
+  const handleDeleteComment = async (commentId) => {
+    try {
+      const res = await axios.delete(`${API}/comment/${song._id}/${commentId}`);
+      setComments(res.data.comments || []);
+      showFeedback('💬 Comment deleted!');
+    } catch {
+      showFeedback('Failed to delete comment.');
+    }
   };
 
   // Share / Copy Link
@@ -285,75 +263,173 @@ const SongPage = ({ collapsed }) => {
     if (navigator.share && navigator.canShare?.(shareData)) {
       try {
         await navigator.share(shareData);
-        setSaveFeedback('🔗 Lyrics shared!');
-        setTimeout(() => setSaveFeedback(''), 2500);
+        showFeedback('🔗 Lyrics shared!');
       } catch (err) {
         if (err.name !== 'AbortError') {
           navigator.clipboard.writeText(window.location.href);
-          setSaveFeedback('📋 Link copied!');
-          setTimeout(() => setSaveFeedback(''), 2500);
+          showFeedback('📋 Link copied!');
         }
       }
     } else {
       navigator.clipboard.writeText(window.location.href);
-      setSaveFeedback('📋 Link copied!');
-      setTimeout(() => setSaveFeedback(''), 2500);
+      showFeedback('📋 Link copied!');
     }
   };
 
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    showFeedback('📋 Link copied!');
+  };
+
   // Submit contribution
-  const handleContribution = async () => {
-    const user = getUser();
-    if (!user) return alert('Please log in to submit contributions.');
+  const handleContributionSubmit = async () => {
+    if (!currentUser) return alert('Please log in to submit contributions.');
     if (!contributionText.trim()) return;
+    setContribPosting(true);
     try {
-      const res = await axios.post(`${API}/contribution/${id}`, {
-        author: user.username,
-        text: contributionText.trim()
+      await axios.post(`${API}/${song._id}/contribute`, {
+        text: contributionText.trim(),
+        contributedText: contributionText.trim()
       });
-      setContributions(res.data.contributions || []);
+      
+      // Reload contributions list
+      const res = await axios.get(`${API}/${song._id}/contributions`);
+      setContributions(res.data || []);
+      
       setContributionText('');
-    } catch { /* silent */ }
+      showFeedback('✨ Lyric verse contribution submitted!');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to submit contribution.');
+    } finally {
+      setContribPosting(false);
+    }
   };
 
   // Upvote contribution
   const handleUpvote = async (contributionId) => {
-    const user = getUser();
-    if (!user) return alert('Please log in to upvote contributions.');
-
-    // Optimistic toggle
-    const alreadyUpvoted = contributions
-      .find(c => (c._id || c.id)?.toString() === contributionId?.toString())
-      ?.upvotedBy?.some(uid => uid.toString() === user._id);
-
-    setContributions(prev =>
-      [...prev.map(c => {
-        if ((c._id || c.id)?.toString() !== contributionId?.toString()) return c;
-        const nowUpvoted = !(c.upvotedBy || []).some(uid => uid.toString() === user._id);
-        return {
-          ...c,
-          upvotes: nowUpvoted ? c.upvotes + 1 : Math.max(0, c.upvotes - 1),
-          upvotedBy: nowUpvoted
-            ? [...(c.upvotedBy || []), user._id]
-            : (c.upvotedBy || []).filter(uid => uid.toString() !== user._id)
-        };
-      })].sort((a, b) => b.upvotes - a.upvotes)
-    );
+    if (!currentUser) return alert('Please log in to upvote contributions.');
 
     try {
-      const res = await axios.put(
-        `${API}/contribution/upvote/${id}/${contributionId}`,
-        { userId: user._id }
-      );
-      setContributions(res.data.contributions || []);
-    } catch {
-      // Revert on failure
-      try {
-        const res = await axios.get(`${API}/${id}`);
-        setContributions(res.data.contributions || []);
-      } catch {}
+      const res = await axios.put(`${API}/contribution/upvote/${song._id}/${contributionId}`);
+      setContributions(prev => prev.map(c => {
+        if (c._id === contributionId) {
+          return {
+            ...c,
+            upvotes: res.data.contributions.find(x => x._id === contributionId)?.upvotes || c.upvotes + 1,
+            upvotedBy: res.data.contributions.find(x => x._id === contributionId)?.upvotedBy || []
+          };
+        }
+        return c;
+      }).sort((a, b) => {
+        if (a.accepted && !b.accepted) return -1;
+        if (!a.accepted && b.accepted) return 1;
+        if (b.upvotes !== a.upvotes) return b.upvotes - a.upvotes;
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }));
+      showFeedback('👍 Upvote updated!');
+    } catch (err) {
+      console.error("Upvote failed:", err);
+      showFeedback('Failed to update upvote.');
     }
   };
+
+  const openAcceptModal = (contribution) => {
+    setAcceptingContrib(contribution);
+    setAppendChecked(true);
+    setShowAcceptModal(true);
+  };
+
+  const handleConfirmAccept = async () => {
+    if (!acceptingContrib) return;
+    setAcceptingLoading(true);
+    try {
+      const cid = acceptingContrib._id || acceptingContrib.id;
+      const res = await axios.post(`${API}/${song._id}/contribution/${cid}/accept`, {
+        append: appendChecked
+      });
+      if (res.data.success) {
+        setSong(res.data.song);
+        // Refresh contributions list
+        const contribsRes = await axios.get(`${API}/${song._id}/contributions`);
+        setContributions(contribsRes.data || []);
+        showFeedback('🎉 Contribution merged to lyrics!');
+        setShowAcceptModal(false);
+        setAcceptingContrib(null);
+      }
+    } catch (err) {
+      console.error("Accept failed:", err);
+      alert(err.response?.data?.message || 'Failed to accept contribution.');
+    } finally {
+      setAcceptingLoading(false);
+    }
+  };
+
+  const handleModerateContribution = async (contribId, status) => {
+    try {
+      await axios.put(`${API}/${song._id}/contributions/${contribId}/status`, { status });
+      const res = await axios.get(`${API}/${song._id}/contributions`);
+      setContributions(res.data || []);
+      showFeedback(`Contribution ${status}!`);
+    } catch (err) {
+      alert('Moderation failed.');
+    }
+  };
+
+  // Edit Song Modals
+  const openEditModal = () => {
+    setEditTitle(song.title || '');
+    setEditArtistName(song.artistName || '');
+    setEditGenre(song.genre || '');
+    setEditSummary(song.summary || '');
+    setEditLyrics(song.lyrics || '');
+    setEditTags(song.tags?.join(', ') || '');
+    setEditCoverImage(song.coverImage || '');
+    setShowEditModal(true);
+  };
+
+  const handleSaveSongEdits = async () => {
+    if (!editTitle.trim()) return alert("Title is required");
+    setSavingEdit(true);
+    try {
+      const payload = {
+        title: editTitle.trim(),
+        artistName: editArtistName.trim(),
+        genre: editGenre.trim(),
+        summary: editSummary.trim(),
+        lyrics: editLyrics,
+        tags: editTags.split(',').map(t => t.trim()).filter(Boolean),
+        coverImage: editCoverImage.trim()
+      };
+      
+      const res = await axios.put(`${API}/${song._id}`, payload);
+      setSong(res.data.song || res.data);
+      setShowEditModal(false);
+      showFeedback('✏️ Lyrics updated successfully!');
+    } catch (err) {
+      alert("Failed to save edits.");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const getContributorsList = () => {
+    if (!song?.contributors) return [];
+    const counts = {};
+    song.contributors.forEach(c => {
+      const name = c.contributorName || "Unknown";
+      if (!counts[name]) {
+        counts[name] = {
+          name,
+          profilePhoto: c.profilePhoto || "",
+          count: 0
+        };
+      }
+      counts[name].count += 1;
+    });
+    return Object.values(counts);
+  };
+
+  const isAuthor = song?.authorId && currentUser && song.authorId.toString() === currentUser._id.toString();
 
   if (loading) return (
     <div className={`song-page ${collapsed ? 'song-page-expanded' : ''} skeleton-details`}>
@@ -414,7 +490,7 @@ const SongPage = ({ collapsed }) => {
               >
                 by {song.artistName || song.author}
               </p>
-              {(!authUser || (song.authorId && authUser._id.toString() !== song.authorId.toString())) && (
+              {(!currentUser || (song.authorId && currentUser._id.toString() !== song.authorId.toString())) && (
                 <button
                   onClick={handleFollowToggle}
                   className={`song-author-follow-btn ${isFollowingArtist ? 'following' : ''}`}
@@ -424,45 +500,102 @@ const SongPage = ({ collapsed }) => {
                 </button>
               )}
             </div>
-            <div className="song-meta-row">
+
+            {/* Created By & Contributor Credits */}
+            <div className="contributors-credit-line" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '13px', color: '#ccc', marginTop: '4px', alignItems: 'center' }}>
+              <span>Created By: <strong>{song.author}</strong></span>
+              {song.contributors && song.contributors.length > 0 && (
+                <>
+                  <span style={{ margin: '0 4px', color: '#777' }}>|</span>
+                  <span>Contributors:</span>
+                  {Array.from(new Set(song.contributors.map(c => c.contributorName))).map((name, i, arr) => (
+                    <strong key={name} style={{ color: 'var(--accent-color)' }}>
+                      {name}{i < arr.length - 1 ? ',' : ''}
+                    </strong>
+                  ))}
+                </>
+              )}
+            </div>
+
+            <div className="song-meta-row" style={{ marginTop: '12px' }}>
               <span><Heart size={13} /> {likeCount.toLocaleString()} likes</span>
               <span><Sparkles size={13} /> {contributions.length} contributions</span>
               <span><MessageSquare size={13} /> {comments.length} comments</span>
+              {song.views !== undefined && (
+                <span><Eye size={13} /> {song.views.toLocaleString()} views</span>
+              )}
               <span><Calendar size={13} /> {new Date(song.createdAt).toLocaleDateString()}</span>
             </div>
-            <div className="song-hero-actions">
-              <button
-                className={`song-action-btn ${liked ? 'song-liked' : ''}`}
-                onClick={handleLike}
+
+            {/* Pending Contributions Alert for Owner */}
+            {isAuthor && contributions.filter(c => c.status === 'pending').length > 0 && (
+              <div 
+                className="pending-contributions-alert" 
+                onClick={() => setActiveTab('contributions')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'rgba(251, 191, 36, 0.15)',
+                  color: '#fbbf24',
+                  padding: '8px 16px',
+                  borderRadius: '20px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  border: '1px solid #fbbf24',
+                  marginTop: '12px'
+                }}
               >
-                <Heart size={15} fill={liked ? 'currentColor' : 'none'} />
-                <span>{liked ? 'Liked' : 'Like'}</span>
-              </button>
-              <button
-                className={`song-action-btn ${saved ? 'song-saved' : ''}`}
-                onClick={handleSave}
-              >
-                <Bookmark size={15} fill={saved ? 'currentColor' : 'none'} />
-                <span>{saved ? 'Saved' : 'Save'}</span>
-              </button>
-              <button
-                className="song-action-btn"
-                onClick={handleShare}
-              >
-                <Share2 size={15} />
-                <span>Share</span>
-              </button>
-            </div>
+                ⚠️ Pending Contributions ({contributions.filter(c => c.status === 'pending').length})
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ── MAIN CONTENT ── */}
-      <div className="song-main-content" style={{ paddingBottom: '120px' }}>
+      {/* ── ACTION BUTTONS ── */}
+      <div className="song-action-bar-container" style={{ background: 'var(--card-color)', borderBottom: '1px solid var(--border-color)', padding: '12px 48px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', maxWidth: '1400px', margin: '0 auto' }}>
+          <button
+            className={`song-action-btn ${liked ? 'song-liked' : ''}`}
+            onClick={handleLike}
+          >
+            <Heart size={15} fill={liked ? 'currentColor' : 'none'} />
+            <span>{liked ? 'Liked' : 'Like'}</span>
+          </button>
+          <button
+            className={`song-action-btn ${saved ? 'song-saved' : ''}`}
+            onClick={handleSave}
+          >
+            <Bookmark size={15} fill={saved ? 'currentColor' : 'none'} />
+            <span>{saved ? 'Saved' : 'Save'}</span>
+          </button>
+          <button className="song-action-btn" onClick={handleShare}>
+            <Share2 size={15} />
+            <span>Share</span>
+          </button>
+          <button className="song-action-btn" onClick={handleCopyLink}>
+            <span>📋 Copy Link</span>
+          </button>
 
+          {/* Edit Song Button for Owner */}
+          {isAuthor && (
+            <button
+              className="song-action-btn"
+              onClick={openEditModal}
+              style={{ background: 'var(--accent-gradient)', color: 'var(--accent-text)', border: 'none', marginLeft: 'auto' }}
+            >
+              <span>✏️ Edit Lyrics</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── MAIN CONTENT ── */}
+      <div className="song-main-content">
         {/* LEFT: Tabs */}
         <div className="song-content-left">
-
           <div className="song-tabs">
             {['lyrics', 'contributions', 'comments'].map(tab => (
               <button
@@ -497,24 +630,36 @@ const SongPage = ({ collapsed }) => {
           {/* Contributions Tab */}
           {activeTab === 'contributions' && (
             <div className="song-contributions-area">
-              <div className="contribution-input-box">
-                <textarea
-                  className="contribution-textarea"
-                  placeholder="Suggest a lyric, verse, or continuation..."
-                  value={contributionText}
-                  onChange={e => setContributionText(e.target.value)}
-                  rows={4}
-                />
-                <button
-                  className="contribution-submit-btn"
-                  onClick={handleContribution}
-                  disabled={!contributionText.trim()}
-                >
-                  <Send size={14} />
-                  <span>Submit Contribution</span>
-                </button>
-              </div>
+              {/* Submission Form */}
+              {currentUser && !isAuthor ? (
+                <div className="contribution-input-box">
+                  <h4 style={{ margin: '0 0 8px 0', fontSize: '15px' }}>Suggest a lyric, verse, or continuation</h4>
+                  <textarea
+                    className="contribution-textarea"
+                    placeholder="Write your contribution here..."
+                    value={contributionText}
+                    onChange={e => setContributionText(e.target.value)}
+                    rows={4}
+                  />
+                  <button
+                    className="contribution-submit-btn"
+                    onClick={handleContributionSubmit}
+                    disabled={contribPosting || !contributionText.trim()}
+                  >
+                    <Send size={14} />
+                    <span>{contribPosting ? 'Submitting...' : 'Submit Contribution'}</span>
+                  </button>
+                </div>
+              ) : !currentUser ? (
+                <div style={{ textAlign: 'center', padding: '24px', background: 'var(--card-color)', borderRadius: '16px', border: '1px dashed var(--border-color)' }}>
+                  <p style={{ color: 'var(--secondary-text)', margin: '0 0 12px 0' }}>Want to suggest additions to these lyrics?</p>
+                  <button className="song-action-btn" onClick={() => navigate('/login')} style={{ margin: '0 auto' }}>
+                    Login to contribute
+                  </button>
+                </div>
+              ) : null}
 
+              {/* Contributions List */}
               <div className="contributions-list">
                 {contributions.length === 0 ? (
                   <div className="song-empty-tab">
@@ -524,29 +669,28 @@ const SongPage = ({ collapsed }) => {
                 ) : (
                   contributions.map((item, idx) => {
                     const cid = item._id || item.id;
-                    const isTop = idx === 0 && item.upvotes > 0;
-                    const user = getUser();
-                    const hasUpvoted = user?._id
-                      ? (item.upvotedBy || []).some(uid => uid.toString() === user._id)
+                    const isAccepted = item.accepted || item.status === 'accepted';
+                    const hasUpvoted = currentUser?._id
+                      ? (item.upvotedBy || []).some(uid => uid.toString() === currentUser._id.toString())
                       : false;
 
                     return (
                       <div
                         key={cid}
-                        className={`contribution-card ${isTop ? 'top-contribution' : ''}`}
+                        className={`contribution-card ${isAccepted ? 'top-contribution' : ''}`}
                       >
-                        {isTop && (
+                        {isAccepted && (
                           <div className="top-badge">
                             <Award size={11} style={{ marginRight: '4px' }} />
-                            <span>Top Contribution</span>
+                            <span>Accepted Verse</span>
                           </div>
                         )}
 
                         <div className="contribution-header">
                           <div className="contribution-meta">
-                             <span 
+                            <span 
                               className="contribution-author"
-                              onClick={() => navigate(`/author/${item.author}`)}
+                              onClick={() => navigate(`/author/${item.contributorId || item.author}`)}
                               style={{ cursor: 'pointer', textDecoration: 'underline' }}
                             >
                               @{item.author}
@@ -555,17 +699,42 @@ const SongPage = ({ collapsed }) => {
                               {new Date(item.createdAt).toLocaleDateString()}
                             </span>
                           </div>
-                          <span className="upvotes-count">{item.upvotes} Upvotes</span>
+                          
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className={`status-badge badge-${item.status}`}>
+                              {item.status}
+                            </span>
+                            <span className="upvotes-count">{item.upvotes} Upvotes</span>
+                          </div>
                         </div>
 
                         <p className="contribution-text">{item.text}</p>
 
-                        <button
-                          className={`upvote-btn ${hasUpvoted ? 'upvoted' : ''}`}
-                          onClick={() => handleUpvote(cid)}
-                        >
-                          <span>👍 {hasUpvoted ? 'Upvoted' : 'Upvote'}</span>
-                        </button>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '10px' }}>
+                          <button
+                            className={`upvote-btn ${hasUpvoted ? 'upvoted' : ''}`}
+                            onClick={() => handleUpvote(cid)}
+                          >
+                            <span>👍 {hasUpvoted ? 'Upvoted' : 'Upvote'}</span>
+                          </button>
+
+                          {isAuthor && item.status === 'pending' && (
+                            <div className="owner-moderation-actions" style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+                              <button
+                                className="moderate-btn reject"
+                                onClick={() => handleModerateContribution(cid, 'rejected')}
+                              >
+                                Reject
+                              </button>
+                              <button
+                                className="moderate-btn accept"
+                                onClick={() => openAcceptModal(item)}
+                              >
+                                Accept & Merge
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })
@@ -602,72 +771,122 @@ const SongPage = ({ collapsed }) => {
                     <p>Be the first to comment!</p>
                   </div>
                 ) : (
-                  [...comments].reverse().map((c, i) => (
-                    <div key={i} className="comment-item">
-                      <div className="comment-avatar">
-                        {(c.username || 'A')[0].toUpperCase()}
+                  [...comments].reverse().map((c, i) => {
+                    const isCommentOwner = currentUser && (c.username === currentUser.username);
+                    const canDelete = isCommentOwner || isAuthor;
+
+                    return (
+                      <div key={i} className="comment-item">
+                        <div className="comment-avatar">
+                          {(c.username || 'A')[0].toUpperCase()}
+                        </div>
+                        <div className="comment-body">
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span 
+                              className="comment-username"
+                              onClick={() => navigate(`/author/${c.username}`)}
+                              style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                            >
+                              {c.username}
+                            </span>
+                            {canDelete && (
+                              <button 
+                                onClick={() => handleDeleteComment(c._id)} 
+                                style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                                title="Delete comment"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
+                          <p className="comment-text">{c.text}</p>
+                          {c.createdAt && (
+                            <span className="comment-date">
+                              {new Date(c.createdAt).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="comment-body">
-                        <span 
-                          className="comment-username"
-                          onClick={() => navigate(`/author/${c.username}`)}
-                          style={{ cursor: 'pointer', textDecoration: 'underline' }}
-                        >
-                          {c.username}
-                        </span>
-                        <p className="comment-text">{c.text}</p>
-                        {c.createdAt && (
-                          <span className="comment-date">
-                            {new Date(c.createdAt).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
           )}
         </div>
 
-        {/* RIGHT: Related Songs */}
+        {/* RIGHT: Related Songs & Contributors */}
         <aside className="song-sidebar">
-          <h3 className="song-sidebar-title">Related Songs</h3>
-          {relatedSongs.length === 0 ? (
-            <p className="song-sidebar-empty">No related songs found.</p>
-          ) : (
-            <div className="related-songs-list">
-              {relatedSongs.map(rs => (
-                <div
-                  key={rs._id}
-                  className="related-song-card"
-                  onClick={() => navigate(`/song/${rs._id}`)}
-                >
-                  <div className="related-song-cover">
-                    {rs.coverImage ? (
-                      <LazyImage src={optimizeCloudinaryUrl(rs.coverImage, 200)} alt={rs.title} />
-                    ) : (
-                      <CoverPlaceholder type="song" genre={rs.genre} title={rs.title} />
-                    )}
+          {/* Contributors Section */}
+          {getContributorsList().length > 0 && (
+            <div className="contributors-card">
+              <h4 className="song-sidebar-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Users size={16} />
+                <span>Lyrics Contributors</span>
+              </h4>
+              <div className="contributors-list-sidebar">
+                {getContributorsList().map((contrib, i) => (
+                  <div key={i} className="contributor-sidebar-item">
+                    <div className="contributor-avatar-sidebar">
+                      {contrib.profilePhoto ? (
+                        <img src={optimizeCloudinaryUrl(contrib.profilePhoto, 50)} alt={contrib.name} />
+                      ) : (
+                        contrib.name[0].toUpperCase()
+                      )}
+                    </div>
+                    <div className="contributor-info-sidebar">
+                      <span className="contributor-name-sidebar" onClick={() => navigate(`/author/${contrib.name}`)} style={{ cursor: 'pointer', textDecoration: 'underline' }}>
+                        @{contrib.name}
+                      </span>
+                      <span className="contributor-count-sidebar">
+                        {contrib.count} accepted verse{contrib.count > 1 ? 's' : ''}
+                      </span>
+                    </div>
                   </div>
-                  <div className="related-song-info">
-                    <p className="related-song-title">{rs.title}</p>
-                    <p 
-                      className="related-song-artist"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(rs.authorId ? `/author/${rs.authorId}` : `/author/${rs.artistName || rs.author}`);
-                      }}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {rs.artistName || rs.author}
-                    </p>
-                    <span className="related-song-genre">{rs.genre}</span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
+
+          {/* Related Songs */}
+          <div className="contributors-card">
+            <h3 className="song-sidebar-title">Related Songs</h3>
+            {relatedSongs.length === 0 ? (
+              <p className="song-sidebar-empty">No related songs found.</p>
+            ) : (
+              <div className="related-songs-list">
+                {relatedSongs.map(rs => (
+                  <div
+                    key={rs._id}
+                    className="related-song-card"
+                    onClick={() => navigate(`/lyrics/${rs.slug || rs._id}`)}
+                  >
+                    <div className="related-song-cover">
+                      {rs.coverImage ? (
+                        <LazyImage src={optimizeCloudinaryUrl(rs.coverImage, 200)} alt={rs.title} />
+                      ) : (
+                        <CoverPlaceholder type="song" genre={rs.genre} title={rs.title} />
+                      )}
+                    </div>
+                    <div className="related-song-info">
+                      <p className="related-song-title">{rs.title}</p>
+                      <p 
+                        className="related-song-artist"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(rs.authorId ? `/author/${rs.authorId}` : `/author/${rs.artistName || rs.author}`);
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        {rs.artistName || rs.author}
+                      </p>
+                      <span className="related-song-genre">{rs.genre}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Tags */}
           {song.tags && song.tags.length > 0 && (
@@ -683,66 +902,166 @@ const SongPage = ({ collapsed }) => {
         </aside>
       </div>
 
-      {/* ── SPOTIFY-INSPIRED FLOATING PLAYER BAR ── */}
-      <div className="spotify-player-bar">
-        <div className="player-song-info">
-          <div className="player-cover-container">
-            {song.coverImage ? (
-              <img src={optimizeCloudinaryUrl(song.coverImage, 100)} alt={song.title} />
-            ) : (
-              <div className="player-cover-fallback"><Music size={16} /></div>
-            )}
-          </div>
-          <div className="player-meta">
-            <span className="player-song-title">{song.title}</span>
-            <span className="player-song-artist">{song.artistName || song.author}</span>
-          </div>
-        </div>
-
-        <div className="player-controls-container">
-          <div className="player-control-buttons">
-            <button className={`player-icon-btn ${isShuffle ? 'player-active-icon' : ''}`} onClick={handleShuffleToggle} title="Shuffle">
-              <Shuffle size={16} />
-            </button>
-            <button className="player-icon-btn" onClick={handlePrevSong} title="Previous">
-              <SkipBack size={18} />
-            </button>
-            <button className="player-play-btn" onClick={handlePlayPause} title={isPlaying ? 'Pause' : 'Play'}>
-              {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" style={{ marginLeft: '2px' }} />}
-            </button>
-            <button className="player-icon-btn" onClick={handleNextSong} title="Next">
-              <SkipForward size={18} />
-            </button>
-            <button className={`player-icon-btn ${isRepeat ? 'player-active-icon' : ''}`} onClick={handleRepeatToggle} title="Repeat">
-              <Repeat size={16} />
-            </button>
-          </div>
-          <div className="player-progress-bar-wrapper">
-            <span className="player-time">{formatTime(currentTime)}</span>
-            <div className="player-progress-bar-container" onClick={handleProgressClick}>
-              <div 
-                className="player-progress-bar-fill" 
-                style={{ width: `${(currentTime / duration) * 100}%` }}
-              />
+      {/* ── ACCEPT MODAL ── */}
+      {showAcceptModal && acceptingContrib && (
+        <div className="glass-modal-overlay">
+          <div className="glass-modal-content">
+            <div className="glass-modal-header">
+              <h3 className="glass-modal-title">Accept & Merge Contribution</h3>
+              <button className="glass-modal-close-btn" onClick={() => setShowAcceptModal(false)}>
+                <X size={18} />
+              </button>
             </div>
-            <span className="player-time">{formatTime(duration)}</span>
+            <div className="glass-modal-body">
+              <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--secondary-text)' }}>
+                You are about to accept the contribution from <strong>@{acceptingContrib.author}</strong>.
+              </p>
+              
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '14px', fontStyle: 'italic', whiteSpace: 'pre-wrap', maxHeight: '150px', overflowY: 'auto' }}>
+                {acceptingContrib.text}
+              </div>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', marginTop: '8px' }}>
+                <input
+                  type="checkbox"
+                  checked={appendChecked}
+                  onChange={e => setAppendChecked(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--accent-color)' }}
+                />
+                <span>Append this text directly to the end of the lyrics?</span>
+              </label>
+            </div>
+            <div className="glass-modal-footer">
+              <button 
+                className="moderate-btn reject" 
+                onClick={() => setShowAcceptModal(false)}
+                style={{ padding: '8px 18px' }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="moderate-btn accept" 
+                onClick={handleConfirmAccept}
+                disabled={acceptingLoading}
+                style={{ padding: '8px 18px', background: '#10b981', color: '#fff' }}
+              >
+                {acceptingLoading ? 'Accepting...' : 'Accept & Merge'}
+              </button>
+            </div>
           </div>
         </div>
+      )}
 
-        <div className="player-volume-controls">
-          <button className="player-icon-btn" onClick={handleMuteToggle}>
-            {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
-          </button>
-          <input 
-            type="range" 
-            min="0" 
-            max="100" 
-            value={isMuted ? 0 : volume} 
-            onChange={handleVolumeChange} 
-            className="player-volume-slider" 
-          />
+      {/* ── EDIT LYRICS MODAL ── */}
+      {showEditModal && (
+        <div className="glass-modal-overlay">
+          <div className="glass-modal-content" style={{ maxWidth: '650px' }}>
+            <div className="glass-modal-header">
+              <h3 className="glass-modal-title">Edit Song Details & Lyrics</h3>
+              <button className="glass-modal-close-btn" onClick={() => setShowEditModal(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="glass-modal-body" style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: '6px' }}>
+              <div className="glass-modal-field">
+                <label>Song Title</label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={e => setEditTitle(e.target.value)}
+                  placeholder="Enter song title..."
+                />
+              </div>
+
+              <div className="glass-modal-field">
+                <label>Artist Name</label>
+                <input
+                  type="text"
+                  value={editArtistName}
+                  onChange={e => setEditArtistName(e.target.value)}
+                  placeholder="Enter artist name..."
+                />
+              </div>
+
+              <div className="glass-modal-field">
+                <label>Genre</label>
+                <select value={editGenre} onChange={e => setEditGenre(e.target.value)}>
+                  <option value="">Select Genre</option>
+                  <option value="Pop">Pop</option>
+                  <option value="Rock">Rock</option>
+                  <option value="Hip Hop">Hip Hop</option>
+                  <option value="R&B">R&B</option>
+                  <option value="Country">Country</option>
+                  <option value="Jazz">Jazz</option>
+                  <option value="Classical">Classical</option>
+                  <option value="Electronic">Electronic</option>
+                  <option value="Folk">Folk</option>
+                  <option value="Indie">Indie</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="glass-modal-field">
+                <label>Short Summary / Hook</label>
+                <input
+                  type="text"
+                  value={editSummary}
+                  onChange={e => setEditSummary(e.target.value)}
+                  placeholder="Short description of the song..."
+                />
+              </div>
+
+              <div className="glass-modal-field">
+                <label>Lyrics</label>
+                <textarea
+                  value={editLyrics}
+                  onChange={e => setEditLyrics(e.target.value)}
+                  placeholder="Write the lyrics here..."
+                  rows={8}
+                  style={{ fontFamily: 'Georgia, serif', lineHeight: '1.6' }}
+                />
+              </div>
+
+              <div className="glass-modal-field">
+                <label>Tags (Comma separated)</label>
+                <input
+                  type="text"
+                  value={editTags}
+                  onChange={e => setEditTags(e.target.value)}
+                  placeholder="tag1, tag2, tag3"
+                />
+              </div>
+
+              <div className="glass-modal-field">
+                <label>Cover Image URL</label>
+                <input
+                  type="text"
+                  value={editCoverImage}
+                  onChange={e => setEditCoverImage(e.target.value)}
+                  placeholder="Image URL..."
+                />
+              </div>
+            </div>
+            <div className="glass-modal-footer">
+              <button 
+                className="moderate-btn reject" 
+                onClick={() => setShowEditModal(false)}
+                style={{ padding: '8px 18px' }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="moderate-btn accept" 
+                onClick={handleSaveSongEdits}
+                disabled={savingEdit}
+                style={{ padding: '8px 18px', background: 'var(--accent-color)', color: 'var(--accent-text)' }}
+              >
+                {savingEdit ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

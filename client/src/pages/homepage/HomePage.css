@@ -3,7 +3,8 @@
    ===================================================== */
 
 .page-container {
-  display: flex;
+  display: block;
+  width: 100%;
   height: 100vh;
   background: var(--bg-color);
   overflow: hidden;
@@ -16,21 +17,16 @@
 .main-container {
   flex: 1;
   margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
   height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 90px 24px 24px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 24px;
   background: var(--bg-color);
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  grid-auto-rows: max-content;
-}
-
-@media (max-width: 1200px) {
-  .main-container {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @media (max-width: 768px) {
@@ -41,7 +37,6 @@
 
 @media (max-width: 600px) {
   .main-container {
-    grid-template-columns: 1fr;
     padding: 130px 12px 24px;
   }
 }
@@ -163,4 +158,11 @@
   color: var(--accent-text);
   border-color: transparent;
   box-shadow: 0 4px 12px var(--accent-glow-md);
+}
+
+@media (max-width: 768px) {
+  .main-container {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
 }

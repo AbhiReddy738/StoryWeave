@@ -6,6 +6,7 @@ import path from "path";
 import User from "../models/user.js";
 import Story from "../models/Story.js";
 import Song from "../models/Song.js";
+import Follow from "../models/Follow.js";
 import Notification from "../models/Notification.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
@@ -507,6 +508,13 @@ router.post("/follow/:authorId", authMiddleware, async (req, res) => {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
+        // Maintain Follow document
+        const existingFollow = await Follow.findOne({ followerId, followingId: targetId });
+        if (!existingFollow) {
+            const followDoc = new Follow({ followerId, followingId: targetId });
+            await followDoc.save();
+        }
+
         if (followerUser.following.includes(targetId)) {
             return res.status(400).json({ success: false, message: "You are already following this author" });
         }
@@ -551,6 +559,9 @@ router.post("/unfollow/:authorId", authMiddleware, async (req, res) => {
         if (!targetUser || !followerUser) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
+
+        // Maintain Follow document
+        await Follow.findOneAndDelete({ followerId, followingId: targetId });
 
         if (!followerUser.following.includes(targetId)) {
             return res.status(400).json({ success: false, message: "You do not follow this author" });
@@ -776,18 +787,45 @@ router.put("/upload-photo", authMiddleware, (req, res, next) => {
 router.get("/my-contributions/:userId", async (req, res) => {
     try {
         const { userId } = req.params;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const myContribs = [];
+        
         // Find all stories where contributions contain this contributor's ID
         const stories = await Story.find({ "contributions.authorId": userId });
-        
-        const myContribs = [];
         stories.forEach(story => {
             story.contributions.forEach(c => {
                 if (c.authorId && c.authorId.toString() === userId.toString()) {
                     myContribs.push({
                         _id: c._id,
+                        type: "story",
                         storyId: story._id,
                         storyTitle: story.title,
                         storySlug: story.slug,
+                        text: c.text,
+                        upvotes: c.upvotes || 0,
+                        accepted: c.accepted || false,
+                        status: c.accepted ? "Accepted" : (c.status === "rejected" ? "Rejected" : "Pending"),
+                        createdAt: c.createdAt
+                    });
+                }
+            });
+        });
+
+        // Find all songs where contributions contain this contributor's ID
+        const songs = await Song.find({ "contributions.authorId": userId });
+        songs.forEach(song => {
+            song.contributions.forEach(c => {
+                if (c.authorId && c.authorId.toString() === userId.toString()) {
+                    myContribs.push({
+                        _id: c._id,
+                        type: "song",
+                        storyId: song._id,
+                        storyTitle: song.title,
+                        storySlug: song.slug,
                         text: c.text,
                         upvotes: c.upvotes || 0,
                         accepted: c.accepted || false,

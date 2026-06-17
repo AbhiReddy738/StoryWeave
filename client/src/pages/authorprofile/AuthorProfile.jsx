@@ -89,11 +89,11 @@ const AuthorProfile = ({ collapsed }) => {
     };
 
     fetchProfileData();
-  }, [id, authUser]);
+  }, [id, authUser?._id]);
 
   // Fetch Tabs Content
   useEffect(() => {
-    if (!profile) return;
+    if (!profile?._id) return;
     
     const fetchContentData = async () => {
       setLoadingContent(true);
@@ -121,11 +121,11 @@ const AuthorProfile = ({ collapsed }) => {
     };
 
     fetchContentData();
-  }, [profile]);
+  }, [profile?._id]);
 
   // Fetch logged in user's following list to track follow states inside modals
   useEffect(() => {
-    if (authUser) {
+    if (authUser?._id) {
       axios.get(`${API_BASE_URL}/user/profile/${authUser._id}`)
         .then(res => {
           const followingIds = res.data.following || [];
@@ -139,7 +139,7 @@ const AuthorProfile = ({ collapsed }) => {
     } else {
       setMyFollowingMap({});
     }
-  }, [authUser]);
+  }, [authUser?._id]);
 
   // ── Load More Functions ────────────────────────────────────────────────────
   const loadMoreStories = async () => {
@@ -491,7 +491,7 @@ const AuthorProfile = ({ collapsed }) => {
             </div>
 
             {loadingContent ? (
-              <div className="profile-cards-grid" style={{ marginTop: '20px', gridColumn: '1/-1' }}>
+              <div className="content-grid" style={{ marginTop: '20px', gridColumn: '1/-1' }}>
                 <SkeletonCard type={activeTab === 'stories' ? 'story' : 'song'} />
                 <SkeletonCard type={activeTab === 'stories' ? 'story' : 'song'} />
                 <SkeletonCard type={activeTab === 'stories' ? 'story' : 'song'} />
@@ -503,7 +503,7 @@ const AuthorProfile = ({ collapsed }) => {
                 {activeTab === 'stories' && (
                   stories.length > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                      <div className="profile-cards-grid">
+                      <div className="content-grid">
                         {stories.map(story => (
                           <ContentCard
                             key={story._id}
@@ -559,7 +559,7 @@ const AuthorProfile = ({ collapsed }) => {
                 {activeTab === 'songs' && (
                   songs.length > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                      <div className="profile-cards-grid">
+                      <div className="content-grid">
                         {songs.map(song => (
                           <ContentCard
                             key={song._id}
@@ -578,7 +578,7 @@ const AuthorProfile = ({ collapsed }) => {
                             actionButton={
                               <button 
                                 className="card-action-btn"
-                                onClick={() => navigate(`/song/${song._id}`)}
+                                onClick={() => navigate(`/lyrics/${song.slug || song._id}`)}
                               >
                                 Open Song
                               </button>
@@ -615,7 +615,7 @@ const AuthorProfile = ({ collapsed }) => {
                         <div 
                           key={contrib._id}
                           className="contrib-card"
-                          onClick={() => navigate(contrib.type === 'story' ? `/card/${contrib.parentSlug || contrib.parentId}` : `/song/${contrib.parentId}`)}
+                          onClick={() => navigate(contrib.type === 'story' ? `/card/${contrib.parentSlug || contrib.parentId}` : `/lyrics/${contrib.parentSlug || contrib.parentId}`)}
                         >
                           <div className="contrib-header">
                             <span className={`contrib-type-badge ${contrib.type}`}>

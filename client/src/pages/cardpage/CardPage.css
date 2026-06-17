@@ -4,11 +4,13 @@
 
 .card-page {
   margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
   min-height: 100vh;
   background: var(--bg-color);
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   padding-top: 70px;
   padding-bottom: 60px;
+  overflow-x: hidden;
 }
 
 /* Loading & Error */
@@ -23,7 +25,8 @@
   gap: 18px;
   font-size: 18px;
   margin-left: var(--sidebar-width);
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: calc(100% - var(--sidebar-width));
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .story-spinner {
@@ -732,6 +735,12 @@
 }
 
 @media (max-width: 768px) {
+  .card-page,
+  .story-page-loading,
+  .story-page-error {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
   .story-hero-content {
     flex-direction: column;
     align-items: center;

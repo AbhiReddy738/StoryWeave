@@ -97,7 +97,7 @@ const CardPage = ({ collapsed }) => {
 
   // Follow status check
   useEffect(() => {
-    if (!story || !story.authorId || !authUser) return;
+    if (!story?.authorId || !authUser) return;
     const checkFollowStatus = async () => {
       try {
         const res = await axios.get(`${API_BASE_URL}/user/follow-status/${story.authorId}`);
@@ -107,7 +107,7 @@ const CardPage = ({ collapsed }) => {
       }
     };
     checkFollowStatus();
-  }, [story, authUser]);
+  }, [story?.authorId, authUser]);
 
   const handleFollowToggle = async () => {
     if (!authUser) {

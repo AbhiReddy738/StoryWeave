@@ -80,6 +80,7 @@ const songSchema = new mongoose.Schema(
     contributions: [
         {
             author: { type: String },
+            authorId: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
             text: { type: String },
             upvotes: { type: Number, default: 0 },
             upvotedBy: {
@@ -87,7 +88,46 @@ const songSchema = new mongoose.Schema(
                 ref: 'user',
                 default: []
             },
+            accepted: { type: Boolean, default: false },
+            acceptedAt: { type: Date },
+            acceptedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
+            status: {
+                type: String,
+                enum: ['pending', 'accepted', 'rejected'],
+                default: 'pending'
+            },
             createdAt: { type: Date, default: Date.now }
+        }
+    ],
+
+    contributors: [
+        {
+            contributorId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "user",
+                required: true
+            },
+            contributorName: {
+                type: String,
+                required: true
+            },
+            profilePhoto: {
+                type: String,
+                default: ""
+            },
+            contributionId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Contribution",
+                required: true
+            },
+            contributedText: {
+                type: String,
+                required: true
+            },
+            mergedAt: {
+                type: Date,
+                default: Date.now
+            }
         }
     ],
 

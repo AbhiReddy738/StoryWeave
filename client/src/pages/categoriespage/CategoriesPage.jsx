@@ -171,7 +171,7 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
             </div>
 
             {loading ? (
-              <div className="category-cards-grid">
+              <div className="content-grid">
                 <SkeletonCard type={activeGlobalTab === 'stories' ? 'story' : 'song'} />
                 <SkeletonCard type={activeGlobalTab === 'stories' ? 'story' : 'song'} />
                 <SkeletonCard type={activeGlobalTab === 'stories' ? 'story' : 'song'} />
@@ -181,7 +181,7 @@ const CategoriesPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
                 No {activeGlobalTab === 'stories' ? 'stories' : 'songs'} available in this category yet.
               </div>
             ) : (
-              <div className="category-cards-grid">
+              <div className="content-grid">
                 {items.map((item) => {
                   if (activeGlobalTab === 'stories') {
                     return (

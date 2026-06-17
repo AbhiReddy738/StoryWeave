@@ -34,7 +34,7 @@ const ContentCard = ({
       const targetSlug = slug || id;
       navigate(`/card/${targetSlug}`);
     } else {
-      navigate(`/song/${id}`);
+      navigate(`/lyrics/${slug || id}`);
     }
   };
 

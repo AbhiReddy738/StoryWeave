@@ -108,7 +108,7 @@ const SavedPage = ({ collapsed }) => {
           </button>
         </div>
 
-        <div className="saved-grid">
+        <div className="content-grid">
           {loading ? (
             <>
               <SkeletonCard type={activeTab === 'stories' ? 'story' : 'song'} />

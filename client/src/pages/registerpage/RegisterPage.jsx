@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './RegisterPage.css'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -8,7 +8,14 @@ import { API_BASE_URL } from '../../config'
 const RegisterPage = () => {
 
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
+
+  // Redirect if already logged in (Issue 2)
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")

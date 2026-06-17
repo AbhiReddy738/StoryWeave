@@ -111,7 +111,7 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
 
   return (
     <div className="page-container">
-      <main className={`main-container ${collapsed ? 'main-expanded' : ''}`} style={{ paddingRight: '24px' }}>
+      <main className={`main-container ${collapsed ? 'main-expanded' : ''}`}>
 
         {/* ── Feed Selection ── */}
         {isLoggedIn && (
@@ -153,7 +153,7 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
 
         {/* ── STORIES TAB ── */}
         {activeTab === 'stories' && (
-          <>
+          <div className="content-grid">
             {currentLoading && (
               <>
                 <SkeletonCard type="story" />
@@ -193,12 +193,12 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
                 id={story._id}
               />
             ))}
-          </>
+          </div>
         )}
 
         {/* ── SONGS TAB ── */}
         {activeTab === 'songs' && (
-          <>
+          <div className="content-grid">
             {currentLoading && (
               <>
                 <SkeletonCard type="song" />
@@ -237,7 +237,7 @@ const HomePage = ({ collapsed, searchTerm, activeGlobalTab, setActiveGlobalTab }
                 id={song._id}
               />
             ))}
-          </>
+          </div>
         )}
 
       </main>

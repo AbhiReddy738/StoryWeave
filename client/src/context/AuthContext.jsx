@@ -4,6 +4,9 @@ import { API_BASE_URL } from '../config';
 
 const AuthContext = createContext();
 
+// Cache the /api/auth/me promise to prevent duplicate API requests during concurrent mounts or StrictMode
+let mePromise = null;
+
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => {
     const savedToken = localStorage.getItem('token');
@@ -32,6 +35,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('username');
     setToken(null);
     setUser(null);
+    mePromise = null;
     console.log('[DEBUG - CLIENT] Logout complete.');
   }, []);
 
@@ -43,6 +47,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('username', newUser.username);
     setToken(newToken);
     setUser(newUser);
+    mePromise = null;
   }, []);
 
   // Set up global Axios request interceptor to attach authorization token
@@ -112,14 +117,19 @@ export const AuthProvider = ({ children }) => {
 
       console.log('[DEBUG - CLIENT] Validating token with backend...');
       try {
-        const res = await axios.get(`${API_BASE_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${savedToken}` }
-        });
+        if (!mePromise) {
+          console.log('[DEBUG - CLIENT] Initiating token validation promise with backend...');
+          mePromise = axios.get(`${API_BASE_URL}/auth/me`, {
+            headers: { Authorization: `Bearer ${savedToken}` }
+          });
+        }
+        const res = await mePromise;
         console.log('[DEBUG - CLIENT] Token validated successfully. User:', res.data.user);
         setUser(res.data.user);
         localStorage.setItem('user', JSON.stringify(res.data.user));
       } catch (err) {
         console.error('[DEBUG - CLIENT] Token validation failed:', err.message);
+        mePromise = null; // Clear on failure to allow retries if needed
         // Only clear credentials if validation explicitly returns 401 or 403.
         // This keeps offline users logged in during temporary backend down times.
         if (err.response && (err.response.status === 401 || err.response.status === 403)) {

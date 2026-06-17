@@ -58,12 +58,11 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
     }
   }, [authUser]);
 
+  // Fetch profile data once on userId mount
   useEffect(() => {
     if (!userId) return;
 
-    const fetchData = async () => {
-      setLoading(true);
-      setError('');
+    const fetchProfile = async () => {
       try {
         const profileRes = await axios.get(`${API_BASE_URL}/user/${userId}`);
         const user = profileRes.data;
@@ -76,7 +75,23 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
           followersCount: user.followersCount || 0,
           followingCount: user.followingCount || 0
         });
+      } catch (err) {
+        console.error("Failed to load profile details:", err);
+        setError('Failed to load profile data. Please try again.');
+      }
+    };
 
+    fetchProfile();
+  }, [userId]);
+
+  // Fetch content list for the active tab when userId or localTab changes
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchTabData = async () => {
+      setLoading(true);
+      setError('');
+      try {
         if (localTab === 'songs') {
           const postsRes = await axios.get(`${API_BASE_URL}/user/songs/${userId}`);
           setPosts(postsRes.data);
@@ -89,13 +104,13 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
         }
       } catch (err) {
         console.error(err);
-        setError('Failed to load profile data. Please try again.');
+        setError('Failed to load list content. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchTabData();
   }, [userId, localTab]);
 
   const fetchFollowers = async () => {
@@ -229,7 +244,7 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
   };
 
   const handleDelete = async (id) => {
-    const isSong = activeGlobalTab === 'songs';
+    const isSong = localTab === 'songs';
     if (!window.confirm(`Are you sure you want to delete this ${isSong ? 'song' : 'story'}?`)) {
       return;
     }
@@ -529,7 +544,7 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
           {localTab === 'contributions' ? 'Your Contributions' : 'Your Posts'}
         </h2>
 
-        <div className={localTab === 'contributions' ? "contributions-history-grid" : "posts-grid"} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+        <div className="content-grid">
           {localTab === 'contributions' ? (
             loading && contributions.length === 0 ? (
               <>
@@ -565,11 +580,11 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
                       gap: '12px',
                       cursor: 'pointer'
                     }}
-                    onClick={() => navigate(`/card/${c.storySlug}`)}
+                    onClick={() => navigate(c.type === 'song' ? `/lyrics/${c.storySlug}` : `/card/${c.storySlug}`)}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--accent-color)', textDecoration: 'underline' }}>
-                        📖 {c.storyTitle}
+                        {c.type === 'song' ? '🎵' : '📖'} {c.storyTitle}
                       </span>
                       <span
                         className="status-badge"

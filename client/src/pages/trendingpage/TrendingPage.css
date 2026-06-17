@@ -4,7 +4,8 @@
 
 .trending-page {
   height: 100vh;
-  overflow: hidden;
+  width: 100%;
+  overflow-x: hidden;
   background: var(--bg-color);
 }
 
@@ -14,11 +15,13 @@
 
 .trending-container {
   margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
   height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 90px 25px 25px;
   background: var(--bg-color);
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   scrollbar-width: none;
 }
 
@@ -77,27 +80,7 @@
   box-shadow: 0 4px 12px var(--accent-glow-md);
 }
 
-/* =====================================================
-   CARDS GRID
-   ===================================================== */
-
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 25px;
-}
-
-@media (max-width: 1200px) {
-  .cards-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 600px) {
-  .cards-grid {
-    grid-template-columns: 1fr;
-  }
-}
+/* CARDS GRID delegated to global .content-grid */
 
 /* =====================================================
    EMPTY STATE
@@ -115,10 +98,16 @@
    ===================================================== */
 
 @media (max-width: 768px) {
-  .trending-container { padding: 90px 16px 25px; }
+  .trending-container {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 90px 16px 25px;
+  }
 }
 
 @media (max-width: 600px) {
-  .trending-container { padding: 130px 12px 25px; }
+  .trending-container {
+    padding: 130px 12px 25px;
+  }
   .tab-btn { width: 110px; height: 44px; font-size: 14px; }
 }

@@ -5,15 +5,18 @@
 .post-page {
   height: 100vh;
   background: var(--bg-color);
+  overflow-x: hidden;
 }
 
 .post-container {
   margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
   height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 80px 32px 60px;
   background: var(--bg-color);
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   scrollbar-width: none;
 }
 .post-container::-webkit-scrollbar { display: none; }
@@ -688,7 +691,11 @@
 }
 
 @media (max-width: 768px) {
-  .post-container { padding: 80px 16px 40px; }
+  .post-container {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 80px 16px 40px;
+  }
   .post-topbar { flex-direction: column; align-items: flex-start; }
   .post-topbar-actions { width: 100%; justify-content: flex-end; }
   .cover-upload-area { height: 180px; }

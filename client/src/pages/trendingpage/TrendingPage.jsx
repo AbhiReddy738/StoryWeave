@@ -87,7 +87,7 @@ const TrendingPage = ({ collapsed }) => {
         </div>
 
         {activeTab === 'stories' && (
-          <div className="cards-grid">
+          <div className="content-grid">
             {loading ? (
               <>
                 <SkeletonCard type="story" />
@@ -116,13 +116,13 @@ const TrendingPage = ({ collapsed }) => {
 
         {activeTab === 'lyrics' && (
           loading ? (
-            <div className="cards-grid">
+            <div className="content-grid">
               <SkeletonCard type="song" />
               <SkeletonCard type="song" />
               <SkeletonCard type="song" />
             </div>
           ) : songs.length > 0 ? (
-            <div className="cards-grid">
+            <div className="content-grid">
               {songs.map((song) => (
                 <ContentCard
                   key={song._id}

@@ -1,11 +1,23 @@
 import express from "express";
+import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 import multer from "multer";
 import Song from "../models/Song.js";
 import User from "../models/user.js";
+import Notification from "../models/Notification.js";
 import cloudinary from "../config/cloudinary.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+
+// Helper: Find song by ID or slug (Issue 1)
+const findSongByIdOrSlug = async (param) => {
+    if (mongoose.Types.ObjectId.isValid(param)) {
+        const song = await Song.findById(param);
+        if (song) return song;
+    }
+    return await Song.findOne({ slug: param });
+};
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -163,10 +175,31 @@ router.get("/is-saved/:songId/:userId", authMiddleware, async (req, res) => {
     }
 });
 
-// GET /song/:id — Retrieve single song
+// GET /song/:id — Retrieve single song by ID or slug
 router.get("/:id", async (req, res) => {
+    const requestedId = req.params.id;
     try {
-        const song = await Song.findById(req.params.id);
+        let song = null;
+        // 1. Check if exact slug match
+        song = await Song.findOne({ slug: requestedId });
+
+        // 2. Check if valid ObjectId and search by ID
+        if (!song && mongoose.Types.ObjectId.isValid(requestedId)) {
+            song = await Song.findById(requestedId);
+        }
+
+        // 3. Try to extract ObjectId from end of slug (legacy support)
+        if (!song && requestedId) {
+            const hex24Regex = /[0-9a-fA-F]{24}$/;
+            const match = requestedId.match(hex24Regex);
+            if (match) {
+                const extractedId = match[0];
+                if (mongoose.Types.ObjectId.isValid(extractedId)) {
+                    song = await Song.findById(extractedId);
+                }
+            }
+        }
+
         if (!song) return res.status(404).json({ message: "Song not found" });
 
         // Increment views count
@@ -180,7 +213,8 @@ router.get("/:id", async (req, res) => {
 
         res.status(200).json(song);
     } catch (err) {
-        res.status(500).json(err);
+        console.error("[DEBUG - SERVER] Error in GET /song/:id:", err);
+        res.status(500).json({ message: "Server Error", error: err.message });
     }
 });
 
@@ -189,7 +223,7 @@ router.post("/create", authMiddleware, async (req, res) => {
     try {
         const {
             title, artistName, genre, coverImage,
-            lyrics, summary, tags, author
+            lyrics, summary, tags, author, status
         } = req.body;
 
         const authorId = req.user.id; // Enforce authenticated user as author
@@ -212,7 +246,8 @@ router.post("/create", authMiddleware, async (req, res) => {
             tags: tags || [],
             author,
             authorId,
-            slug
+            slug,
+            status: status || "published"
         });
 
         const savedSong = await song.save();
@@ -225,6 +260,74 @@ router.post("/create", authMiddleware, async (req, res) => {
         res.status(201).json({ message: "Song published successfully", song: savedSong });
     } catch (err) {
         res.status(500).json(err);
+    }
+});
+
+// PUT /song/:id — Update song fields (edit lyrics)
+router.put("/:id", authMiddleware, async (req, res) => {
+    try {
+        const song = await Song.findById(req.params.id);
+        if (!song) {
+            return res.status(404).json({ message: "Song not found" });
+        }
+
+        // Verify ownership
+        if (song.authorId && song.authorId.toString() !== req.user.id) {
+            return res.status(403).json({ message: "Forbidden: You are not authorized to edit this song" });
+        }
+
+        // Apply updates
+        Object.assign(song, req.body);
+        
+        // Regenerate slug if title is updated
+        if (req.body.title) {
+            song.slug = req.body.title
+                .toLowerCase()
+                .replace(/[^a-z0-9\s]/g, "")
+                .trim()
+                .replaceAll(" ", "-")
+                + "-" + Date.now();
+        }
+
+        const updated = await song.save();
+        res.status(200).json({ message: "Song updated successfully", song: updated });
+    } catch (err) {
+        console.error("[DEBUG - SERVER] Song update error:", err);
+        res.status(500).json({ message: err.message || "Server Error" });
+    }
+});
+
+// PUT /song/update/:id — Update song fields (alias)
+router.put("/update/:id", authMiddleware, async (req, res) => {
+    try {
+        const song = await Song.findById(req.params.id);
+        if (!song) {
+            return res.status(404).json({ message: "Song not found" });
+        }
+
+        // Verify ownership
+        if (song.authorId && song.authorId.toString() !== req.user.id) {
+            return res.status(403).json({ message: "Forbidden: You are not authorized to edit this song" });
+        }
+
+        // Apply updates
+        Object.assign(song, req.body);
+        
+        // Regenerate slug if title is updated
+        if (req.body.title) {
+            song.slug = req.body.title
+                .toLowerCase()
+                .replace(/[^a-z0-9\s]/g, "")
+                .trim()
+                .replaceAll(" ", "-")
+                + "-" + Date.now();
+        }
+
+        const updated = await song.save();
+        res.status(200).json({ message: "Song updated successfully", song: updated });
+    } catch (err) {
+        console.error("[DEBUG - SERVER] Song update alias error:", err);
+        res.status(500).json({ message: err.message || "Server Error" });
     }
 });
 
@@ -406,14 +509,39 @@ router.delete("/comment/:id/:commentId", async (req, res) => {
 
 // ─── LYRIC CONTRIBUTIONS ──────────────────────────────────────────────────────
 
-// POST /song/contribution/:id — Add lyric contribution
-router.post("/contribution/:id", async (req, res) => {
+// POST /song/contribution/:id — Add lyric contribution (compatibility route)
+router.post("/contribution/:id", authMiddleware, async (req, res) => {
     try {
-        const song = await Song.findById(req.params.id);
+        const song = await findSongByIdOrSlug(req.params.id);
         if (!song) return res.status(404).json({ message: "Song not found" });
-        song.contributions.push({ author: req.body.author, text: req.body.text, upvotes: 0 });
+
+        const contributor = await User.findById(req.user.id);
+        if (!contributor) return res.status(404).json({ message: "User not found" });
+
+        const newContrib = {
+            author: contributor.username,
+            authorId: contributor._id,
+            text: req.body.text,
+            upvotes: 0,
+            upvotedBy: [],
+            accepted: false,
+            status: "pending",
+            createdAt: new Date()
+        };
+
+        song.contributions.push(newContrib);
         await song.save();
-        // Return sorted by upvotes desc
+
+        if (song.authorId) {
+            const notification = new Notification({
+                recipient: song.authorId,
+                sender: req.user.id,
+                type: "contribution_submitted",
+                message: `${contributor.username} submitted a continuation for your lyrics "${song.title}"`
+            });
+            await notification.save();
+        }
+
         const sorted = [...song.contributions].sort((a, b) => b.upvotes - a.upvotes);
         res.status(200).json({ ...song.toObject(), contributions: sorted });
     } catch (err) {
@@ -421,31 +549,159 @@ router.post("/contribution/:id", async (req, res) => {
     }
 });
 
-// PUT /song/contribution/upvote/:songId/:contributionId — toggle upvote
-router.put("/contribution/upvote/:songId/:contributionId", async (req, res) => {
+// POST /song/:songId/contribute — Submit a lyric contribution (authenticated)
+router.post("/:songId/contribute", authMiddleware, async (req, res) => {
     try {
-        const { userId } = req.body;
-        if (!userId) return res.status(400).json({ message: "userId required" });
+        const { songId } = req.params;
+        const { text, contributedText } = req.body;
+        const contribText = (text || contributedText || "").trim();
 
-        const song = await Song.findById(req.params.songId);
+        if (!contribText) {
+            return res.status(400).json({ success: false, message: "Contributed text is required" });
+        }
+
+        const song = await findSongByIdOrSlug(songId);
+        if (!song) {
+            return res.status(404).json({ success: false, message: "Song not found" });
+        }
+
+        // Check if author is trying to contribute to their own song
+        if (song.authorId && song.authorId.toString() === req.user.id) {
+            return res.status(400).json({ success: false, message: "Lyrics authors cannot contribute to their own lyrics" });
+        }
+
+        const contributor = await User.findById(req.user.id);
+        if (!contributor) {
+            return res.status(404).json({ success: false, message: "Contributor user not found" });
+        }
+
+        const newContrib = {
+            author: contributor.username,
+            authorId: contributor._id,
+            text: contribText,
+            upvotes: 0,
+            upvotedBy: [],
+            accepted: false,
+            status: "pending",
+            createdAt: new Date()
+        };
+
+        song.contributions.push(newContrib);
+        await song.save();
+
+        const savedContrib = song.contributions[song.contributions.length - 1];
+
+        // Notify the song author
+        if (song.authorId) {
+            const notification = new Notification({
+                recipient: song.authorId,
+                sender: req.user.id,
+                type: "contribution_submitted",
+                message: `${contributor.username} submitted a continuation for your lyrics "${song.title}"`
+            });
+            await notification.save();
+        }
+
+        res.status(201).json({ success: true, contribution: savedContrib });
+    } catch (err) {
+        console.error("Error in POST /:songId/contribute:", err);
+        res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+    }
+});
+
+// GET /song/:songId/contributions — Get filtered song contributions
+router.get("/:songId/contributions", async (req, res) => {
+    try {
+        const { songId } = req.params;
+        const song = await findSongByIdOrSlug(songId);
+        if (!song) {
+            return res.status(404).json({ success: false, message: "Song not found" });
+        }
+
+        // Resolve contributions authorId for avatars
+        await song.populate("contributions.authorId", "username profilePhoto profileImage");
+
+        // Get visitor ID if logged in
+        const authHeader = req.headers.authorization;
+        let visitorId = null;
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+            try {
+                const token = authHeader.split(" ")[1];
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || "storyweave_secret_key_123");
+                visitorId = decoded.id;
+            } catch (e) {
+                // Ignore
+            }
+        }
+
+        const isOwner = song.authorId && visitorId && song.authorId.toString() === visitorId.toString();
+
+        const mapped = song.contributions.map(c => {
+            const authorUser = c.authorId || {};
+            return {
+                _id: c._id,
+                author: c.author || authorUser.username || "Unknown",
+                authorId: authorUser._id || c.authorId,
+                contributorName: c.author || authorUser.username || "Unknown",
+                contributorId: authorUser._id || c.authorId,
+                contributorProfileImage: authorUser.profilePhoto || authorUser.profileImage || "",
+                text: c.text,
+                contributedText: c.text,
+                upvotes: c.upvotes || 0,
+                upvotedBy: c.upvotedBy || [],
+                accepted: c.accepted || false,
+                status: c.accepted ? "accepted" : (c.status || "pending"),
+                createdAt: c.createdAt
+            };
+        });
+
+        // Filter based on roles (Accepted visible to all, pending/rejected only to owner & contributor)
+        const filtered = mapped.filter(c => {
+            if (c.status === "accepted" || c.accepted) return true;
+            if (visitorId && (isOwner || c.contributorId?.toString() === visitorId.toString())) return true;
+            return false;
+        });
+
+        // Sort: accepted first, then upvotes DESC, then createdAt DESC
+        filtered.sort((a, b) => {
+            if (a.accepted && !b.accepted) return -1;
+            if (!a.accepted && b.accepted) return 1;
+            if (b.upvotes !== a.upvotes) return b.upvotes - a.upvotes;
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
+        res.status(200).json(filtered);
+    } catch (err) {
+        console.error("Error in GET contributions:", err);
+        res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+    }
+});
+
+// PUT /song/contribution/upvote/:songId/:contributionId — toggle upvote
+router.put("/contribution/upvote/:songId/:contributionId", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const song = await findSongByIdOrSlug(req.params.songId);
         if (!song) return res.status(404).json({ message: "Song not found" });
 
         const contribution = song.contributions.id(req.params.contributionId);
         if (!contribution) return res.status(404).json({ message: "Contribution not found" });
 
-        const alreadyUpvoted = contribution.upvotedBy.some(id => id.toString() === userId);
-
-        if (alreadyUpvoted) {
-            contribution.upvotedBy = contribution.upvotedBy.filter(id => id.toString() !== userId);
-            contribution.upvotes = Math.max(0, contribution.upvotes - 1);
-        } else {
-            contribution.upvotedBy.push(userId);
-            contribution.upvotes += 1;
+        if (!contribution.upvotedBy) {
+            contribution.upvotedBy = [];
         }
 
+        const alreadyUpvoted = contribution.upvotedBy.some(id => id.toString() === userId.toString());
+
+        if (alreadyUpvoted) {
+            contribution.upvotedBy = contribution.upvotedBy.filter(id => id.toString() !== userId.toString());
+        } else {
+            contribution.upvotedBy.push(userId);
+        }
+
+        contribution.upvotes = contribution.upvotedBy.length;
         await song.save();
 
-        // Return contributions sorted by upvotes desc
         const sorted = [...song.contributions].sort((a, b) => b.upvotes - a.upvotes);
         res.status(200).json({
             contributions: sorted,
@@ -453,7 +709,129 @@ router.put("/contribution/upvote/:songId/:contributionId", async (req, res) => {
             contributionId: req.params.contributionId
         });
     } catch (err) {
-        res.status(500).json(err);
+        console.error("Error in upvote song contribution:", err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// POST /song/:songId/contribution/:contributionId/accept — Accept contribution and optionally append to lyrics
+router.post("/:songId/contribution/:contributionId/accept", authMiddleware, async (req, res) => {
+    try {
+        const { songId, contributionId } = req.params;
+        const { append } = req.body;
+
+        const song = await findSongByIdOrSlug(songId);
+        if (!song) {
+            return res.status(404).json({ success: false, message: "Song not found" });
+        }
+
+        // Verify ownership
+        if (!song.authorId || song.authorId.toString() !== req.user.id) {
+            return res.status(403).json({ success: false, message: "Forbidden: Only the lyrics author can accept contributions" });
+        }
+
+        const contribution = song.contributions.id(contributionId);
+        if (!contribution) {
+            return res.status(404).json({ success: false, message: "Contribution not found" });
+        }
+
+        contribution.status = "accepted";
+        contribution.accepted = true;
+        contribution.acceptedAt = new Date();
+        contribution.acceptedBy = req.user.id;
+
+        if (append) {
+            song.lyrics = song.lyrics + "\n\n" + contribution.text;
+        }
+
+        // Add to contributors list
+        const contributorUser = await User.findById(contribution.authorId);
+        const exists = song.contributors.some(c => c.contributionId?.toString() === contributionId.toString());
+        if (!exists) {
+            song.contributors.push({
+                contributorId: contribution.authorId,
+                contributorName: contribution.author || contributorUser?.username || "Unknown",
+                profilePhoto: contributorUser?.profilePhoto || contributorUser?.profileImage || "",
+                contributionId: contribution._id,
+                contributedText: contribution.text,
+                mergedAt: new Date()
+            });
+        }
+
+        await song.save();
+
+        // Notify contributor
+        if (contribution.authorId) {
+            try {
+                const notification = new Notification({
+                    recipient: contribution.authorId,
+                    sender: req.user.id,
+                    type: "contribution_accepted",
+                    message: `Your lyric contribution was accepted for "${song.title}"!`
+                });
+                await notification.save();
+            } catch (notifyErr) {
+                console.warn("Notification failed to send:", notifyErr.message);
+            }
+        }
+
+        const updatedSong = await Song.findById(song._id).populate("contributions.authorId", "username profilePhoto profileImage");
+        res.status(200).json({ success: true, song: updatedSong, contribution });
+    } catch (err) {
+        console.error("Error in accept lyrics contribution:", err);
+        res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+    }
+});
+
+// PUT /song/:songId/contributions/:contributionId/status — Moderate status (Accept/Reject)
+router.put("/:songId/contributions/:contributionId/status", authMiddleware, async (req, res) => {
+    try {
+        const { songId, contributionId } = req.params;
+        const { status } = req.body;
+
+        if (!["accepted", "rejected"].includes(status)) {
+            return res.status(400).json({ success: false, message: "Invalid status" });
+        }
+
+        const song = await findSongByIdOrSlug(songId);
+        if (!song) {
+            return res.status(404).json({ success: false, message: "Song not found" });
+        }
+
+        if (!song.authorId || song.authorId.toString() !== req.user.id) {
+            return res.status(403).json({ success: false, message: "Forbidden: Only the song author can moderate" });
+        }
+
+        const contribution = song.contributions.id(contributionId);
+        if (!contribution) {
+            return res.status(404).json({ success: false, message: "Contribution not found" });
+        }
+
+        contribution.status = status;
+        if (status === "accepted") {
+            contribution.accepted = true;
+            contribution.acceptedAt = new Date();
+            contribution.acceptedBy = req.user.id;
+        } else {
+            contribution.accepted = false;
+        }
+
+        await song.save();
+
+        if (contribution.authorId) {
+            const notification = new Notification({
+                recipient: contribution.authorId,
+                sender: req.user.id,
+                type: `contribution_${status}`,
+                message: `Your lyric contribution for "${song.title}" was ${status}.`
+            });
+            await notification.save();
+        }
+
+        res.status(200).json({ success: true, contribution });
+    } catch (err) {
+        console.error("Error in moderate lyrics status:", err);
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 });
 
