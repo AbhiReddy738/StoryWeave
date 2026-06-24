@@ -1,6 +1,6 @@
+import "dotenv/config.js";
 import express from "express";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import cors from "cors";
 import fs from "fs";
 import path from "path";
@@ -10,6 +10,7 @@ import storyRoutes from "./routes/story.js";
 import userRoutes from "./routes/userRoutes.js";
 import songRoutes from "./routes/song.js";
 import authorRoutes from "./routes/authorRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,8 +18,6 @@ const __dirname = path.dirname(__filename);
 if (!fs.existsSync("uploads")) {
     fs.mkdirSync("uploads");
 }
-
-dotenv.config();
 
 const app = express();
 
@@ -51,6 +50,7 @@ app.use("/api/stories", storyRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/song", songRoutes);
 app.use("/api/authors", authorRoutes);
+app.use("/api/ai", aiRoutes);
 
 const startServer = async () => {
     try {

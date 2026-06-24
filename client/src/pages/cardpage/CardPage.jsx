@@ -23,7 +23,8 @@ import {
   Award,
   Trash2,
   ArrowLeft,
-  Users
+  Users,
+  Bot
 } from 'lucide-react';
 import './CardPage.css';
 import StoryReader from '../../components/storyreader/StoryReader';
@@ -664,6 +665,14 @@ const CardPage = ({ collapsed }) => {
           >
             <BookOpen size={15} />
             <span>View Full Story</span>
+          </button>
+
+          <button
+            className="story-action-btn story-view-reader"
+            onClick={() => navigate(`/ai/story/${story._id}`)}
+          >
+            <Bot size={15} />
+            <span>Discuss With AI</span>
           </button>
 
           {/* Continue This Story Button */}

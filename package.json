@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "cloudinary": "^1.41.3"
+    "@google/generative-ai": "^0.24.1",
+    "cloudinary": "^2.10.0"
   }
 }

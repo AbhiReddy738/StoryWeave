@@ -18,6 +18,8 @@ import CategoriesPage from './pages/categoriespage/CategoriesPage';
 import SongPage from './pages/songpage/SongPage';
 import AuthorProfile from './pages/authorprofile/AuthorProfile';
 import NotFoundPage from './pages/notfoundpage/NotFoundPage';
+import AIGeneralPage from './pages/aipage/AIGeneralPage';
+import AIContentPage from './pages/aipage/AIContentPage';
 
 // Protected Route Wrapper Component
 const ProtectedRoute = ({ children }) => {
@@ -169,6 +171,12 @@ function AppContent() {
         />
         <Route path="/lyrics/:slug" element={<SongPage collapsed={collapsed} />} />
         <Route path="/author/:id" element={<AuthorProfile collapsed={collapsed} />} />
+        
+        {/* AI Routes */}
+        <Route path="/ai" element={<AIGeneralPage collapsed={collapsed} />} />
+        <Route path="/ai/story/:id" element={<AIContentPage collapsed={collapsed} />} />
+        <Route path="/ai/song/:id" element={<AIContentPage collapsed={collapsed} />} />
+        
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </div>

@@ -23,7 +23,8 @@ import {
   X,
   Eye,
   UserPlus,
-  UserCheck
+  UserCheck,
+  Bot
 } from 'lucide-react';
 import './SongPage.css';
 
@@ -577,6 +578,14 @@ const SongPage = ({ collapsed }) => {
           </button>
           <button className="song-action-btn" onClick={handleCopyLink}>
             <span>📋 Copy Link</span>
+          </button>
+
+          <button
+            className="song-action-btn"
+            onClick={() => navigate(`/ai/song/${song._id}`)}
+          >
+            <Bot size={15} />
+            <span>Discuss With AI</span>
           </button>
 
           {/* Edit Song Button for Owner */}
