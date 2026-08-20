@@ -1,5 +1,14 @@
-node_modules
+# Environment variables & secrets
 .env
-dist
-build
-uploads
+.env.*
+*.env
+server/.env
+!.env.example
+!server/.env.example
+
+# Dependencies & Build Outputs
+node_modules/
+dist/
+build/
+uploads/
+.DS_Store
