@@ -1,55 +1,45 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
-let genAI = null;
+let aiClient = null;
 
-const checkConfig = () => {
-    // Re-read dynamically in case it wasn't loaded before
+const getAIClient = () => {
     const rawKey = process.env.GEMINI_API_KEY;
     const API_KEY = rawKey ? rawKey.trim() : null;
 
-    // Temporary debug logs requested by user
-    console.log("[DEBUG] GEMINI_API_KEY exists:", !!process.env.GEMINI_API_KEY);
-    console.log("[DEBUG] Key length:", process.env.GEMINI_API_KEY?.length);
-
     if (!API_KEY) {
         console.error("[ERROR] GEMINI_API_KEY is missing from environment variables.");
-        throw new Error("AI service not configured. Please add GEMINI_API_KEY to your environment variables.");
+        throw new Error("AI service unavailable: Invalid Gemini API configuration.");
     }
 
-    if (!genAI) {
-        genAI = new GoogleGenerativeAI(API_KEY);
+    if (!aiClient) {
+        console.log("[INFO] Gemini API key configured: true");
+        aiClient = new GoogleGenAI({ apiKey: API_KEY });
     }
+    return aiClient;
 };
 
-const getModel = () => {
-    checkConfig();
-    return genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-};
-
-// Generic chat completion
+// Generic chat completion using @google/genai
 export const chatWithAI = async (prompt, systemInstruction = "") => {
     try {
-        checkConfig();
-        const model = getModel();
-        // apply system instruction if needed
+        const client = getAIClient();
+        let contents = prompt;
         if (systemInstruction) {
-            prompt = `System: ${systemInstruction}\n\nUser: ${prompt}`;
+            contents = `System: ${systemInstruction}\n\nUser: ${prompt}`;
         }
-        
-        console.log("AI Request Received");
-        console.log("Action:", prompt.substring(0, 100).replace(/\n/g, " ") + "...");
-        console.log("Prompt Length:", prompt?.length);
-        console.log("Gemini Key Exists:", !!process.env.GEMINI_API_KEY);
 
-        const result = await model.generateContent(prompt);
-        console.log("Gemini Response:", result);
+        const response = await client.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: contents
+        });
 
-        return result.response.text();
+        if (!response || !response.text) {
+            throw new Error("Gemini request failed: Empty response received.");
+        }
+
+        return response.text;
     } catch (error) {
-        console.error("Gemini Error:", error);
-        console.error("Gemini Error Message:", error.message);
-        console.error("Gemini Stack:", error.stack);
-        throw error;
+        console.error("[ERROR] Gemini Service Failure:", error.message);
+        throw new Error(error.message || "Gemini request failed.");
     }
 };
 
@@ -60,7 +50,7 @@ Detailed Summary: [1 paragraph]
 Key Themes: [Comma separated list]
 
 Story:
-${storyText.substring(0, 5000)}`; // limit size
+${storyText.substring(0, 5000)}`;
     return await chatWithAI(prompt);
 };
 

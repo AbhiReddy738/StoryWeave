@@ -15,36 +15,32 @@ import {
 const router = express.Router();
 
 const handleAIRequest = async (req, res, actionName, action) => {
-    console.log(`\n=================================================`);
-    console.log(`[DEBUG] AI Request Received - Action: ${actionName}`);
-    console.log(`[DEBUG] Request Body:`, JSON.stringify(req.body, null, 2));
-    console.log(`[DEBUG] Gemini Key Exists:`, !!process.env.GEMINI_API_KEY);
+    console.log(`[INFO] AI Request Received - Action: ${actionName}`);
 
     try {
         const result = await action();
         res.json({ success: true, result });
     } catch (error) {
-        console.error(`[ERROR] Gemini Error in ${actionName}:`, error);
-        console.error(`[ERROR] Gemini Error Message:`, error.message);
-        console.error(`[ERROR] Gemini Stack:`, error.stack);
+        console.error(`[ERROR] Gemini Error in ${actionName}:`, error.message);
         
-        if (error.message.includes("AI service not configured")) {
-            res.status(503).json({ success: false, message: error.message, error: error.message });
-        } else {
-            res.status(500).json({ success: false, message: "AI generation failed.", error: error.message });
+        let clientMessage = "Gemini request failed.";
+        let statusCode = 500;
+
+        if (error.message.includes("unavailable") || error.message.includes("configuration")) {
+            clientMessage = "AI service unavailable. Invalid Gemini API configuration.";
+            statusCode = 503;
         }
+
+        res.status(statusCode).json({
+            success: false,
+            message: clientMessage
+        });
     }
 };
 
 router.get("/health", (req, res) => {
     const rawKey = process.env.GEMINI_API_KEY;
     const keyPresent = !!(rawKey && rawKey.trim().length > 0);
-    
-    if (!keyPresent) {
-        console.error("[DEBUG] AI Health Check: GEMINI_API_KEY is missing or empty.");
-    } else {
-        console.log("[DEBUG] AI Health Check: GEMINI_API_KEY is present.");
-    }
 
     res.json({
         geminiConfigured: keyPresent,
@@ -54,15 +50,16 @@ router.get("/health", (req, res) => {
 
 router.get("/test", async (req, res) => {
     try {
-        console.log("[DEBUG] /api/ai/test called");
-        const { GoogleGenerativeAI } = await import("@google/generative-ai");
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const result = await model.generateContent("Say hello");
-        res.json({ success: true, message: result.response.text() });
+        const { GoogleGenAI } = await import("@google/genai");
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: "Say hello"
+        });
+        res.json({ success: true, message: response.text });
     } catch (error) {
-        console.error("[ERROR] Test Endpoint Failed:", error);
-        res.status(500).json({ success: false, error: error.message, stack: error.stack });
+        console.error("[ERROR] Test Endpoint Failed:", error.message);
+        res.status(500).json({ success: false, message: "Gemini request failed." });
     }
 });
 

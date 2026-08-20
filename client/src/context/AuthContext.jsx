@@ -73,11 +73,11 @@ export const AuthProvider = ({ children }) => {
       (response) => response,
       (error) => {
         if (error.response && error.response.status === 401) {
-          // If the 401 failure was on a login/register request, do not trigger auto-logout
           const isAuthRoute = error.config?.url?.includes('/auth/login') || error.config?.url?.includes('/auth/register');
           if (!isAuthRoute) {
-            console.warn('[DEBUG - CLIENT] Request failed with 401 Unauthorized. Auto logging out...');
+            console.warn('[INFO] Session expired or 401 received. Auto logging out...');
             logout();
+            alert("Your session has expired. Please log in again.");
           }
         }
         return Promise.reject(error);
