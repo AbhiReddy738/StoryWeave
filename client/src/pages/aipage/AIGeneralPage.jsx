@@ -38,12 +38,15 @@ const AIGeneralPage = ({ collapsed }) => {
 
     return (
         <div className={`ai-page ${collapsed ? "collapsed" : ""}`}>
-            <h1 className="ai-page-title">
-                <Bot size={32} />
-                General AI Assistant
-            </h1>
+            <div className="ai-page-header">
+                <h1 className="ai-page-title">
+                    <Bot size={32} />
+                    General AI Assistant
+                </h1>
+                <p className="ai-page-subtitle">Ask for writing advice, story ideas, worldbuilding, and character concepts</p>
+            </div>
             
-            <div className="ai-column-right" style={{ height: "calc(100vh - 180px)", maxWidth: "1000px", margin: "0 auto" }}>
+            <div className="ai-column-right" style={{ flex: 1, maxWidth: "1000px", margin: "0 auto", width: "100%" }}>
                 <div className="ai-chat-area">
                     {messages.map((msg, idx) => (
                         <div key={idx} className={`ai-message ${msg.role}`}>
