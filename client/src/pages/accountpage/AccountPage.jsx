@@ -30,6 +30,7 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
   });
 
   const [posts, setPosts] = useState([]);
+  const [readingHistory, setReadingHistory] = useState([]);
   const [actionFeedback, setActionFeedback] = useState('');
   const [feedbackType, setFeedbackType] = useState('success');
 
@@ -57,6 +58,18 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
       setLoading(false);
     }
   }, [authUser]);
+
+  // Fetch user reading history
+  useEffect(() => {
+    if (!token) return;
+    axios.get(`${API_BASE_URL}/user/history`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(res => {
+      setReadingHistory(res.data || []);
+    }).catch(err => {
+      console.warn("[DEBUG - CLIENT] Failed to fetch reading history:", err.message);
+    });
+  }, [token]);
 
   // Fetch profile data once on userId mount
   useEffect(() => {
@@ -518,6 +531,47 @@ const AccountPage = ({ collapsed, activeGlobalTab, setActiveGlobalTab }) => {
             </div>
           </div>
         </div>
+
+        {readingHistory.length > 0 && (
+          <div className="continue-reading-section" style={{ marginBottom: '32px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', color: 'var(--text-color)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>🕒</span> Continue Reading
+            </h3>
+            <div className="continue-reading-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+              {readingHistory.slice(0, 4).map((item) => (
+                <div
+                  key={item._id || item.contentId}
+                  className="continue-reading-card"
+                  onClick={() => navigate(item.contentType === 'song' ? `/lyrics/${item.slug}` : `/card/${item.slug}`)}
+                  style={{
+                    background: 'var(--card-color)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                  }}
+                >
+                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--accent-color)', textTransform: 'uppercase' }}>
+                    {item.contentType === 'song' ? '🎵 Lyrics' : '📖 Story'} • {item.genre || 'General'}
+                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-color)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {item.title}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--secondary-text)' }}>
+                    by {item.author || 'Unknown'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--secondary-text)', marginTop: 'auto', paddingTop: '4px', borderTop: '1px solid var(--border-color)' }}>
+                    Viewed {new Date(item.viewedAt).toLocaleDateString()}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="home-tabs" style={{ marginBottom: '24px' }}>
           <button

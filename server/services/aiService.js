@@ -23,7 +23,7 @@ const checkConfig = () => {
 
 const getModel = () => {
     checkConfig();
-    return genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    return genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 };
 
 // Generic chat completion
@@ -40,7 +40,6 @@ export const chatWithAI = async (prompt, systemInstruction = "") => {
         console.log("Action:", prompt.substring(0, 100).replace(/\n/g, " ") + "...");
         console.log("Prompt Length:", prompt?.length);
         console.log("Gemini Key Exists:", !!process.env.GEMINI_API_KEY);
-        console.log("Key:", process.env.GEMINI_API_KEY);
 
         const result = await model.generateContent(prompt);
         console.log("Gemini Response:", result);

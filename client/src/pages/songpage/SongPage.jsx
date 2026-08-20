@@ -165,6 +165,17 @@ const SongPage = ({ collapsed }) => {
           } catch (saveErr) {
             console.warn("[DEBUG - CLIENT] Failed to check saved state:", saveErr.message);
           }
+
+          // Record reading history
+          axios.post(`${API_BASE_URL}/user/history`, {
+            contentType: 'song',
+            contentId: actualSongId,
+            title: data.title,
+            slug: data.slug || actualSongId,
+            coverImage: data.coverImage || '',
+            genre: data.genre || '',
+            author: data.artistName || data.author || ''
+          }).catch(hErr => console.warn('[DEBUG - CLIENT] Reading history record error:', hErr.message));
         }
 
         // Related songs

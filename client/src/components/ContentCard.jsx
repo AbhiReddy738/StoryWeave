@@ -50,13 +50,21 @@ const ContentCard = ({
   const likesCount = typeof likes === 'number' ? likes : (likes?.length || 0);
   const commentsCount = typeof comments === 'number' ? comments : (comments?.length || 0);
 
+  const hasCover = Boolean(
+    coverImage &&
+    typeof coverImage === 'string' &&
+    coverImage.trim() !== '' &&
+    coverImage !== 'null' &&
+    coverImage !== 'undefined'
+  );
+
   return (
     <div 
       className={`content-card ${type}-card ${actionButton ? 'has-action' : ''}`} 
       onClick={handleCardClick}
     >
       <div className="card-cover">
-        {coverImage ? (
+        {hasCover ? (
           <>
             <LazyImage 
               src={optimizeCloudinaryUrl(coverImage, 400)} 

@@ -101,7 +101,45 @@ const userSchema = new mongoose.Schema({
     followingCount: {
         type: Number,
         default: 0
-    }
+    },
+
+    readingHistory: [
+        {
+            contentType: {
+                type: String,
+                enum: ["story", "song"],
+                required: true
+            },
+            contentId: {
+                type: mongoose.Schema.Types.ObjectId,
+                required: true
+            },
+            title: {
+                type: String,
+                required: true
+            },
+            slug: {
+                type: String,
+                required: true
+            },
+            coverImage: {
+                type: String,
+                default: ""
+            },
+            genre: {
+                type: String,
+                default: ""
+            },
+            author: {
+                type: String,
+                default: ""
+            },
+            viewedAt: {
+                type: Date,
+                default: Date.now
+            }
+        }
+    ]
 }, {
     timestamps: true
 });

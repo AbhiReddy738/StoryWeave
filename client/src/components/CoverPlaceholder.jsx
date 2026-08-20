@@ -13,7 +13,7 @@ const CoverPlaceholder = ({ type, genre, title }) => {
     >
       <div className="placeholder-content">
         <span className="placeholder-icon">
-          {isSong ? <Music className="lucide-icon" /> : <BookOpen className="lucide-icon" />}
+          {isSong ? <span style={{ fontSize: '28px' }}>🎵</span> : <span style={{ fontSize: '28px' }}>📖</span>}
         </span>
         <span className="placeholder-text">{text}</span>
       </div>

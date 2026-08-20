@@ -845,4 +845,66 @@ router.get("/my-contributions/:userId", async (req, res) => {
     }
 });
 
+// POST /api/user/history — record reading history item (story or song)
+router.post("/history", authMiddleware, async (req, res) => {
+    try {
+        const { contentType, contentId, title, slug, coverImage, genre, author } = req.body;
+        if (!contentType || !contentId || !title) {
+            return res.status(400).json({ success: false, message: "Missing required history fields" });
+        }
+
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        // Initialize history array if empty
+        if (!user.readingHistory) {
+            user.readingHistory = [];
+        }
+
+        // Remove duplicate entry if exists
+        user.readingHistory = user.readingHistory.filter(
+            item => item.contentId.toString() !== contentId.toString()
+        );
+
+        // Add new entry at beginning
+        user.readingHistory.unshift({
+            contentType,
+            contentId,
+            title,
+            slug: slug || contentId.toString(),
+            coverImage: coverImage || "",
+            genre: genre || "",
+            author: author || "",
+            viewedAt: new Date()
+        });
+
+        // Limit maximum 50 items
+        if (user.readingHistory.length > 50) {
+            user.readingHistory = user.readingHistory.slice(0, 50);
+        }
+
+        await user.save();
+        res.status(200).json({ success: true, readingHistory: user.readingHistory });
+    } catch (err) {
+        console.error("Error saving reading history:", err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// GET /api/user/history — fetch current user's reading history
+router.get("/history", authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select("readingHistory");
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+        res.status(200).json(user.readingHistory || []);
+    } catch (err) {
+        console.error("Error fetching reading history:", err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
 export default router;

@@ -133,6 +133,7 @@ function AppContent() {
           } 
         />
         <Route path="/card/:slug" element={<CardPage collapsed={collapsed} />} />
+        <Route path="/story/:slug" element={<CardPage collapsed={collapsed} />} />
         <Route 
           path="/saved" 
           element={
