@@ -41,6 +41,7 @@ const CardPage = ({ collapsed }) => {
   const [relatedStories, setRelatedStories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('story'); // 'story' | 'contributions' | 'comments'
 
   // Follow State
   const [isFollowingAuthor, setIsFollowingAuthor] = useState(false);
@@ -620,6 +621,7 @@ const CardPage = ({ collapsed }) => {
               <div 
                 className="pending-contributions-alert" 
                 onClick={() => {
+                  setActiveTab('contributions');
                   const el = document.querySelector('.story-contributions-card');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
@@ -714,337 +716,368 @@ const CardPage = ({ collapsed }) => {
       {/* ── MAIN CONTENT GRID ── */}
       <div className="story-main-content">
         
-        {/* LEFT COLUMN: Story Reading, Contributions & Comments */}
+        {/* LEFT COLUMN: Story Reading, Contributions & Comments Tabs */}
         <div className="story-content-left">
           
-          {/* Story Reading Area */}
-          <div className="story-content-card">
-            <h3 className="story-section-title">
-              <BookOpen size={18} className="section-title-icon" />
-              <span>Story Content</span>
-            </h3>
-            <div className="story-text-body">
-              {renderContent(story.content)}
-            </div>
+          {/* Horizontal Tab Navigation */}
+          <div className="song-tabs">
+            <button
+              className={`song-tab-btn ${activeTab === 'story' ? 'song-tab-active' : ''}`}
+              onClick={() => setActiveTab('story')}
+            >
+              <BookOpen size={15} style={{ marginRight: '6px' }} /> Story
+            </button>
+            <button
+              className={`song-tab-btn ${activeTab === 'contributions' ? 'song-tab-active' : ''}`}
+              onClick={() => setActiveTab('contributions')}
+            >
+              <Sparkles size={15} style={{ marginRight: '6px' }} /> Contributions ({contributions.length})
+            </button>
+            <button
+              className={`song-tab-btn ${activeTab === 'comments' ? 'song-tab-active' : ''}`}
+              onClick={() => setActiveTab('comments')}
+            >
+              <MessageSquare size={15} style={{ marginRight: '6px' }} /> Comments ({comments.length})
+            </button>
           </div>
 
-          {/* Inline Contribution Form */}
-          <div className="story-content-card inline-contribution-section" style={{ background: 'var(--card-color)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px', marginBottom: '24px' }}>
-            <h3 className="story-section-title" style={{ marginBottom: '16px' }}>
-              <Sparkles size={18} className="section-title-icon" />
-              <span>Continue This Story</span>
-            </h3>
-            
-            {currentUser ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <textarea
-                  className="comment-textarea"
-                  value={contributionText}
-                  onChange={(e) => setContributionText(e.target.value)}
-                  placeholder="Write your continuation of the story..."
-                  rows={4}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid var(--border-color)',
-                    color: 'var(--text-color)',
-                    resize: 'vertical',
-                    fontSize: '14px',
-                    fontFamily: 'inherit'
-                  }}
-                />
-                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                  <button
-                    className="modal-btn cancel"
-                    onClick={() => setContributionText('')}
-                    style={{ padding: '8px 20px', fontSize: '13px' }}
-                  >
-                    Clear
-                  </button>
-                  <button
-                    className="modal-btn save"
-                    onClick={handleContributionSubmit}
-                    disabled={contribPosting || !contributionText.trim()}
-                    style={{ padding: '8px 20px', fontSize: '13px' }}
-                  >
-                    {contribPosting ? 'Submitting...' : 'Submit Contribution'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px dashed var(--border-color)' }}>
-                <p style={{ color: 'var(--secondary-text)', margin: '0 0 12px 0', fontSize: '14px' }}>Want to contribute your continuation idea for this story?</p>
-                <button
-                  className="modal-btn save"
-                  onClick={() => navigate('/login')}
-                  style={{ padding: '8px 20px', fontSize: '13px' }}
-                >
-                  Login to contribute
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Contributions Section */}
-          <div className="story-contributions-card">
-            <h3 className="story-section-title">
-              <Sparkles size={18} className="section-title-icon" />
-              <span>Community Contributions ({contributions.length})</span>
-            </h3>
-
-            <div className="contributions-list" style={{ marginTop: '20px' }}>
-              {contributions.length === 0 ? (
-                <div className="song-empty-tab">
-                  <span><Sparkles size={32} /></span>
-                  <p>No continuation submissions yet. Be the first to continue the story!</p>
-                </div>
-              ) : (
-                contributions.map((item, idx) => {
-                  const cid = item._id || item.id;
-                  const isTop = item.accepted || item.status === 'accepted';
-                  const hasUpvoted = currentUser?._id
-                    ? (item.upvotedBy || []).some(uid => uid.toString() === currentUser._id.toString())
-                    : false;
-
-                  return (
-                    <div
-                      key={cid}
-                      className={`contribution-card ${isTop ? 'top-contribution' : ''}`}
-                      style={{
-                        background: 'var(--card-color)',
-                        border: isTop ? '2px solid #d4af37' : '1px solid var(--border-color)',
-                        borderRadius: '16px',
-                        padding: '20px',
-                        marginBottom: '16px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '12px',
-                        boxShadow: isTop ? '0 0 10px rgba(212, 175, 55, 0.15)' : 'none'
-                      }}
-                    >
-                      <div className="contribution-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div className="contribution-meta" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div className="contrib-user-avatar" style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden' }}>
-                            <img src={item.contributorProfileImage || 'https://via.placeholder.com/150'} alt={item.contributorName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span 
-                              className="contribution-author"
-                              onClick={() => navigate(item.contributorId ? `/author/${item.contributorId}` : `/author/${item.contributorName}`)}
-                              style={{ cursor: 'pointer', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                            >
-                              {item.contributorName}
-                              {isTop && <span className="contributed-badge" style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '12px' }}>🏆 Contributed</span>}
-                            </span>
-                            <span className="contribution-date" style={{ fontSize: '11px', color: 'var(--secondary-text)' }}>
-                              {new Date(item.createdAt).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        <div className="contrib-badges-row" style={{ display: 'flex', gap: '8px' }}>
-                          {isTop && (
-                            <span className="status-badge" style={{ background: 'rgba(74, 222, 128, 0.15)', color: '#4ade80', fontSize: '11px', padding: '4px 10px', borderRadius: '12px', fontWeight: 'bold', border: '1px solid #4ade80' }}>
-                              ✓ Added To Story
-                            </span>
-                          )}
-                          {item.mergedIntoStory && (
-                            <span className="status-badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', fontSize: '11px', padding: '4px 10px', borderRadius: '12px', fontWeight: 'bold' }}>
-                              Merged Into Story
-                            </span>
-                          )}
-                          {!isTop && item.status === 'pending' && (
-                            <span className="status-badge" style={{ background: 'rgba(251, 191, 36, 0.15)', color: '#fbbf24', fontSize: '11px', padding: '4px 10px', borderRadius: '12px', fontWeight: 'bold' }}>
-                              Pending
-                            </span>
-                          )}
-                          {!isTop && item.status === 'rejected' && (
-                            <span className="status-badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', fontSize: '11px', padding: '4px 10px', borderRadius: '12px', fontWeight: 'bold' }}>
-                              Rejected
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="contributed-continuation-header" style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--accent-color)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        &ldquo;Contributed Continuation&rdquo;
-                      </div>
-
-                      <p className="contribution-text" style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--text-color)', margin: 0 }}>
-                        {item.contributedText.length > 250 ? item.contributedText.slice(0, 250) + '...' : item.contributedText}
-                      </p>
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', flexWrap: 'wrap', gap: '10px' }}>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          <button 
-                            className="modal-btn cancel" 
-                            onClick={() => setSelectedContribution(item)}
-                            style={{ padding: '6px 14px', fontSize: '12px', borderRadius: '16px' }}
-                          >
-                            View Full
-                          </button>
-                          
-                          <span className="upvotes-count" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--secondary-text)', marginLeft: '12px', marginRight: '6px' }}>
-                            👍 {item.upvotes || 0}
-                          </span>
-                          <button
-                            className={`upvote-btn ${hasUpvoted ? 'upvoted' : ''}`}
-                            onClick={() => handleUpvote(cid)}
-                            style={{
-                              background: hasUpvoted ? 'rgba(74, 222, 128, 0.15)' : 'rgba(255,255,255,0.05)',
-                              color: hasUpvoted ? '#4ade80' : 'var(--text-color)',
-                              border: hasUpvoted ? '1px solid #4ade80' : '1px solid var(--border-color)',
-                              padding: '6px 14px',
-                              fontSize: '12px',
-                              borderRadius: '16px',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px'
-                            }}
-                          >
-                            <span>{hasUpvoted ? 'Upvoted' : 'Upvote'}</span>
-                          </button>
-                        </div>
-
-                        {/* Story Author Moderation Panel */}
-                        {isAuthor && (
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            {!item.accepted && item.status !== 'rejected' && (
-                              <>
-                                <button 
-                                  className="modal-btn" 
-                                  onClick={() => openAcceptModal(item)}
-                                  style={{ background: 'rgba(74, 222, 128, 0.2)', color: '#4ade80', border: '1px solid #4ade80', padding: '6px 14px', fontSize: '12px', borderRadius: '16px' }}
-                                >
-                                  ➕ Add To Story
-                                </button>
-                                <button 
-                                  className="modal-btn" 
-                                  onClick={() => handleModerateContribution(cid, 'rejected')}
-                                  style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid #ef4444', padding: '6px 14px', fontSize: '12px', borderRadius: '16px' }}
-                                >
-                                  Reject
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          {/* Story Contributors Section */}
-          {story.contributors && story.contributors.length > 0 && (
-            <div className="story-contributions-card">
+          {/* TAB 1: STORY CONTENT */}
+          {activeTab === 'story' && (
+            <div className="story-content-card">
               <h3 className="story-section-title">
-                <Users size={18} className="section-title-icon" />
-                <span>Story Contributors ({Array.from(new Set(story.contributors.map(c => c.contributorId?.toString()))).length})</span>
+                <BookOpen size={18} className="section-title-icon" />
+                <span>Story Content</span>
               </h3>
-              <div className="contributors-list-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginTop: '16px' }}>
-                {story.contributors.map((c, idx) => {
-                  const acceptedCount = story.contributors.filter(tc => tc.contributorId?.toString() === c.contributorId?.toString()).length;
-
-                  return (
-                    <div 
-                      key={idx} 
-                      className="contributor-profile-card" 
-                      style={{ background: 'var(--card-color)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' }}
-                    >
-                      <div className="contributor-avatar-large" style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--accent-color)' }}>
-                        <img src={c.profilePhoto || 'https://via.placeholder.com/150'} alt={c.contributorName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                      <div className="contributor-info-block">
-                        <div className="contributor-name-text" style={{ fontWeight: 'bold', fontSize: '14px' }}>{c.contributorName}</div>
-                        <div className="contributor-count-badge" style={{ fontSize: '12px', color: 'var(--accent-color)', marginTop: '4px' }}>🏆 {acceptedCount} accepted continuation(s)</div>
-                        {c.mergedAt && <div className="contributor-date-text" style={{ fontSize: '11px', color: 'var(--secondary-text)', marginTop: '2px' }}>Merged: {new Date(c.mergedAt).toLocaleDateString()}</div>}
-                      </div>
-                      <button 
-                        className="modal-btn cancel" 
-                        onClick={() => setSelectedContributor(c)}
-                        style={{ padding: '6px 14px', fontSize: '12px', borderRadius: '16px', width: '100%' }}
-                      >
-                        View Contribution
-                      </button>
-                    </div>
-                  );
-                })}
+              <div className="story-text-body">
+                {renderContent(story.content)}
               </div>
             </div>
           )}
 
-          {/* Comments section */}
-          <div className="story-comments-card">
-            <h3 className="story-section-title">
-              <MessageSquare size={18} className="section-title-icon" />
-              <span>Comments ({comments.length})</span>
-            </h3>
-
-            <div className="comment-input-box">
-              <textarea
-                className="comment-textarea"
-                placeholder="Share your thoughts about this story..."
-                value={commentText}
-                onChange={e => setCommentText(e.target.value)}
-                rows={3}
-              />
-              <button
-                className="comment-post-btn"
-                onClick={handleComment}
-                disabled={commentPosting || !commentText.trim()}
-              >
-                <MessageSquare size={14} />
-                <span>{commentPosting ? 'Posting...' : 'Post Comment'}</span>
-              </button>
-            </div>
-
-            <div className="comments-list">
-              {comments.length === 0 ? (
-                <div className="song-empty-tab">
-                  <span><MessageSquare size={32} /></span>
-                  <p>Be the first to comment!</p>
-                </div>
-              ) : (
-                [...comments].reverse().map((c, i) => (
-                  <div key={i} className="comment-item">
-                    <div className="comment-avatar">
-                      {(c.username || 'A')[0].toUpperCase()}
-                    </div>
-                    <div className="comment-body">
-                      <span 
-                        className="comment-username"
-                        onClick={() => navigate(`/author/${c.username}`)}
-                        style={{ cursor: 'pointer', textDecoration: 'underline' }}
+          {/* TAB 2: CONTRIBUTIONS */}
+          {activeTab === 'contributions' && (
+            <>
+              {/* Inline Contribution Form */}
+              <div className="story-content-card inline-contribution-section" style={{ background: 'var(--card-color)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px', marginBottom: '24px' }}>
+                <h3 className="story-section-title" style={{ marginBottom: '16px' }}>
+                  <Sparkles size={18} className="section-title-icon" />
+                  <span>Continue This Story</span>
+                </h3>
+                
+                {currentUser ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <textarea
+                      className="comment-textarea"
+                      value={contributionText}
+                      onChange={(e) => setContributionText(e.target.value)}
+                      placeholder="Write your continuation of the story..."
+                      rows={4}
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid var(--border-color)',
+                        color: 'var(--text-color)',
+                        resize: 'vertical',
+                        fontSize: '14px',
+                        fontFamily: 'inherit'
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                      <button
+                        className="modal-btn cancel"
+                        onClick={() => setContributionText('')}
+                        style={{ padding: '8px 20px', fontSize: '13px' }}
                       >
-                        {c.username}
-                      </span>
-                      <p className="comment-text">{c.text}</p>
-                      {c.createdAt && (
-                        <span className="comment-date">
-                          {new Date(c.createdAt).toLocaleDateString()}
+                        Clear
+                      </button>
+                      <button
+                        className="modal-btn save"
+                        onClick={handleContributionSubmit}
+                        disabled={contribPosting || !contributionText.trim()}
+                        style={{ padding: '8px 20px', fontSize: '13px' }}
+                      >
+                        {contribPosting ? 'Submitting...' : 'Submit Contribution'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px dashed var(--border-color)' }}>
+                    <p style={{ color: 'var(--secondary-text)', margin: '0 0 12px 0', fontSize: '14px' }}>Want to contribute your continuation idea for this story?</p>
+                    <button
+                      className="modal-btn save"
+                      onClick={() => navigate('/login')}
+                      style={{ padding: '8px 20px', fontSize: '13px' }}
+                    >
+                      Login to contribute
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Contributions List */}
+              <div className="story-contributions-card">
+                <h3 className="story-section-title">
+                  <Sparkles size={18} className="section-title-icon" />
+                  <span>Community Contributions ({contributions.length})</span>
+                </h3>
+
+                <div className="contributions-list" style={{ marginTop: '20px' }}>
+                  {contributions.length === 0 ? (
+                    <div className="song-empty-tab">
+                      <span><Sparkles size={32} /></span>
+                      <p>No continuation submissions yet. Be the first to continue the story!</p>
+                    </div>
+                  ) : (
+                    contributions.map((item, idx) => {
+                      const cid = item._id || item.id;
+                      const isTop = item.accepted || item.status === 'accepted';
+                      const hasUpvoted = currentUser?._id
+                        ? (item.upvotedBy || []).some(uid => uid.toString() === currentUser._id.toString())
+                        : false;
+
+                      return (
+                        <div
+                          key={cid}
+                          className={`contribution-card ${isTop ? 'top-contribution' : ''}`}
+                          style={{
+                            background: 'var(--card-color)',
+                            border: isTop ? '2px solid #d4af37' : '1px solid var(--border-color)',
+                            borderRadius: '16px',
+                            padding: '20px',
+                            marginBottom: '16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '12px',
+                            boxShadow: isTop ? '0 0 10px rgba(212, 175, 55, 0.15)' : 'none'
+                          }}
+                        >
+                          <div className="contribution-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div className="contribution-meta" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div className="contrib-user-avatar" style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden' }}>
+                                <img src={item.contributorProfileImage || 'https://via.placeholder.com/150'} alt={item.contributorName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span 
+                                  className="contribution-author"
+                                  onClick={() => navigate(item.contributorId ? `/author/${item.contributorId}` : `/author/${item.contributorName}`)}
+                                  style={{ cursor: 'pointer', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                >
+                                  {item.contributorName}
+                                  {isTop && <span className="contributed-badge" style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '12px' }}>🏆 Contributed</span>}
+                                </span>
+                                <span className="contribution-date" style={{ fontSize: '11px', color: 'var(--secondary-text)' }}>
+                                  {new Date(item.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="contrib-badges-row" style={{ display: 'flex', gap: '8px' }}>
+                              {isTop && (
+                                <span className="status-badge" style={{ background: 'rgba(74, 222, 128, 0.15)', color: '#4ade80', fontSize: '11px', padding: '4px 10px', borderRadius: '12px', fontWeight: 'bold', border: '1px solid #4ade80' }}>
+                                  ✓ Added To Story
+                                </span>
+                              )}
+                              {item.mergedIntoStory && (
+                                <span className="status-badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', fontSize: '11px', padding: '4px 10px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                  Merged Into Story
+                                </span>
+                              )}
+                              {!isTop && item.status === 'pending' && (
+                                <span className="status-badge" style={{ background: 'rgba(251, 191, 36, 0.15)', color: '#fbbf24', fontSize: '11px', padding: '4px 10px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                  Pending
+                                </span>
+                              )}
+                              {!isTop && item.status === 'rejected' && (
+                                <span className="status-badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', fontSize: '11px', padding: '4px 10px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                  Rejected
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="contributed-continuation-header" style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--accent-color)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            &ldquo;Contributed Continuation&rdquo;
+                          </div>
+
+                          <p className="contribution-text" style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--text-color)', margin: 0 }}>
+                            {item.contributedText.length > 250 ? item.contributedText.slice(0, 250) + '...' : item.contributedText}
+                          </p>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', flexWrap: 'wrap', gap: '10px' }}>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <button 
+                                className="modal-btn cancel" 
+                                onClick={() => setSelectedContribution(item)}
+                                style={{ padding: '6px 14px', fontSize: '12px', borderRadius: '16px' }}
+                              >
+                                View Full
+                              </button>
+                              
+                              <span className="upvotes-count" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--secondary-text)', marginLeft: '12px', marginRight: '6px' }}>
+                                👍 {item.upvotes || 0}
+                              </span>
+                              <button
+                                className={`upvote-btn ${hasUpvoted ? 'upvoted' : ''}`}
+                                onClick={() => handleUpvote(cid)}
+                                style={{
+                                  background: hasUpvoted ? 'rgba(74, 222, 128, 0.15)' : 'rgba(255,255,255,0.05)',
+                                  color: hasUpvoted ? '#4ade80' : 'var(--text-color)',
+                                  border: hasUpvoted ? '1px solid #4ade80' : '1px solid var(--border-color)',
+                                  padding: '6px 14px',
+                                  fontSize: '12px',
+                                  borderRadius: '16px',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px'
+                                }}
+                              >
+                                <span>{hasUpvoted ? 'Upvoted' : 'Upvote'}</span>
+                              </button>
+                            </div>
+
+                            {/* Story Author Moderation Panel */}
+                            {isAuthor && (
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                {!item.accepted && item.status !== 'rejected' && (
+                                  <>
+                                    <button 
+                                      className="modal-btn" 
+                                      onClick={() => openAcceptModal(item)}
+                                      style={{ background: 'rgba(74, 222, 128, 0.2)', color: '#4ade80', border: '1px solid #4ade80', padding: '6px 14px', fontSize: '12px', borderRadius: '16px' }}
+                                    >
+                                      ➕ Add To Story
+                                    </button>
+                                    <button 
+                                      className="modal-btn" 
+                                      onClick={() => handleModerateContribution(cid, 'rejected')}
+                                      style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid #ef4444', padding: '6px 14px', fontSize: '12px', borderRadius: '16px' }}
+                                    >
+                                      Reject
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Story Contributors Section */}
+              {story.contributors && story.contributors.length > 0 && (
+                <div className="story-contributions-card" style={{ marginTop: '24px' }}>
+                  <h3 className="story-section-title">
+                    <Users size={18} className="section-title-icon" />
+                    <span>Story Contributors ({Array.from(new Set(story.contributors.map(c => c.contributorId?.toString()))).length})</span>
+                  </h3>
+                  <div className="contributors-list-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginTop: '16px' }}>
+                    {story.contributors.map((c, idx) => {
+                      const acceptedCount = story.contributors.filter(tc => tc.contributorId?.toString() === c.contributorId?.toString()).length;
+
+                      return (
+                        <div 
+                          key={idx} 
+                          className="contributor-profile-card" 
+                          style={{ background: 'var(--card-color)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' }}
+                        >
+                          <div className="contributor-avatar-large" style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--accent-color)' }}>
+                            <img src={c.profilePhoto || 'https://via.placeholder.com/150'} alt={c.contributorName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                          <div className="contributor-info-block">
+                            <div className="contributor-name-text" style={{ fontWeight: 'bold', fontSize: '14px' }}>{c.contributorName}</div>
+                            <div className="contributor-count-badge" style={{ fontSize: '12px', color: 'var(--accent-color)', marginTop: '4px' }}>🏆 {acceptedCount} accepted continuation(s)</div>
+                            {c.mergedAt && <div className="contributor-date-text" style={{ fontSize: '11px', color: 'var(--secondary-text)', marginTop: '2px' }}>Merged: {new Date(c.mergedAt).toLocaleDateString()}</div>}
+                          </div>
+                          <button 
+                            className="modal-btn cancel" 
+                            onClick={() => setSelectedContributor(c)}
+                            style={{ padding: '6px 14px', fontSize: '12px', borderRadius: '16px', width: '100%' }}
+                          >
+                            View Contribution
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* TAB 3: COMMENTS */}
+          {activeTab === 'comments' && (
+            <div className="story-comments-card">
+              <h3 className="story-section-title">
+                <MessageSquare size={18} className="section-title-icon" />
+                <span>Comments ({comments.length})</span>
+              </h3>
+
+              <div className="comment-input-box">
+                <textarea
+                  className="comment-textarea"
+                  placeholder="Share your thoughts about this story..."
+                  value={commentText}
+                  onChange={e => setCommentText(e.target.value)}
+                  rows={3}
+                />
+                <button
+                  className="comment-post-btn"
+                  onClick={handleComment}
+                  disabled={commentPosting || !commentText.trim()}
+                >
+                  <MessageSquare size={14} />
+                  <span>{commentPosting ? 'Posting...' : 'Post Comment'}</span>
+                </button>
+              </div>
+
+              <div className="comments-list">
+                {comments.length === 0 ? (
+                  <div className="song-empty-tab">
+                    <span><MessageSquare size={32} /></span>
+                    <p>Be the first to comment!</p>
+                  </div>
+                ) : (
+                  [...comments].reverse().map((c, i) => (
+                    <div key={i} className="comment-item">
+                      <div className="comment-avatar">
+                        {(c.username || 'A')[0].toUpperCase()}
+                      </div>
+                      <div className="comment-body">
+                        <span 
+                          className="comment-username"
+                          onClick={() => navigate(`/author/${c.username}`)}
+                          style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                          {c.username}
                         </span>
+                        <p className="comment-text">{c.text}</p>
+                        {c.createdAt && (
+                          <span className="comment-date">
+                            {new Date(c.createdAt).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                      {currentUser && c.username === currentUser.username && (
+                        <button
+                          className="comment-delete-btn"
+                          onClick={() => handleDeleteComment(c._id)}
+                          title="Delete Comment"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       )}
                     </div>
-                    {currentUser && c.username === currentUser.username && (
-                      <button
-                        className="comment-delete-btn"
-                        onClick={() => handleDeleteComment(c._id)}
-                        title="Delete Comment"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
         </div>
 
