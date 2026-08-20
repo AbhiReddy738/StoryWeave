@@ -48,19 +48,13 @@
 
 /* Left Pane: Story Context */
 .ai-column-left {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--card-color);
     border: 1px solid var(--border-color);
     border-radius: 18px;
     padding: 24px;
     display: flex;
     flex-direction: column;
     gap: 20px;
-    position: sticky;
-    top: 24px;
-    max-height: calc(100vh - 48px);
-    overflow-y: auto;
 }
 
 /* Story Cover & Info */
@@ -183,15 +177,13 @@
 
 /* Right Pane: AI Assistant */
 .ai-column-right {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--card-color);
     border: 1px solid var(--border-color);
     border-radius: 18px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    height: 85vh; /* Standardized height */
+    min-height: 600px;
 }
 
 /* Context Loaded Panel */

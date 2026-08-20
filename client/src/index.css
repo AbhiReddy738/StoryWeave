@@ -4,27 +4,27 @@
 
 .dark-theme,
 .app-container.dark-theme {
-  --bg-color: #0a0a0a;
-  --card-color: #111827;
-  --surface-color: #1f2937;
-  --text-color: #f9fafb;
-  --secondary-text: #9ca3af;
-  --border-color: #1f2937;
-  --accent-color: #6366f1;
-  --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+  --bg-color: #0F1115;
+  --card-color: #1B202B;
+  --surface-color: #151922;
+  --text-color: #F3F4F6;
+  --secondary-text: #A7AFBF;
+  --border-color: #2A303C;
+  --accent-color: #7C8CFF;
+  --accent-gradient: linear-gradient(135deg, #7C8CFF, #4FD1C5);
   --accent-text: #ffffff;
-  --hover-color: #1f2937;
-  --input-bg: #111827;
-  --input-border: #1f2937;
-  --scroll-thumb: #6366f1;
-  --scroll-track: #0a0a0a;
-  --shadow-color: rgba(0, 0, 0, 0.5);
-  --header-bg: rgba(10, 10, 10, 0.75);
-  --sidebar-bg: rgba(17, 24, 39, 0.75);
-  --accent-glow-sm: rgba(99, 102, 241, 0.08);
-  --accent-glow-md: rgba(99, 102, 241, 0.15);
-  --accent-glow-lg: rgba(99, 102, 241, 0.25);
-  --accent-glow-xl: rgba(99, 102, 241, 0.45);
+  --hover-color: #232936;
+  --input-bg: #151922;
+  --input-border: #2A303C;
+  --scroll-thumb: #7C8CFF;
+  --scroll-track: #0F1115;
+  --shadow-color: rgba(0, 0, 0, 0.4);
+  --header-bg: rgba(15, 17, 21, 0.85);
+  --sidebar-bg: rgba(21, 25, 34, 0.85);
+  --accent-glow-sm: rgba(124, 140, 255, 0.08);
+  --accent-glow-md: rgba(124, 140, 255, 0.15);
+  --accent-glow-lg: rgba(124, 140, 255, 0.25);
+  --accent-glow-xl: rgba(124, 140, 255, 0.45);
 }
 
 .light-theme,
@@ -62,15 +62,15 @@
 
 :root {
   --sidebar-width: 170px;
-  --header-height: 68px;
-  --touch-target: 44px;
+  --header-height: 60px;
+  --touch-target: 40px;
 
   /* Typography Fluid Clamps */
-  --fs-title-large: clamp(1.8rem, 5vw + 1rem, 2.75rem);
-  --fs-title-medium: clamp(1.4rem, 4vw + 0.8rem, 2rem);
-  --fs-title-small: clamp(1.1rem, 3vw + 0.6rem, 1.4rem);
-  --fs-body: clamp(0.9rem, 1vw + 0.7rem, 1.05rem);
-  --fs-meta: clamp(0.75rem, 0.5vw + 0.7rem, 0.85rem);
+  --fs-title-large: clamp(1.6rem, 4vw + 1rem, 2.4rem);
+  --fs-title-medium: clamp(1.25rem, 3vw + 0.8rem, 1.75rem);
+  --fs-title-small: clamp(1rem, 2vw + 0.6rem, 1.25rem);
+  --fs-body: clamp(0.875rem, 1vw + 0.6rem, 1rem);
+  --fs-meta: clamp(0.75rem, 0.5vw + 0.6rem, 0.85rem);
 }
 
 .app-container {
@@ -92,7 +92,7 @@
 
 @media (max-width: 768px) {
   :root {
-    --header-height: 60px;
+    --header-height: 54px;
   }
   .app-container,
   .app-container.sidebar-collapsed {
@@ -104,6 +104,14 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 html {

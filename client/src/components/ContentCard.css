@@ -6,32 +6,32 @@
   position: relative;
   background: var(--card-color);
   border: 1px solid var(--border-color);
-  border-radius: 18px;
-  padding: 16px;
+  border-radius: 14px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
   width: 100%;
-  min-height: 420px;
+  min-height: 370px;
 }
 
 .content-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-4px);
   border-color: var(--accent-color);
-  box-shadow: 0 12px 30px var(--shadow-color);
+  box-shadow: 0 10px 24px var(--shadow-color);
 }
 
 /* Cover Section */
 .content-card .card-cover {
   position: relative;
   width: 100%;
-  height: 200px;
-  border-radius: 16px;
+  height: 180px;
+  border-radius: 12px;
   overflow: hidden;
-  margin-bottom: 14px;
-  box-shadow: 0 8px 20px var(--shadow-color);
-  background: linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(18, 18, 32, 0.95));
+  margin-bottom: 12px;
+  box-shadow: 0 4px 14px var(--shadow-color);
+  background: var(--surface-color);
 }
 
 .content-card .card-cover img {
