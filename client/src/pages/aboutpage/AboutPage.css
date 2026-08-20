@@ -1,0 +1,745 @@
+/* =====================================================
+   STORYWEAVE ABOUT PAGE — Creative Storytelling Design
+   ===================================================== */
+
+.about-page {
+  margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
+  min-height: 100vh;
+  padding: calc(var(--header-height) + 24px) 32px 80px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  box-sizing: border-box;
+  overflow-x: hidden;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+}
+
+/* ── 1. HERO SECTION ── */
+.about-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px 20px 60px;
+  background: linear-gradient(180deg, var(--surface-color) 0%, transparent 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.about-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(124, 140, 255, 0.12);
+  border: 1px solid rgba(124, 140, 255, 0.25);
+  color: var(--accent-color);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.about-hero-title {
+  font-size: 48px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 12px 0;
+}
+
+.about-hero-tagline {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 16px 0;
+  font-style: italic;
+}
+
+.about-hero-description {
+  max-width: 680px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--secondary-text);
+  margin: 0 0 32px 0;
+}
+
+.about-hero-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 48px;
+}
+
+.about-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 28px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+}
+
+.about-btn.primary {
+  background: var(--accent-gradient);
+  color: var(--accent-text);
+  box-shadow: 0 4px 16px var(--accent-glow-md);
+}
+
+.about-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--accent-glow-lg);
+}
+
+.about-btn.secondary {
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.about-btn.secondary:hover {
+  background: var(--hover-color);
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+}
+
+/* Branching Visual */
+.about-hero-branch-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 600px;
+}
+
+.branch-root-node {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card-color);
+  border: 1px solid var(--accent-color);
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-weight: 700;
+  color: var(--accent-color);
+  box-shadow: 0 0 16px var(--accent-glow-md);
+}
+
+.node-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--accent-color);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--accent-color);
+}
+
+.branch-connecting-lines {
+  display: flex;
+  justify-content: space-around;
+  width: 80%;
+  height: 30px;
+  border-top: 2px dashed var(--border-color);
+  position: relative;
+}
+
+.branch-leaf-nodes {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.leaf-node {
+  flex: 1;
+  min-width: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+  transition: transform 0.2s ease;
+}
+
+.leaf-node:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-color);
+}
+
+/* ── COMMON SECTION HEADERS ── */
+.about-section {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.section-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-pill {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-color);
+  background: rgba(124, 140, 255, 0.1);
+  padding: 4px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(124, 140, 255, 0.2);
+}
+
+.section-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.section-subtitle {
+  font-size: 16px;
+  color: var(--secondary-text);
+  max-width: 600px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── 2. THE IDEA FLOW ── */
+.idea-flow-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 20px 10px;
+  scrollbar-width: none;
+}
+.idea-flow-container::-webkit-scrollbar { display: none; }
+
+.flow-step-card {
+  flex: 1;
+  min-width: 140px;
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  transition: transform 0.2s;
+}
+
+.flow-step-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-color);
+}
+
+.flow-step-card.highlight {
+  border-color: #4ade80;
+  background: rgba(74, 222, 128, 0.05);
+}
+
+.flow-step-card.final {
+  border-color: var(--accent-color);
+  background: var(--surface-color);
+  box-shadow: 0 4px 16px var(--accent-glow-md);
+}
+
+.flow-icon {
+  color: var(--accent-color);
+}
+
+.flow-step-card h4 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-color);
+}
+
+.flow-step-card p {
+  font-size: 12px;
+  color: var(--secondary-text);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.flow-arrow {
+  color: var(--secondary-text);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+/* ── 3. TIMELINE ── */
+.timeline-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.timeline-card {
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.timeline-card:hover, .timeline-card.active {
+  border-color: var(--accent-color);
+  background: var(--surface-color);
+  transform: translateY(-3px);
+}
+
+.timeline-number {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--accent-color);
+  opacity: 0.8;
+}
+
+.timeline-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-color);
+}
+
+.timeline-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--secondary-text);
+  margin: 0;
+}
+
+/* ── 4. FEATURES GRID ── */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.feature-card {
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.feature-card:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.feature-icon {
+  color: var(--accent-color);
+}
+
+.feature-card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-color);
+}
+
+.feature-card p {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--secondary-text);
+  margin: 0;
+}
+
+/* ── 5. CONTRIBUTION DEMO ── */
+.contribution-demo-card {
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 28px;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.demo-block {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.demo-author-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.demo-role {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: rgba(124, 140, 255, 0.15);
+  color: var(--accent-color);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.demo-role.contrib {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+.demo-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.demo-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-left: auto;
+}
+
+.demo-badge.pending {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+.demo-badge.accepted {
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+  border: 1px solid #4ade80;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.demo-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-color);
+  margin: 0;
+  font-style: italic;
+}
+
+.demo-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--secondary-text);
+  font-weight: 600;
+}
+
+.connector-line {
+  width: 2px;
+  height: 20px;
+  background: var(--accent-color);
+}
+
+.demo-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(74, 222, 128, 0.05);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text-color);
+}
+
+.demo-result-card {
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.1), rgba(124, 140, 255, 0.1));
+  border: 1px solid #4ade80;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.result-header h4 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  color: #4ade80;
+}
+
+.result-credits {
+  font-size: 12px;
+  color: var(--secondary-text);
+}
+
+/* ── 6. COMMUNITY CONNECTIONS ── */
+.community-nodes-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0;
+  position: relative;
+}
+
+.node-center {
+  background: var(--accent-gradient);
+  color: var(--accent-text);
+  padding: 20px 32px;
+  border-radius: 30px;
+  font-weight: 900;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 0 24px var(--accent-glow-lg);
+  z-index: 2;
+}
+
+.node-orbit {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.node-item {
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  padding: 10px 20px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+/* ── 7. AI SECTION ── */
+.ai-capabilities-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.ai-cap-pill {
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 10px 20px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.ai-cap-pill:hover {
+  background: var(--surface-color);
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+}
+
+/* ── 8. TECH STACK ── */
+.tech-stack-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.tech-card {
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tech-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent-color);
+}
+
+.tech-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tech-tag {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── 9. JOURNEY ── */
+.journey-columns {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.journey-col {
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.journey-col.today {
+  border-color: #4ade80;
+}
+
+.journey-col.next {
+  border-color: var(--accent-color);
+}
+
+.journey-col h3 {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+.journey-col.today h3 { color: #4ade80; }
+.journey-col.next h3 { color: var(--accent-color); }
+
+.journey-col ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.journey-col li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+/* ── 10. CLOSING CTA ── */
+.about-cta {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 60px 32px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.cta-heading {
+  font-size: 32px;
+  font-weight: 800;
+  font-style: italic;
+  margin: 0;
+  color: var(--text-color);
+}
+
+.cta-subheading {
+  font-size: 18px;
+  color: var(--secondary-text);
+  margin: 0 0 16px 0;
+  font-weight: 500;
+}
+
+.cta-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ── RESPONSIVE BREAKPOINTS ── */
+@media (max-width: 1024px) {
+  .timeline-grid, .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .about-hero-title {
+    font-size: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .about-page {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: calc(var(--header-height) + 16px) 16px 60px;
+    gap: 50px;
+  }
+  .timeline-grid, .features-grid, .tech-stack-grid, .journey-columns {
+    grid-template-columns: 1fr;
+  }
+  .about-hero-title {
+    font-size: 32px;
+  }
+  .about-hero-tagline {
+    font-size: 18px;
+  }
+  .section-title {
+    font-size: 24px;
+  }
+  .idea-flow-container {
+    flex-direction: column;
+  }
+  .flow-arrow {
+    transform: rotate(90deg);
+  }
+}

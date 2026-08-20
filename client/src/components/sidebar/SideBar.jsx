@@ -14,7 +14,8 @@ import {
   Sun, 
   Moon,
   Menu,
-  Bot
+  Bot,
+  Info
 } from 'lucide-react';
 import './SideBar.css';
 
@@ -135,6 +136,18 @@ const Sidebar = ({ collapsed, setCollapsed, sidebarOpen, setSidebarOpen }) => {
           </span>
           {(!collapsed || sidebarOpen) && (
             <span className="btn-text">AI Assistant</span>
+          )}
+        </button>
+
+        <button
+          className={`sidebar-btn ${isActive('/about') ? 'active' : ''}`}
+          onClick={() => handleNav('/about')}
+        >
+          <span className="icon">
+            <Info size={18} />
+          </span>
+          {(!collapsed || sidebarOpen) && (
+            <span className="btn-text">About</span>
           )}
         </button>
 

@@ -20,6 +20,7 @@ import AuthorProfile from './pages/authorprofile/AuthorProfile';
 import NotFoundPage from './pages/notfoundpage/NotFoundPage';
 import AIGeneralPage from './pages/aipage/AIGeneralPage';
 import AIContentPage from './pages/aipage/AIContentPage';
+import AboutPage from './pages/aboutpage/AboutPage';
 
 // ScrollToTop component to reset scroll position on navigation
 function ScrollToTop() {
@@ -189,6 +190,9 @@ function AppContent() {
         <Route path="/ai" element={<AIGeneralPage collapsed={collapsed} />} />
         <Route path="/ai/story/:id" element={<AIContentPage collapsed={collapsed} />} />
         <Route path="/ai/song/:id" element={<AIContentPage collapsed={collapsed} />} />
+        
+        {/* About Route */}
+        <Route path="/about" element={<AboutPage collapsed={collapsed} />} />
         
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
