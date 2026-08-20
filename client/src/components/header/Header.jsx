@@ -59,7 +59,15 @@ const Header = ({searchTerm, setSearchTerm, sidebarOpen, setSidebarOpen}) => {
       </button>
 
       <div className="logo">
-        <Link to='/'>
+        <Link 
+          to='/'
+          onClick={(e) => {
+            if (window.location.pathname === '/') {
+              e.preventDefault();
+              window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+            }
+          }}
+        >
           <img src={logo} alt="StoryWeave" />
         </Link>
       </div>

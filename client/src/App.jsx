@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useTheme } from './context/ThemeContext.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 
@@ -20,6 +20,17 @@ import AuthorProfile from './pages/authorprofile/AuthorProfile';
 import NotFoundPage from './pages/notfoundpage/NotFoundPage';
 import AIGeneralPage from './pages/aipage/AIGeneralPage';
 import AIContentPage from './pages/aipage/AIContentPage';
+
+// ScrollToTop component to reset scroll position on navigation
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname]);
+
+  return null;
+}
 
 // Protected Route Wrapper Component
 const ProtectedRoute = ({ children }) => {
@@ -84,6 +95,7 @@ function AppContent() {
 
   return (
     <div className={`app-container ${theme === 'dark' ? 'dark-theme' : 'light-theme'} ${collapsed ? 'sidebar-collapsed' : ''}`}>
+      <ScrollToTop />
       <Header 
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm} 

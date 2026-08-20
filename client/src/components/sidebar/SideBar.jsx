@@ -25,7 +25,11 @@ const Sidebar = ({ collapsed, setCollapsed, sidebarOpen, setSidebarOpen }) => {
   const { isLoggedIn, logout } = useAuth();
 
   const handleNav = (path) => {
-    navigate(path);
+    if (location.pathname === path) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    } else {
+      navigate(path);
+    }
     if (setSidebarOpen) {
       setSidebarOpen(false);
     }
