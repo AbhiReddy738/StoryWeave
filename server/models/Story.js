@@ -167,11 +167,12 @@ storySchema.index({ likes: -1 });
 
 storySchema.pre("save", function () {
     if (!this.slug) {
-        this.slug = this.title
+        const baseTitle = this.title || "story";
+        this.slug = baseTitle
             .toLowerCase()
             .replace(/[^a-z0-9\s]/g, "")
             .trim()
-            .replaceAll(" ", "-");
+            .replace(/\s+/g, "-");
         if (!this.slug) {
             this.slug = "story-" + Date.now();
         }

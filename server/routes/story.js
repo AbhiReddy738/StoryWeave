@@ -252,73 +252,67 @@ router.get("/:slug", async (req, res) => {
     console.log(`[DEBUG - SERVER] GET /story/:slug triggered with requested slug/id: "${requestedSlug}"`);
     try {
         let story = null;
-        // 1. Look up by the exact slug field in the database
-        story = await Story.findOne({ slug: requestedSlug });
-        if (story) {
-            console.log(`[DEBUG - SERVER] Lookup by exact slug field successful: FOUND`);
-        }
 
-        // 2. Check if the parameter is a valid 24-character ObjectId
-        if (!story && mongoose.Types.ObjectId.isValid(requestedSlug)) {
+        // 1. Direct ObjectId lookup first if parameter is a valid 24-char hex string
+        if (mongoose.Types.ObjectId.isValid(requestedSlug)) {
             story = await Story.findById(requestedSlug);
-            console.log(`[DEBUG - SERVER] Lookup by direct ObjectId successful: ${story ? "FOUND" : "NOT FOUND"}`);
+            if (story) console.log(`[DEBUG - SERVER] Lookup by direct ObjectId successful: FOUND`);
         }
 
-        // 3. Try to extract a 24-character ObjectId from the end of the slug (since frontend links are generated as slug-id in legacy cases)
+        // 2. Look up by exact slug field in database
+        if (!story) {
+            story = await Story.findOne({ slug: requestedSlug });
+            if (story) console.log(`[DEBUG - SERVER] Lookup by exact slug field successful: FOUND`);
+        }
+
+        // 3. Extract 24-char ObjectId from end of slug (legacy slug-id links)
         if (!story && requestedSlug) {
             const hex24Regex = /[0-9a-fA-F]{24}$/;
             const match = requestedSlug.match(hex24Regex);
-            if (match) {
-                const extractedId = match[0];
-                if (mongoose.Types.ObjectId.isValid(extractedId)) {
-                    story = await Story.findById(extractedId);
-                    console.log(`[DEBUG - SERVER] Lookup by legacy extracted ObjectId ${extractedId} successful: ${story ? "FOUND" : "NOT FOUND"}`);
-                }
+            if (match && mongoose.Types.ObjectId.isValid(match[0])) {
+                story = await Story.findById(match[0]);
+                if (story) console.log(`[DEBUG - SERVER] Lookup by legacy extracted ObjectId successful: FOUND`);
             }
         }
 
-        // 4. Try lookup by extracting the prefix slug before the ObjectId suffix if present (legacy fallback)
+        // 4. Extract prefix slug before hyphen-separated timestamp or ID suffix
         if (!story && requestedSlug) {
             const parts = requestedSlug.split("-");
             if (parts.length > 1) {
-                const lastPart = parts[parts.length - 1];
-                if (/[0-9a-fA-F]{24}/.test(lastPart)) {
-                    const slugPrefix = parts.slice(0, -1).join("-");
-                    story = await Story.findOne({ slug: slugPrefix });
-                    console.log(`[DEBUG - SERVER] Lookup by prefix slug "${slugPrefix}" successful: ${story ? "FOUND" : "NOT FOUND"}`);
-                }
+                const prefix = parts.slice(0, -1).join("-");
+                story = await Story.findOne({ slug: prefix });
+                if (story) console.log(`[DEBUG - SERVER] Lookup by prefix slug "${prefix}" successful: FOUND`);
             }
         }
 
-        // Debugging logs required:
-        // Log:
-        // Requested slug
-        // Found story
-        // Database slug
-        console.log(`[DEBUG - SERVER] Requested slug: "${requestedSlug}"`);
-        if (story) {
-            console.log(`[DEBUG - SERVER] Found story: "${story.title}" (ID: ${story._id})`);
-            console.log(`[DEBUG - SERVER] Database slug: "${story.slug}"`);
-        } else {
-            console.log(`[DEBUG - SERVER] Found story: null`);
-            console.log(`[DEBUG - SERVER] Database slug: null`);
+        // 5. Case-insensitive title fallback search
+        if (!story && requestedSlug) {
+            const cleanTitle = requestedSlug.replace(/-[0-9]+$/, "").replace(/-/g, " ");
+            story = await Story.findOne({ title: { $regex: new RegExp(`^${cleanTitle}$`, "i") } });
+            if (story) console.log(`[DEBUG - SERVER] Lookup by title regex "${cleanTitle}" successful: FOUND`);
         }
+
+        console.log(`[DEBUG - SERVER] Requested slug: "${requestedSlug}" -> Story: ${story ? story.title : "null"}`);
 
         if (!story) {
             return res.status(404).json({ message: "Story not found" });
         }
         
-        // Increment views count
-        story.views = (story.views || 0) + 1;
-        await story.save();
-
-        if (story.contributions && story.contributions.length > 0) {
-            story.contributions.sort((a, b) => b.upvotes - a.upvotes);
+        // Safely increment views count without letting a save error block response
+        try {
+            story.views = (story.views || 0) + 1;
+            await story.save();
+        } catch (saveErr) {
+            console.warn(`[DEBUG - SERVER] View increment warning:`, saveErr.message);
         }
-        res.status(200).json(story);
+
+        if (Array.isArray(story.contributions) && story.contributions.length > 0) {
+            story.contributions.sort((a, b) => ((b && b.upvotes) || 0) - ((a && a.upvotes) || 0));
+        }
+        return res.status(200).json(story);
     } catch (err) {
         console.error(`[DEBUG - SERVER] Error in GET /story/:slug handler:`, err);
-        res.status(500).json({ message: "Server Error", error: err.message });
+        return res.status(500).json({ message: "Server Error", error: err.message });
     }
 });
 

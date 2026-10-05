@@ -1,4 +1,6 @@
 export const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  import.meta.env.VITE_API_BASE_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000/api'
-    : 'https://storyweave-fxdt.onrender.com/api';
+    : 'https://storyweave-fxdt.onrender.com/api');
+

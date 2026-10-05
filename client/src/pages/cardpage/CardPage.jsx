@@ -148,8 +148,30 @@ const CardPage = ({ collapsed }) => {
       setLoading(true);
       setError('');
       try {
-        const res = await axios.get(`${API}/${slug}`);
-        const data = res.data;
+        let data = null;
+
+        try {
+          const res = await axios.get(`${API}/${slug}`);
+          data = res.data;
+        } catch (directErr) {
+          console.warn("[DEBUG - CLIENT] Direct story fetch by slug failed, attempting fallback search...", directErr.message);
+          try {
+            const allRes = await axios.get(`${API}/all`);
+            data = allRes.data.find(s => s.slug === slug || s._id === slug || s.slug?.includes(slug) || slug?.includes(s._id));
+            if (data && data._id) {
+              // Fetch full document by ID
+              const idRes = await axios.get(`${API}/${data._id}`);
+              data = idRes.data;
+            }
+          } catch (fallbackErr) {
+            console.error("[DEBUG - CLIENT] Fallback story search failed:", fallbackErr.message);
+          }
+        }
+
+        if (!data || (!data._id && !data.title)) {
+          throw new Error('Story data unavailable');
+        }
+
         setStory(data);
         setLikeCount(data.likes || 0);
         setComments(data.comments || []);
